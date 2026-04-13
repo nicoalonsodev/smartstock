@@ -28,7 +28,7 @@ INSERT INTO public.modulo_config (
 ) VALUES (
   'f0000001-0000-4000-8000-000000000001',
   true, true, true, false,
-  false, false, false
+  true, false, true
 );
 
 INSERT INTO public.categoria (id, tenant_id, nombre, descripcion) VALUES

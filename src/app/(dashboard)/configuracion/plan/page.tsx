@@ -105,7 +105,7 @@ export default function PlanPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <PlanCard
           title="Plan Base"
-          description="Funciones esenciales de stock e importación. Podés activar el facturador simple desde tu cuenta si lo necesitás."
+          description="Stock, importación, pedidos e IA de precios. Sin facturación ARCA ni presupuestos (esos quedan en el plan completo)."
           highlight={plan === 'base'}
           acciones={
             isAdmin && plan === 'completo' ? (
@@ -122,7 +122,7 @@ export default function PlanPage() {
         />
         <PlanCard
           title="Plan Completo"
-          description="Incluye facturador ARCA, pedidos, presupuestos e IA de precios, además de todo lo del plan base."
+          description="Agrega facturación electrónica ARCA y presupuestos, además de todo lo del plan base (incluidos pedidos e IA)."
           highlight={plan === 'completo'}
           acciones={
             isAdmin && plan === 'base' ? (

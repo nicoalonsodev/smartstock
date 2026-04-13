@@ -98,9 +98,9 @@ export async function POST(request: Request) {
       importador_excel: true,
       facturador_simple: true,
       facturador_arca: false,
-      pedidos: false,
+      pedidos: true,
       presupuestos: false,
-      ia_precios: false,
+      ia_precios: true,
     });
 
     if (moduloError) {
