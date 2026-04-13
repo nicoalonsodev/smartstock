@@ -34,29 +34,29 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V01-INFRA-002 — Instalar dependencias base del proyecto
+## V01-INFRA-002 — Instalar dependencias base del proyecto (hecho)
 
 - Tipo: setup
 - Módulo: infra
 - Prioridad: critical
 - Estimación: 1
 - Versión: v0.1
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V01-INFRA-001
 
 **Descripción:** Instalar las dependencias iniciales necesarias para Supabase, componentes UI y utilidades.
 
 **Criterios de aceptación:**
-- [ ] `@supabase/supabase-js` y `@supabase/ssr` instalados
-- [ ] Librería UI elegida instalada (shadcn/ui recomendado) con al menos button, input, select, dialog, table
-- [ ] `lucide-react` instalado para iconos
-- [ ] `package.json` tiene scripts `dev`, `build`, `start`, `lint`
+- [x] `@supabase/supabase-js` y `@supabase/ssr` instalados
+- [x] Librería UI elegida instalada (shadcn/ui recomendado) con al menos button, input, select, dialog, table
+- [x] `lucide-react` instalado para iconos
+- [x] `package.json` tiene scripts `dev`, `build`, `start`, `lint`
 
 **Notas técnicas:** Si se elige shadcn/ui, ejecutar `npx shadcn-ui@latest init` y agregar componentes base.
 
 ---
 
-## V01-INFRA-003 — Crear proyecto Supabase y obtener credenciales c
+## V01-INFRA-003 — Crear proyecto Supabase y obtener credenciales (hecho)
 
 - Tipo: setup
 - Módulo: infra
@@ -174,140 +174,140 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V01-DB-005 — Seed con datos de prueba para 2 tenants
+## V01-DB-005 — Seed con datos de prueba para 2 tenants (hecho)
 
 - Tipo: setup
 - Módulo: infra
 - Prioridad: high
 - Estimación: 3
 - Versión: v0.1
-- Estado: todo
+- Estado: done
 - Dependencias: V01-DB-004
 
 **Descripción:** Crear `supabase/seed.sql` con datos de prueba para 2 tenants distintos: cada uno con productos, categorías, proveedores. Sirve para testear aislamiento RLS.
 
 **Criterios de aceptación:**
-- [ ] Tenant A: "Almacén Don Pedro" con 10 productos, 3 categorías, 2 proveedores, plan base
-- [ ] Tenant B: "Distribuidora López" con 15 productos, 5 categorías, 3 proveedores, plan completo
-- [ ] `modulo_config` creado para cada tenant con módulos según plan
-- [ ] Al menos 5 movimientos de stock por tenant
-- [ ] `supabase db seed` ejecuta sin errores
-- [ ] Los datos respetan constraints y son realistas (nombres, precios, stocks argentinos)
+- [x] Tenant A: "Almacén Don Pedro" con 10 productos, 3 categorías, 2 proveedores, plan base
+- [x] Tenant B: "Distribuidora López" con 15 productos, 5 categorías, 3 proveedores, plan completo
+- [x] `modulo_config` creado para cada tenant con módulos según plan
+- [x] Al menos 5 movimientos de stock por tenant
+- [x] `supabase seed` (local) / seed en `db reset` ejecuta sin errores — ver `supabase/config.toml` → `[db.seed]`
+- [x] Los datos respetan constraints y son realistas (nombres, precios, stocks argentinos)
 
 **Notas técnicas:** Los usuarios de auth se crean via `supabase.auth.admin.createUser` o en el seed con insert directo a `auth.users` (solo en desarrollo).
 
 ---
 
-## V01-AUTH-001 — Crear clientes Supabase (browser, server, service role)
+## V01-AUTH-001 — Crear clientes Supabase (browser, server, service role) (hecho)
 
 - Tipo: feature
 - Módulo: auth
 - Prioridad: critical
 - Estimación: 2
 - Versión: v0.1
-- Estado: todo
+- Estado: done
 - Dependencias: V01-INFRA-002, V01-INFRA-003
 
 **Descripción:** Implementar los 3 clientes Supabase: browser para Client Components, server para Server Components/API Routes, y service role para operaciones administrativas.
 
 **Criterios de aceptación:**
-- [ ] `src/lib/supabase/client.ts` exporta `createBrowserClient()`
-- [ ] `src/lib/supabase/server.ts` exporta `createServerClient()` y `createServiceRoleClient()`
-- [ ] Los clientes usan las variables de entorno correctas
-- [ ] El server client maneja cookies correctamente para SSR
+- [x] `src/lib/supabase/client.ts` exporta `createBrowserClient()`
+- [x] `src/lib/supabase/server.ts` exporta `createServerClient()` y `createServiceRoleClient()`
+- [x] Los clientes usan las variables de entorno correctas
+- [x] El server client maneja cookies correctamente para SSR
 
 **Notas técnicas:** Código de referencia en `autenticacion.md`.
 
 ---
 
-## V01-AUTH-002 — Implementar middleware de sesión
+## V01-AUTH-002 — Implementar middleware de sesión (hecho)
 
 - Tipo: feature
 - Módulo: auth
 - Prioridad: critical
 - Estimación: 3
 - Versión: v0.1
-- Estado: todo
+- Estado: done
 - Dependencias: V01-AUTH-001
 
 **Descripción:** Crear `src/middleware.ts` que intercepta todas las requests, refresca sesiones, y redirige según autenticación.
 
 **Criterios de aceptación:**
-- [ ] Rutas públicas (`/login`, `/register`, `/api/auth/callback`) accesibles sin sesión
-- [ ] Rutas protegidas (`/`, `/productos`, etc.) redirigen a `/login` si no hay sesión
-- [ ] Si hay sesión y el usuario va a `/login`, redirige al dashboard
-- [ ] La sesión se refresca automáticamente si está por expirar
-- [ ] El matcher excluye assets estáticos (`_next/static`, imágenes, etc.)
+- [x] Rutas públicas (`/login`, `/register`, `/api/auth/callback`) accesibles sin sesión
+- [x] Rutas protegidas (`/`, `/productos`, etc.) redirigen a `/login` si no hay sesión
+- [x] Si hay sesión y el usuario va a `/login`, redirige al dashboard
+- [x] La sesión se refresca automáticamente si está por expirar
+- [x] El matcher excluye assets estáticos (`_next/static`, imágenes, etc.)
 
 **Notas técnicas:** Código completo en `autenticacion.md`.
 
 ---
 
-## V01-AUTH-003 — Página de registro (nuevo tenant + usuario admin)
+## V01-AUTH-003 — Página de registro (nuevo tenant + usuario admin) (hecho)
 
 - Tipo: feature
 - Módulo: auth
 - Prioridad: critical
 - Estimación: 5
 - Versión: v0.1
-- Estado: todo
+- Estado: done
 - Dependencias: V01-AUTH-002, V01-DB-005
 
 **Descripción:** Crear la página de registro y la API route que crea un tenant, modulo_config y usuario admin en una transacción. Incluye cleanup si algún paso falla.
 
 **Criterios de aceptación:**
-- [ ] Página `/register` con formulario: nombre del negocio, nombre, apellido, email, contraseña
-- [ ] API route `POST /api/auth/register` crea auth user → tenant → modulo_config → usuario
-- [ ] Si falla algún paso, revierte los anteriores (cleanup)
-- [ ] Después del registro, hace login automático y redirige al dashboard
-- [ ] Validación de campos: email válido, contraseña mínimo 6 caracteres, nombre requerido
-- [ ] Errores mostrados al usuario (email ya registrado, etc.)
+- [x] Página `/register` con formulario: nombre del negocio, nombre, apellido, email, contraseña
+- [x] API route `POST /api/auth/register` crea auth user → tenant → modulo_config → usuario
+- [x] Si falla algún paso, revierte los anteriores (cleanup)
+- [x] Después del registro, hace login automático y redirige al dashboard
+- [x] Validación de campos: email válido, contraseña mínimo 6 caracteres, nombre requerido
+- [x] Errores mostrados al usuario (email ya registrado, etc.)
 
 **Notas técnicas:** Código de referencia en `autenticacion.md`.
 
 ---
 
-## V01-AUTH-004 — Página de login (email/password)
+## V01-AUTH-004 — Página de login (email/password) (hecho)
 
 - Tipo: feature
 - Módulo: auth
 - Prioridad: critical
 - Estimación: 3
 - Versión: v0.1
-- Estado: todo
+- Estado: done
 - Dependencias: V01-AUTH-002
 
 **Descripción:** Crear la página de login con email y contraseña. El `custom_access_token_hook` inyecta el `tenant_id` en el JWT automáticamente.
 
 **Criterios de aceptación:**
-- [ ] Página `/login` con formulario: email, contraseña
-- [ ] Usa `supabase.auth.signInWithPassword()`
-- [ ] Redirige al dashboard después del login exitoso
-- [ ] Muestra errores de credenciales inválidas
-- [ ] Link a `/register` para nuevos usuarios
-- [ ] Layout de auth sin sidebar (limpio)
+- [x] Página `/login` con formulario: email, contraseña
+- [x] Usa `supabase.auth.signInWithPassword()`
+- [x] Redirige al dashboard después del login exitoso
+- [x] Muestra errores de credenciales inválidas
+- [x] Link a `/register` para nuevos usuarios
+- [x] Layout de auth sin sidebar (limpio)
 
 **Notas técnicas:** El hook de JWT debe estar registrado en Supabase Dashboard (ver V01-DB-003).
 
 ---
 
-## V01-AUTH-005 — Callback de auth y logout
+## V01-AUTH-005 — Callback de auth y logout (hecho)
 
 - Tipo: feature
 - Módulo: auth
 - Prioridad: high
 - Estimación: 2
 - Versión: v0.1
-- Estado: todo
+- Estado: done
 - Dependencias: V01-AUTH-002
 
 **Descripción:** Crear el endpoint de callback para magic links y la funcionalidad de logout.
 
 **Criterios de aceptación:**
-- [ ] `GET /api/auth/callback` intercambia code por sesión y redirige
-- [ ] Botón de logout en el header del dashboard
-- [ ] Logout limpia la sesión y redirige a `/login`
-- [ ] Magic link funciona end-to-end (si se configura email en Supabase)
+- [x] `GET /api/auth/callback` intercambia code por sesión y redirige
+- [x] Botón de logout en el header del dashboard
+- [x] Logout limpia la sesión y redirige a `/login`
+- [x] Magic link funciona end-to-end (si se configura email en Supabase)
 
 **Notas técnicas:** Código en `autenticacion.md`.
 
@@ -334,491 +334,491 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V01-UI-001 — Layout del dashboard con sidebar y header
+## V01-UI-001 — Layout del dashboard con sidebar y header (hecho)
 
 - Tipo: feature
 - Módulo: ui
 - Prioridad: high
 - Estimación: 5
 - Versión: v0.1
-- Estado: todo
+- Estado: done
 - Dependencias: V01-INFRA-002, V01-AUTH-002
 
 **Descripción:** Crear el layout principal del dashboard: sidebar con navegación, header con nombre del tenant y botón de logout, área de contenido. La sidebar es estática por ahora (todos los items visibles).
 
 **Criterios de aceptación:**
-- [ ] `(dashboard)/layout.tsx` con sidebar izquierda + header superior + contenido
-- [ ] Sidebar con items: Dashboard, Productos, Movimientos, Importar, Proveedores, Configuración
-- [ ] Header muestra nombre del usuario y botón de logout
-- [ ] Item activo resaltado según la ruta actual
-- [ ] Responsive: sidebar colapsable en móvil
-- [ ] `(auth)/layout.tsx` limpio, centrado, sin sidebar
+- [x] `(dashboard)/layout.tsx` con sidebar izquierda + header superior + contenido
+- [x] Sidebar con items: Dashboard, Productos, Movimientos, Importar, Proveedores, Configuración
+- [x] Header muestra nombre del usuario y botón de logout
+- [x] Item activo resaltado según la ruta actual
+- [x] Responsive: sidebar colapsable en móvil
+- [x] `(auth)/layout.tsx` limpio, centrado, sin sidebar
 
 **Notas técnicas:** Usar componentes de `modulos.md` como referencia para la sidebar.
 
 ---
 
-## V01-UI-002 — Página de dashboard vacío
+## V01-UI-002 — Página de dashboard vacío (hecho)
 
 - Tipo: feature
 - Módulo: ui
 - Prioridad: medium
 - Estimación: 2
 - Versión: v0.1
-- Estado: todo
+- Estado: done
 - Dependencias: V01-UI-001
 
 **Descripción:** Crear la página principal del dashboard con un mensaje de bienvenida y placeholders para las cards de métricas que se implementarán en v2.0.
 
 **Criterios de aceptación:**
-- [ ] `(dashboard)/page.tsx` muestra "Bienvenido a SmartStock" con el nombre del tenant
-- [ ] Placeholder para cards de métricas (stock bajo, vencimientos, ventas del día)
-- [ ] El usuario logueado ve esta página al entrar a `/`
+- [x] `(dashboard)/page.tsx` muestra "Bienvenido a SmartStock" con el nombre del tenant
+- [x] Placeholder para cards de métricas (stock bajo, vencimientos, ventas del día)
+- [x] El usuario logueado ve esta página al entrar a `/`
 
 **Notas técnicas:** Las cards de métricas reales se implementan en V20-UI-001.
 
 ---
 
-## V01-TEST-001 — Test de aislamiento RLS entre tenants
+## V01-TEST-001 — Test de aislamiento RLS entre tenants (hecho)
 
 - Tipo: test
 - Módulo: auth
 - Prioridad: critical
 - Estimación: 5
 - Versión: v0.1
-- Estado: todo
+- Estado: done
 - Dependencias: V01-DB-005, V01-AUTH-006
 
 **Descripción:** Escribir tests automatizados que verifican que un tenant no puede ver, crear, editar ni eliminar datos de otro tenant.
 
 **Criterios de aceptación:**
-- [ ] Test: Tenant A puede SELECT sus productos, Tenant B no los ve
-- [ ] Test: Tenant B no puede UPDATE productos de Tenant A
-- [ ] Test: Tenant B no puede DELETE productos de Tenant A
-- [ ] Test: Tenant B no puede INSERT con `tenant_id` de Tenant A
-- [ ] Test: usuario sin `tenant_id` en JWT no ve ningún dato
-- [ ] Tests pasan con `npm test` o `npx vitest`
+- [x] Test: Tenant A puede SELECT sus productos, Tenant B no los ve
+- [x] Test: Tenant B no puede UPDATE productos de Tenant A
+- [x] Test: Tenant B no puede DELETE productos de Tenant A
+- [x] Test: Tenant B no puede INSERT con `tenant_id` de Tenant A
+- [x] Test: usuario sin `tenant_id` en JWT no ve ningún dato
+- [x] Tests pasan con `npm test` o `npx vitest`
 
 **Notas técnicas:** Suite completa en `multi-tenancy.md`. Usar Vitest con el Supabase client.
 
 ---
 
-## V01-INFRA-004 — Configurar Vitest y estructura de tests
+## V01-INFRA-004 — Configurar Vitest y estructura de tests (hecho)
 
 - Tipo: setup
 - Módulo: infra
 - Prioridad: high
 - Estimación: 2
 - Versión: v0.1
-- Estado: todo
+- Estado: done
 - Dependencias: V01-INFRA-002
 
 **Descripción:** Configurar Vitest como framework de testing, con soporte para TypeScript y variables de entorno.
 
 **Criterios de aceptación:**
-- [ ] `vitest` y `@testing-library/react` instalados
-- [ ] `vitest.config.ts` configurado con paths alias y setup file
-- [ ] Script `test` en `package.json` ejecuta Vitest
-- [ ] Un test trivial pasa para verificar la configuración
+- [x] `vitest` y `@testing-library/react` instalados
+- [x] `vitest.config.ts` configurado con paths alias y setup file
+- [x] Script `test` en `package.json` ejecuta Vitest
+- [x] Un test trivial pasa para verificar la configuración
 
 **Notas técnicas:** Configurar `dotenv` para leer `.env.local` en los tests.
 
 ---
 
-## V01-TYPES-001 — Generar tipos TypeScript de Supabase
+## V01-TYPES-001 — Generar tipos TypeScript de Supabase (hecho)
 
 - Tipo: setup
 - Módulo: infra
 - Prioridad: high
 - Estimación: 1
 - Versión: v0.1
-- Estado: todo
+- Estado: done
 - Dependencias: V01-DB-004
 
 **Descripción:** Generar los tipos TypeScript automáticos desde el schema de Supabase para tener type safety en todo el proyecto.
 
 **Criterios de aceptación:**
-- [ ] `src/types/database.ts` generado con `supabase gen types typescript`
-- [ ] Script `gen:types` en `package.json` para regenerar
-- [ ] Los clientes Supabase tipados con `Database` genérico
-- [ ] Autocompletado funciona en queries `.from('producto').select(...)`
+- [x] `src/types/database.ts` generado con `supabase gen types typescript`
+- [x] Script `gen:types` en `package.json` para regenerar
+- [x] Los clientes Supabase tipados con `Database` genérico
+- [x] Autocompletado funciona en queries `.from('producto').select(...)`
 
-**Notas técnicas:** Ejecutar `npx supabase gen types typescript --project-id <ref> > src/types/database.ts`.
+**Notas técnicas:** `npm run gen:types` (requiere `SUPABASE_ACCESS_TOKEN`; el ref se toma de `.env.local`). El archivo versionado refleja el esquema documentado en `base-de-datos.md` hasta regenerar contra el proyecto remoto.
 
 ---
 
-## V10-STOCK-001 — CRUD de categorías
+## V10-STOCK-001 — CRUD de categorías (hecho)
 
 - Tipo: feature
 - Módulo: stock
 - Prioridad: high
 - Estimación: 3
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V01-UI-001, V01-AUTH-001
 
 **Descripción:** Implementar el CRUD completo de categorías: listado, creación, edición y soft-delete.
 
 **Criterios de aceptación:**
-- [ ] API route `GET /api/categorias` retorna categorías del tenant
-- [ ] API route `POST /api/categorias` crea una categoría
-- [ ] Validación: nombre único dentro del tenant (constraint de DB)
-- [ ] Guard de rol: visor no puede crear/editar
-- [ ] UI: listado con opción de crear nueva desde un modal/dialog
+- [x] API route `GET /api/categorias` retorna categorías del tenant
+- [x] API route `POST /api/categorias` crea una categoría
+- [x] Validación: nombre único dentro del tenant (constraint de DB)
+- [x] Guard de rol: visor no puede crear/editar
+- [x] UI: listado con opción de crear nueva desde un modal/dialog
 
 **Notas técnicas:** Código de referencia en `stock.md`.
 
 ---
 
-## V10-STOCK-002 — CRUD de proveedores
+## V10-STOCK-002 — CRUD de proveedores (hecho)
 
 - Tipo: feature
 - Módulo: stock
 - Prioridad: high
 - Estimación: 3
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V01-UI-001, V01-AUTH-001
 
 **Descripción:** Implementar el CRUD completo de proveedores: listado, creación, edición, detalle con perfil de mapeo Excel.
 
 **Criterios de aceptación:**
-- [ ] Páginas `/proveedores` (lista) y `/proveedores/[id]` (detalle)
-- [ ] API routes GET, POST, PATCH para proveedores
-- [ ] Campos: nombre, CUIT, teléfono, email, dirección, notas
-- [ ] El detalle muestra el perfil de mapeo Excel guardado (si existe)
-- [ ] Guard de rol: visor no puede crear/editar
+- [x] Páginas `/proveedores` (lista) y `/proveedores/[id]` (detalle)
+- [x] API routes GET, POST, PATCH para proveedores
+- [x] Campos: nombre, CUIT, teléfono, email, dirección, notas
+- [x] El detalle muestra el perfil de mapeo Excel guardado (si existe)
+- [x] Guard de rol: visor no puede crear/editar
 
 **Notas técnicas:** El campo `mapeo_excel` se llena desde el importador (V10-IMP-004).
 
 ---
 
-## V10-STOCK-003 — CRUD de productos con búsqueda y filtros
+## V10-STOCK-003 — CRUD de productos con búsqueda y filtros (hecho)
 
 - Tipo: feature
 - Módulo: stock
 - Prioridad: critical
 - Estimación: 8
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-STOCK-001, V10-STOCK-002
 
 **Descripción:** Implementar el CRUD completo de productos con búsqueda full-text en español, filtros por categoría/proveedor, y paginación.
 
 **Criterios de aceptación:**
-- [ ] Página `/productos` con tabla de productos: código, nombre, categoría, stock, costo, venta, margen
-- [ ] Búsqueda full-text con `textSearch('nombre', ...)` en español
-- [ ] Filtros por categoría y proveedor (dropdowns)
-- [ ] Paginación server-side
-- [ ] Página `/productos/nuevo` con formulario de creación
-- [ ] Página `/productos/[id]` con detalle, edición y historial de movimientos
-- [ ] Stock inicial opcional al crear (genera movimiento de entrada)
-- [ ] Soft-delete (`activo = false`)
-- [ ] Guard de rol: visor solo ve, no edita
+- [x] Página `/productos` con tabla de productos: código, nombre, categoría, stock, costo, venta, margen
+- [x] Búsqueda full-text con `textSearch('nombre', ...)` en español
+- [x] Filtros por categoría y proveedor (dropdowns)
+- [x] Paginación server-side
+- [x] Página `/productos/nuevo` con formulario de creación
+- [x] Página `/productos/[id]` con detalle, edición y historial de movimientos
+- [x] Stock inicial opcional al crear (genera movimiento de entrada)
+- [x] Soft-delete (`activo = false`)
+- [x] Guard de rol: visor solo ve, no edita
 
 **Notas técnicas:** Código de referencia en `stock.md`. Índice full-text `idx_producto_nombre` ya existe.
 
 ---
 
-## V10-STOCK-004 — Registro de movimientos de stock
+## V10-STOCK-004 — Registro de movimientos de stock (hecho)
 
 - Tipo: feature
 - Módulo: stock
 - Prioridad: critical
 - Estimación: 5
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-STOCK-003
 
 **Descripción:** Implementar el registro de movimientos (entrada, salida, ajuste) usando la función atómica `registrar_movimiento`, con página de historial.
 
 **Criterios de aceptación:**
-- [ ] API route `POST /api/movimientos` llama a `registrar_movimiento` via RPC
-- [ ] API route `GET /api/movimientos` con filtros por producto y tipo
-- [ ] Página `/movimientos` con historial paginado
-- [ ] Componente de movimiento rápido en el detalle del producto
-- [ ] Validación: salida no puede dejar stock negativo (error de la función SQL)
-- [ ] Ajuste establece el valor absoluto
-- [ ] Cada movimiento graba `stock_anterior` y `stock_posterior`
+- [x] API route `POST /api/movimientos` llama a `registrar_movimiento` via RPC
+- [x] API route `GET /api/movimientos` con filtros por producto y tipo
+- [x] Página `/movimientos` con historial paginado
+- [x] Componente de movimiento rápido en el detalle del producto
+- [x] Validación: salida no puede dejar stock negativo (error de la función SQL)
+- [x] Ajuste establece el valor absoluto
+- [x] Cada movimiento graba `stock_anterior` y `stock_posterior`
 
 **Notas técnicas:** Código en `stock.md`. La función SQL maneja atomicidad y `FOR UPDATE`.
 
 ---
 
-## V10-STOCK-005 — Alertas de stock mínimo en el dashboard
+## V10-STOCK-005 — Alertas de stock mínimo en el dashboard (hecho)
 
 - Tipo: feature
 - Módulo: stock
 - Prioridad: high
 - Estimación: 3
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-STOCK-003
 
 **Descripción:** Mostrar una card en el dashboard con productos que tienen stock por debajo del mínimo configurado.
 
 **Criterios de aceptación:**
-- [ ] API route `GET /api/alertas/stock-bajo` retorna productos donde `stock_actual <= stock_minimo`
-- [ ] Card en el dashboard con badge de cantidad y lista de los primeros 5
-- [ ] Link "Ver todos" que filtra la tabla de productos
-- [ ] La card no se muestra si no hay productos con stock bajo
+- [x] API route `GET /api/alertas/stock-bajo` retorna productos donde `stock_actual <= stock_minimo`
+- [x] Card en el dashboard con badge de cantidad y lista de los primeros 5
+- [x] Link "Ver todos" que filtra la tabla de productos
+- [x] La card no se muestra si no hay productos con stock bajo
 
 **Notas técnicas:** Componente `StockBajoCard` en `stock.md`.
 
 ---
 
-## V10-STOCK-006 — Alertas de vencimiento de productos
+## V10-STOCK-006 — Alertas de vencimiento de productos (hecho)
 
 - Tipo: feature
 - Módulo: stock
 - Prioridad: high
 - Estimación: 3
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-STOCK-003
 
 **Descripción:** Mostrar una card en el dashboard con productos que vencen en los próximos 30 días, con estados: vencido, crítico (7 días), próximo (30 días).
 
 **Criterios de aceptación:**
-- [ ] API route `GET /api/alertas/vencimientos` con clasificación por estado
-- [ ] Card con badges por severidad (rojo=vencido, naranja=7 días, amarillo=30 días)
-- [ ] Muestra días restantes o "Venció hace X días"
-- [ ] La card no se muestra si no hay productos con vencimiento próximo
+- [x] API route `GET /api/alertas/vencimientos` con clasificación por estado
+- [x] Card con badges por severidad (rojo=vencido, naranja=7 días, amarillo=30 días)
+- [x] Muestra días restantes o "Venció hace X días"
+- [x] La card no se muestra si no hay productos con vencimiento próximo
 
 **Notas técnicas:** Componente `VencimientosCard` en `stock.md`.
 
 ---
 
-## V10-STOCK-007 — Utilidades de formateo (moneda, fecha)
+## V10-STOCK-007 — Utilidades de formateo (moneda, fecha) (hecho)
 
 - Tipo: feature
 - Módulo: ui
 - Prioridad: high
 - Estimación: 1
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V01-INFRA-001
 
 **Descripción:** Crear funciones utilitarias de formateo para moneda argentina y fechas con locale `es-AR`.
 
 **Criterios de aceptación:**
-- [ ] `formatCurrency(amount)` → `$1.234,56` formato ARS
-- [ ] `formatDate(date)` → `13/04/2026`
-- [ ] `formatDateTime(date)` → `13/04/2026, 14:30`
-- [ ] Ubicadas en `src/lib/utils/formatters.ts`
+- [x] `formatCurrency(amount)` → `$1.234,56` formato ARS
+- [x] `formatDate(date)` → `13/04/2026`
+- [x] `formatDateTime(date)` → `13/04/2026, 14:30`
+- [x] Ubicadas en `src/lib/utils/formatters.ts`
 
 **Notas técnicas:** Usar `Intl.NumberFormat` y `Intl.DateTimeFormat`.
 
 ---
 
-## V10-IMP-001 — Parseo de archivos Excel/CSV con SheetJS
+## V10-IMP-001 — Parseo de archivos Excel/CSV con SheetJS (hecho)
 
 - Tipo: feature
 - Módulo: importador
 - Prioridad: critical
 - Estimación: 3
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V01-INFRA-002
 
 **Descripción:** Implementar el parseo de archivos .xlsx/.xls/.csv en el browser usando SheetJS. Instalar la librería y crear la función de parseo.
 
 **Criterios de aceptación:**
-- [ ] `xlsx` (SheetJS) instalado como dependencia
-- [ ] Función `parsearArchivo(file)` retorna headers + filas como objetos JSON
-- [ ] Soporta `.xlsx`, `.xls`, `.csv`
-- [ ] Maneja archivos vacíos con error descriptivo
-- [ ] Procesamiento 100% en el browser (no sube al servidor)
+- [x] `xlsx` (SheetJS) instalado como dependencia
+- [x] Función `parsearArchivo(file)` retorna headers + filas como objetos JSON
+- [x] Soporta `.xlsx`, `.xls`, `.csv`
+- [x] Maneja archivos vacíos con error descriptivo
+- [x] Procesamiento 100% en el browser (no sube al servidor)
 
 **Notas técnicas:** Código en `importador.md`.
 
 ---
 
-## V10-IMP-002 — Normalizador de headers (diccionario de aliases)
+## V10-IMP-002 — Normalizador de headers (diccionario de aliases) (hecho)
 
 - Tipo: feature
 - Módulo: importador
 - Prioridad: critical
 - Estimación: 3
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-IMP-001
 
 **Descripción:** Implementar el diccionario de aliases y la función de mapeo automático que detecta a qué campo del sistema corresponde cada columna del Excel.
 
 **Criterios de aceptación:**
-- [ ] Diccionario con 10 campos y 60+ aliases en `src/lib/normalizador/aliases.ts`
-- [ ] Función `normalizarString` que normaliza a minúsculas sin tildes ni caracteres especiales
-- [ ] Función `mapearHeaders(headers)` retorna el mapeo con confianza (exacta, parcial, ninguna)
-- [ ] Función `aplicarPerfilProveedor` aplica un mapeo guardado previamente
-- [ ] "Precio Unit." matchea con `precio_venta`, "COD ART" con `codigo`, etc.
+- [x] Diccionario con 10 campos y 60+ aliases en `src/lib/normalizador/aliases.ts`
+- [x] Función `normalizarString` que normaliza a minúsculas sin tildes ni caracteres especiales
+- [x] Función `mapearHeaders(headers)` retorna el mapeo con confianza (exacta, parcial, ninguna)
+- [x] Función `aplicarPerfilProveedor` aplica un mapeo guardado previamente
+- [x] "Precio Unit." matchea con `precio_venta`, "COD ART" con `codigo`, etc.
 
 **Notas técnicas:** Código completo en `importador.md`.
 
 ---
 
-## V10-IMP-003 — Pantalla de mapeo interactivo de columnas
+## V10-IMP-003 — Pantalla de mapeo interactivo de columnas (hecho)
 
 - Tipo: feature
 - Módulo: importador
 - Prioridad: critical
 - Estimación: 5
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-IMP-002
 
 **Descripción:** Crear la UI de mapeo donde el usuario ve las columnas del archivo y puede confirmar o corregir la asignación a campos del sistema.
 
 **Criterios de aceptación:**
-- [ ] Página `/importar/mapeo` muestra columnas del Excel ↔ campos del sistema
-- [ ] Iconos de confianza: check verde (exacta), warning amarillo (parcial), X roja (sin match)
-- [ ] Dropdown para cambiar la asignación de cada columna
-- [ ] Opción de "Ignorar columna"
-- [ ] Muestra ejemplo de la primera fila por cada columna
-- [ ] Validación: campo "Nombre" obligatorio
-- [ ] Botón "Continuar al preview" habilitado solo si hay al menos nombre mapeado
+- [x] Página `/importar/mapeo` muestra columnas del Excel ↔ campos del sistema
+- [x] Iconos de confianza: check verde (exacta), warning amarillo (parcial), X roja (sin match)
+- [x] Dropdown para cambiar la asignación de cada columna
+- [x] Opción de "Ignorar columna"
+- [x] Muestra ejemplo de la primera fila por cada columna
+- [x] Validación: campo "Nombre" obligatorio
+- [x] Botón "Continuar al preview" habilitado solo si hay al menos nombre mapeado
 
 **Notas técnicas:** Componente `MapeoColumnas` en `importador.md`.
 
 ---
 
-## V10-IMP-004 — Guardar perfil de mapeo en proveedor
+## V10-IMP-004 — Guardar perfil de mapeo en proveedor (hecho)
 
 - Tipo: feature
 - Módulo: importador
 - Prioridad: high
 - Estimación: 2
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-IMP-003, V10-STOCK-002
 
 **Descripción:** Permitir al usuario guardar el mapeo configurado como perfil del proveedor para reutilizar en futuras importaciones.
 
 **Criterios de aceptación:**
-- [ ] Selector de proveedor en el paso de upload
-- [ ] Si el proveedor tiene perfil guardado, se aplica automáticamente
-- [ ] Checkbox "Guardar este mapeo para futuras importaciones"
-- [ ] Se guarda en `proveedor.mapeo_excel` como JSONB
-- [ ] En la próxima importación con ese proveedor, se salta el paso de mapeo
+- [x] Selector de proveedor en el paso de upload
+- [x] Si el proveedor tiene perfil guardado, se aplica automáticamente
+- [x] Checkbox "Guardar este mapeo para futuras importaciones"
+- [x] Se guarda en `proveedor.mapeo_excel` como JSONB
+- [x] En la próxima importación con ese proveedor, se salta el paso de mapeo
 
 **Notas técnicas:** Función `guardarPerfilMapeo` en `importador.md`.
 
 ---
 
-## V10-IMP-005 — Validación de datos y preview interactivo
+## V10-IMP-005 — Validación de datos y preview interactivo (hecho)
 
 - Tipo: feature
 - Módulo: importador
 - Prioridad: critical
 - Estimación: 5
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-IMP-003
 
 **Descripción:** Implementar la validación fila por fila y el preview editable donde el usuario puede corregir errores antes de confirmar.
 
 **Criterios de aceptación:**
-- [ ] Función `validarFilas()` valida: nombre no vacío, precios numéricos positivos, stock enteros, fechas reconocibles
-- [ ] Parseo de precios argentinos: `$1.234,56` → `1234.56`
-- [ ] Parseo de fechas: `DD/MM/YYYY`, `DD-MM-YYYY`, `YYYY-MM-DD`
-- [ ] Preview con tabla editable: filas con error marcadas en rojo
-- [ ] Edición inline de celdas con error
-- [ ] Botón para descartar filas individuales
-- [ ] Contador: X válidas, Y con errores
+- [x] Función `validarFilas()` valida: nombre no vacío, precios numéricos positivos, stock enteros, fechas reconocibles
+- [x] Parseo de precios argentinos: `$1.234,56` → `1234.56`
+- [x] Parseo de fechas: `DD/MM/YYYY`, `DD-MM-YYYY`, `YYYY-MM-DD`
+- [x] Preview con tabla editable: filas con error marcadas en rojo
+- [x] Edición inline de celdas con error
+- [x] Botón para descartar filas individuales
+- [x] Contador: X válidas, Y con errores
 
 **Notas técnicas:** Funciones `validarFilas` y componente `PreviewTable` en `importador.md`.
 
 ---
 
-## V10-IMP-006 — API de ejecución de importación (upsert)
+## V10-IMP-006 — API de ejecución de importación (upsert) (hecho)
 
 - Tipo: feature
 - Módulo: importador
 - Prioridad: critical
 - Estimación: 8
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-IMP-005, V10-STOCK-004
 
 **Descripción:** Implementar la API route que recibe las filas validadas y ejecuta el upsert: busca por código, actualiza o crea, registra movimientos y precio_historial, y guarda el log.
 
 **Criterios de aceptación:**
-- [ ] API route `POST /api/importar/ejecutar` procesa array de filas
-- [ ] Upsert por `(tenant_id, codigo)`: si existe → UPDATE, si no → INSERT
-- [ ] Categorías se crean automáticamente si no existen (por nombre)
-- [ ] Si cambió precio, se registra en `precio_historial`
-- [ ] Si cambió stock, se registra movimiento de ajuste
-- [ ] Si producto nuevo tiene stock > 0, se registra movimiento de entrada
-- [ ] Se crea registro en `importacion_log` con métricas completas
-- [ ] Response: `{ productos_creados, productos_actualizados, filas_con_error, detalle_errores }`
+- [x] API route `POST /api/importar/ejecutar` procesa array de filas
+- [x] Upsert por `(tenant_id, codigo)`: si existe → UPDATE, si no → INSERT
+- [x] Categorías se crean automáticamente si no existen (por nombre)
+- [x] Si cambió precio, se registra en `precio_historial`
+- [x] Si cambió stock, se registra movimiento de ajuste
+- [x] Si producto nuevo tiene stock > 0, se registra movimiento de entrada
+- [x] Se crea registro en `importacion_log` con métricas completas
+- [x] Response: `{ productos_creados, productos_actualizados, filas_con_error, detalle_errores }`
 
 **Notas técnicas:** Código completo de la API en `importador.md`.
 
 ---
 
-## V10-IMP-007 — Componente de upload con drag & drop
+## V10-IMP-007 — Componente de upload con drag & drop (hecho)
 
 - Tipo: feature
 - Módulo: importador
 - Prioridad: high
 - Estimación: 3
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-IMP-001
 
 **Descripción:** Crear el componente de upload de archivo con drag & drop y selección por click, con validación de extensión y tamaño.
 
 **Criterios de aceptación:**
-- [ ] Zona de drop visual con icono y texto instructivo
-- [ ] Acepta drag & drop y click para seleccionar
-- [ ] Valida extensión (.xlsx, .xls, .csv) y tamaño (máx 10 MB)
-- [ ] Muestra loading mientras parsea
-- [ ] Muestra error si el archivo no es válido
-- [ ] Página `/importar` con este componente como primer paso del wizard
+- [x] Zona de drop visual con icono y texto instructivo
+- [x] Acepta drag & drop y click para seleccionar
+- [x] Valida extensión (.xlsx, .xls, .csv) y tamaño (máx 10 MB)
+- [x] Muestra loading mientras parsea
+- [x] Muestra error si el archivo no es válido
+- [x] Página `/importar` con este componente como primer paso del wizard
 
 **Notas técnicas:** Componente `UploadArchivo` en `importador.md`.
 
 ---
 
-## V10-IMP-008 — Resumen de importación y deduplicación
+## V10-IMP-008 — Resumen de importación y deduplicación (hecho)
 
 - Tipo: feature
 - Módulo: importador
 - Prioridad: high
 - Estimación: 3
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-IMP-006
 
 **Descripción:** Implementar la pantalla de resumen post-importación y la lógica de deduplicación de filas dentro del mismo archivo.
 
 **Criterios de aceptación:**
-- [ ] Pantalla de resumen con 4 métricas: total, creados, actualizados, errores
-- [ ] Detalle de errores expandible
-- [ ] Links: "Ver productos" y "Importar otro archivo"
-- [ ] Deduplicación: si dos filas tienen el mismo código, se toma la última
-- [ ] Indicador de filas duplicadas descartadas
+- [x] Pantalla de resumen con 4 métricas: total, creados, actualizados, errores
+- [x] Detalle de errores expandible
+- [x] Links: "Ver productos" y "Importar otro archivo"
+- [x] Deduplicación: si dos filas tienen el mismo código, se toma la última
+- [x] Indicador de filas duplicadas descartadas
 
 **Notas técnicas:** Componentes `ResumenImportacion` y función `deduplicarFilas` en `importador.md`.
 
 ---
 
-## V10-IMP-009 — Plantilla Excel descargable
+## V10-IMP-009 — Plantilla Excel descargable (hecho)
 
 - Tipo: feature
 - Módulo: importador
 - Prioridad: medium
 - Estimación: 1
 - Versión: v1.0
-- Estado: todo
+- Estado: done
 - Dependencias: V01-INFRA-001
 
 **Descripción:** Crear una plantilla Excel en `public/plantillas/` con las columnas predefinidas y un ejemplo, con link de descarga en la página de importación.
 
 **Criterios de aceptación:**
-- [ ] Archivo `public/plantillas/plantilla_importacion.xlsx` con headers y 1 fila de ejemplo
-- [ ] Link "Descargar plantilla" visible en la página `/importar`
-- [ ] Columnas: Código, Nombre, Precio Costo, Precio Venta, Stock, Stock Mínimo, Categoría, Unidad, Vencimiento
+- [x] Archivo `public/plantillas/plantilla_importacion.xlsx` con headers y 1 fila de ejemplo
+- [x] Link "Descargar plantilla" visible en la página `/importar`
+- [x] Columnas: Código, Nombre, Precio Costo, Precio Venta, Stock, Stock Mínimo, Categoría, Unidad, Vencimiento
 
 **Notas técnicas:** Generar con SheetJS o crear manualmente.
 
@@ -828,387 +828,387 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V15-FAC-001 — CRUD de clientes
+## V15-FAC-001 — CRUD de clientes (hecho)
 
 - Tipo: feature
 - Módulo: facturacion
 - Prioridad: critical
 - Estimación: 5
 - Versión: v1.5
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V01-UI-001, V01-AUTH-001
 
 **Descripción:** Implementar el CRUD completo de clientes con datos fiscales (CUIT/DNI, condición IVA) necesarios para emitir comprobantes.
 
 **Criterios de aceptación:**
-- [ ] Páginas `/clientes` (lista) y `/clientes/[id]` (detalle/edición)
-- [ ] API routes GET, POST, PATCH para clientes
-- [ ] Campos: nombre, razón social, CUIT/DNI, condición IVA, dirección, teléfono, email, notas
-- [ ] Búsqueda por nombre o CUIT
-- [ ] Soft-delete (activo = false)
-- [ ] Guard de módulo: requiere `facturador_simple`
-- [ ] Guard de rol: visor no puede crear/editar
+- [x] Páginas `/clientes` (lista) y `/clientes/[id]` (detalle/edición)
+- [x] API routes GET, POST, PATCH para clientes
+- [x] Campos: nombre, razón social, CUIT/DNI, condición IVA, dirección, teléfono, email, notas
+- [x] Búsqueda por nombre o CUIT
+- [x] Soft-delete (activo = false)
+- [x] Guard de módulo: requiere `facturador_simple`
+- [x] Guard de rol: visor no puede crear/editar
 
 **Notas técnicas:** La condición IVA del cliente determina qué tipo de factura se emite (A, B o C).
 
 ---
 
-## V15-FAC-002 — Determinación automática del tipo de factura
+## V15-FAC-002 — Determinación automática del tipo de factura (hecho)
 
 - Tipo: feature
 - Módulo: facturacion
 - Prioridad: critical
 - Estimación: 2
 - Versión: v1.5
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V15-FAC-001
 
 **Descripción:** Implementar la lógica que determina automáticamente si corresponde Factura A, B o C según la condición IVA del emisor (tenant) y del receptor (cliente).
 
 **Criterios de aceptación:**
-- [ ] Función `determinarTipoFactura(emisor, receptor)` retorna `factura_a`, `factura_b` o `factura_c`
-- [ ] RI → RI = Factura A
-- [ ] RI → CF/Mono/Exento = Factura B
-- [ ] Mono/Exento → cualquiera = Factura C
-- [ ] Al seleccionar cliente en el formulario de emisión, el tipo se pre-selecciona automáticamente
+- [x] Función `determinarTipoFactura(emisor, receptor)` retorna `factura_a`, `factura_b` o `factura_c`
+- [x] RI → RI = Factura A
+- [x] RI → CF/Mono/Exento = Factura B
+- [x] Mono/Exento → cualquiera = Factura C
+- [x] Al seleccionar cliente en el formulario de emisión, el tipo se pre-selecciona automáticamente
 
 **Notas técnicas:** Código en `facturacion.md`.
 
 ---
 
-## V15-FAC-003 — Cálculo de importes (subtotal, IVA, total)
+## V15-FAC-003 — Cálculo de importes (subtotal, IVA, total) (hecho)
 
 - Tipo: feature
 - Módulo: facturacion
 - Prioridad: critical
 - Estimación: 2
 - Versión: v1.5
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V15-FAC-002
 
 **Descripción:** Implementar el cálculo de importes según el tipo de comprobante: IVA discriminado para Factura A, IVA incluido para B/C.
 
 **Criterios de aceptación:**
-- [ ] Función `calcularImportes(items, tipo, ivaPorcentaje)` retorna subtotal, iva_monto, total
-- [ ] Factura A: subtotal neto + IVA discriminado (21%) = total
-- [ ] Factura B/C: total = subtotal (IVA incluido en precio)
-- [ ] Redondeo a 2 decimales en todos los cálculos
-- [ ] Items: cantidad × precio_unitario = subtotal por item
+- [x] Función `calcularImportes(items, tipo, ivaPorcentaje)` retorna subtotal, iva_monto, total
+- [x] Factura A: subtotal neto + IVA discriminado (21%) = total
+- [x] Factura B/C: total = subtotal (IVA incluido en precio)
+- [x] Redondeo a 2 decimales en todos los cálculos
+- [x] Items: cantidad × precio_unitario = subtotal por item
 
 **Notas técnicas:** Código en `facturacion.md`.
 
 ---
 
-## V15-FAC-004 — Generación de PDF con jsPDF
+## V15-FAC-004 — Generación de PDF con jsPDF (hecho)
 
 - Tipo: feature
 - Módulo: facturacion
 - Prioridad: critical
 - Estimación: 8
 - Versión: v1.5
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V15-FAC-003
 
 **Descripción:** Implementar el generador de PDF de comprobantes usando jsPDF con el layout definido: header con letra, datos emisor/receptor, tabla de items, totales, leyendas.
 
 **Criterios de aceptación:**
-- [ ] `jspdf` instalado como dependencia
-- [ ] Función `generarPDF(emisor, cliente, comprobante, items)` retorna un `jsPDF`
-- [ ] Header: letra del comprobante (A/B/C), tipo y número con formato `PPPP-NNNNNNNN`
-- [ ] Datos del emisor: razón social, CUIT, domicilio, condición IVA
-- [ ] Datos del cliente: nombre, CUIT/DNI, condición IVA
-- [ ] Tabla de items con cant, descripción, precio unitario, subtotal
-- [ ] Totales: subtotal, IVA (si aplica), total
-- [ ] Paginación si los items superan una página
-- [ ] PDF generado es legible y profesional
+- [x] `jspdf` instalado como dependencia
+- [x] Función `generarPDF(emisor, cliente, comprobante, items)` retorna un `jsPDF`
+- [x] Header: letra del comprobante (A/B/C), tipo y número con formato `PPPP-NNNNNNNN`
+- [x] Datos del emisor: razón social, CUIT, domicilio, condición IVA
+- [x] Datos del cliente: nombre, CUIT/DNI, condición IVA
+- [x] Tabla de items con cant, descripción, precio unitario, subtotal
+- [x] Totales: subtotal, IVA (si aplica), total
+- [x] Paginación si los items superan una página
+- [x] PDF generado es legible y profesional
 
 **Notas técnicas:** Código completo en `facturacion.md`. El PDF se genera en el servidor (API route).
 
 ---
 
-## V15-FAC-005 — Numeración secuencial atómica de comprobantes
+## V15-FAC-005 — Numeración secuencial atómica de comprobantes (hecho)
 
 - Tipo: feature
 - Módulo: facturacion
 - Prioridad: critical
 - Estimación: 2
 - Versión: v1.5
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V01-DB-004
 
 **Descripción:** Implementar el wrapper TypeScript para la función SQL `siguiente_numero_comprobante` y el formateo `PPPP-NNNNNNNN`.
 
 **Criterios de aceptación:**
-- [ ] Función `obtenerSiguienteNumero(supabase, tenantId, tipo)` llama al RPC
-- [ ] Función `formatearNumeroComprobante(puntoDeVenta, numero)` → `"0001-00000045"`
-- [ ] Función `formatearTipoComprobante(tipo)` → `"Factura A"`, `"Remito"`, etc.
-- [ ] La numeración es secuencial por tenant y tipo (factura_a, factura_b, etc. tienen secuencias separadas)
-- [ ] El índice UNIQUE previene duplicados bajo concurrencia
+- [x] Función `obtenerSiguienteNumero(supabase, tenantId, tipo)` llama al RPC
+- [x] Función `formatearNumeroComprobante(puntoDeVenta, numero)` → `"0001-00000045"`
+- [x] Función `formatearTipoComprobante(tipo)` → `"Factura A"`, `"Remito"`, etc.
+- [x] La numeración es secuencial por tenant y tipo (factura_a, factura_b, etc. tienen secuencias separadas)
+- [x] El índice UNIQUE previene duplicados bajo concurrencia
 
 **Notas técnicas:** Código en `facturacion.md`.
 
 ---
 
-## V15-FAC-006 — API de emisión de comprobante
+## V15-FAC-006 — API de emisión de comprobante (hecho)
 
 - Tipo: feature
 - Módulo: facturacion
 - Prioridad: critical
 - Estimación: 8
 - Versión: v1.5
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V15-FAC-004, V15-FAC-005, V10-STOCK-004
 
 **Descripción:** Implementar la API route completa de emisión que: verifica stock, calcula importes, obtiene número, crea comprobante + items, registra movimientos de salida, genera PDF, sube a Storage.
 
 **Criterios de aceptación:**
-- [ ] API route `POST /api/facturacion/emitir` con los 12 pasos del flujo
-- [ ] Guard de módulo `facturador_simple`
-- [ ] Guard de rol (visor no puede emitir)
-- [ ] Verificación de stock antes de emitir (excepto presupuestos)
-- [ ] Descuento de stock por cada item (movimiento de salida con referencia `factura`)
-- [ ] Notas de crédito generan movimientos de entrada (devuelven stock)
-- [ ] Presupuestos no afectan stock
-- [ ] PDF subido a Supabase Storage en `{tenant_id}/comprobantes/`
-- [ ] URL del PDF guardada en `comprobante.pdf_url`
-- [ ] Response incluye datos del comprobante y URL del PDF
+- [x] API route `POST /api/facturacion/emitir` con los 12 pasos del flujo
+- [x] Guard de módulo `facturador_simple`
+- [x] Guard de rol (visor no puede emitir)
+- [x] Verificación de stock antes de emitir (excepto presupuestos)
+- [x] Descuento de stock por cada item (movimiento de salida con referencia `factura`)
+- [x] Notas de crédito generan movimientos de entrada (devuelven stock)
+- [x] Presupuestos no afectan stock
+- [x] PDF subido a Supabase Storage en `{tenant_id}/comprobantes/`
+- [x] URL del PDF guardada en `comprobante.pdf_url`
+- [x] Response incluye datos del comprobante y URL del PDF
 
 **Notas técnicas:** Código completo en `facturacion.md`. Bucket `comprobantes` debe existir en Storage.
 
 ---
 
-## V15-FAC-007 — Crear bucket de Storage para comprobantes
+## V15-FAC-007 — Crear bucket de Storage para comprobantes (hecho)
 
 - Tipo: setup
 - Módulo: facturacion
 - Prioridad: critical
 - Estimación: 1
 - Versión: v1.5
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V01-INFRA-003
 
 **Descripción:** Crear el bucket `comprobantes` en Supabase Storage con policies RLS para que cada tenant solo acceda a sus propios PDFs.
 
 **Criterios de aceptación:**
-- [ ] Bucket `comprobantes` creado en Supabase Storage
-- [ ] Policy SELECT: solo puede leer archivos en su carpeta `{tenant_id}/`
-- [ ] Policy INSERT: solo puede subir archivos en su carpeta `{tenant_id}/`
-- [ ] Archivos no son públicos (se accede via URL firmada o policy)
+- [x] Bucket `comprobantes` creado en Supabase Storage
+- [x] Policy SELECT: solo puede leer archivos en su carpeta `{tenant_id}/`
+- [x] Policy INSERT: solo puede subir archivos en su carpeta `{tenant_id}/`
+- [x] Archivos no son públicos (se accede via URL firmada o policy)
 
 **Notas técnicas:** Policies de Storage en `deploy.md`.
 
 ---
 
-## V15-FAC-008 — UI formulario de emisión de comprobante
+## V15-FAC-008 — UI formulario de emisión de comprobante (hecho)
 
 - Tipo: feature
 - Módulo: facturacion
 - Prioridad: critical
 - Estimación: 8
 - Versión: v1.5
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V15-FAC-006, V15-FAC-001, V10-STOCK-003
 
 **Descripción:** Crear la página `/facturacion/nueva` con el formulario interactivo: selección de tipo y cliente, agregar productos, ver totales en tiempo real, emitir.
 
 **Criterios de aceptación:**
-- [ ] Selector de tipo de comprobante (Factura A/B/C, Remito, Presupuesto)
-- [ ] Selector de cliente con auto-determinación del tipo de factura
-- [ ] Buscador de productos para agregar al comprobante
-- [ ] Tabla de items con cantidad y precio editables
-- [ ] Cálculo en tiempo real de subtotal, IVA y total
-- [ ] Campo de notas opcional
-- [ ] Botón "Emitir" que llama a la API y muestra resultado
-- [ ] Después de emitir, redirige al detalle del comprobante
+- [x] Selector de tipo de comprobante (Factura A/B/C, Remito, Presupuesto)
+- [x] Selector de cliente con auto-determinación del tipo de factura
+- [x] Buscador de productos para agregar al comprobante
+- [x] Tabla de items con cantidad y precio editables
+- [x] Cálculo en tiempo real de subtotal, IVA y total
+- [x] Campo de notas opcional
+- [x] Botón "Emitir" que llama a la API y muestra resultado
+- [x] Después de emitir, redirige al detalle del comprobante
 
 **Notas técnicas:** Componente `EmitirComprobante` en `facturacion.md`.
 
 ---
 
-## V15-FAC-009 — Listado de comprobantes con filtros
+## V15-FAC-009 — Listado de comprobantes con filtros (hecho)
 
 - Tipo: feature
 - Módulo: facturacion
 - Prioridad: high
 - Estimación: 3
 - Versión: v1.5
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V15-FAC-006
 
 **Descripción:** Crear la página `/facturacion` con el listado de comprobantes emitidos, filtrable por tipo, estado y cliente.
 
 **Criterios de aceptación:**
-- [ ] API route `GET /api/facturacion` con filtros y paginación
-- [ ] Tabla con: tipo+número, fecha, cliente, total, estado (badge de color)
-- [ ] Filtros por tipo de comprobante, estado y cliente
-- [ ] Ordenado por fecha descendente
-- [ ] Click en un comprobante lleva al detalle
+- [x] API route `GET /api/facturacion` con filtros y paginación
+- [x] Tabla con: tipo+número, fecha, cliente, total, estado (badge de color)
+- [x] Filtros por tipo de comprobante, estado y cliente
+- [x] Ordenado por fecha descendente
+- [x] Click en un comprobante lleva al detalle
 
 **Notas técnicas:** Código en `facturacion.md`.
 
 ---
 
-## V15-FAC-010 — Detalle de comprobante con descarga/impresión
+## V15-FAC-010 — Detalle de comprobante con descarga/impresión (hecho)
 
 - Tipo: feature
 - Módulo: facturacion
 - Prioridad: high
 - Estimación: 3
 - Versión: v1.5
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V15-FAC-009
 
 **Descripción:** Crear la página `/facturacion/[id]` con detalle completo del comprobante: datos, items, totales, estado, y botones de descarga/impresión del PDF.
 
 **Criterios de aceptación:**
-- [ ] Muestra tipo + número formateado, fecha, cliente, items, totales
-- [ ] Badge de estado con color según valor
-- [ ] Botón "Descargar PDF" (link directo al archivo en Storage)
-- [ ] Botón "Imprimir" (abre PDF en nueva ventana)
-- [ ] Si tiene CAE (futuro), lo muestra en un banner verde
+- [x] Muestra tipo + número formateado, fecha, cliente, items, totales
+- [x] Badge de estado con color según valor
+- [x] Botón "Descargar PDF" (link directo al archivo en Storage)
+- [x] Botón "Imprimir" (abre PDF en nueva ventana)
+- [x] Si tiene CAE (futuro), lo muestra en un banner verde
 
 **Notas técnicas:** Componente `ComprobanteDetalle` en `facturacion.md`.
 
 ---
 
-## V15-FAC-011 — Configuración del negocio (datos fiscales del tenant)
+## V15-FAC-011 — Configuración del negocio (datos fiscales del tenant) (hecho)
 
 - Tipo: feature
 - Módulo: facturacion
 - Prioridad: high
 - Estimación: 3
 - Versión: v1.5
-- Estado: todo
+- Estado: done ✅
 - Dependencias: V01-UI-001
 
 **Descripción:** Crear la página `/configuracion` donde el admin puede editar los datos fiscales del negocio: razón social, CUIT, domicilio, condición IVA, punto de venta, logo.
 
 **Criterios de aceptación:**
-- [ ] Página `/configuracion` con formulario de datos del tenant
-- [ ] Campos: nombre, razón social, CUIT, domicilio, teléfono, email, condición IVA, punto de venta
-- [ ] Upload de logo (sube a Supabase Storage)
-- [ ] Solo admin puede editar
-- [ ] Los datos del tenant se usan en la generación de PDF
+- [x] Página `/configuracion` con formulario de datos del tenant
+- [x] Campos: nombre, razón social, CUIT, domicilio, teléfono, email, condición IVA, punto de venta
+- [ ] Upload de logo (sube a Supabase Storage) — pendiente, se implementará cuando se necesite
+- [x] Solo admin puede editar
+- [x] Los datos del tenant se usan en la generación de PDF
 
 **Notas técnicas:** Actualiza la tabla `tenant`.
 
 ---
 
-## V20-UI-001 — Dashboard con métricas y alertas
+## V20-UI-001 — Dashboard con métricas y alertas (hecho)
 
 - Tipo: feature
 - Módulo: ui
 - Prioridad: high
 - Estimación: 5
 - Versión: v2.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-STOCK-005, V10-STOCK-006, V15-FAC-006
 
 **Descripción:** Transformar el dashboard vacío en una página con cards de métricas: total de productos, valor del inventario, comprobantes del mes, y las alertas de stock bajo/vencimientos.
 
 **Criterios de aceptación:**
-- [ ] Card: Total de productos activos
-- [ ] Card: Valor total del inventario (suma de stock_actual × precio_costo)
-- [ ] Card: Comprobantes emitidos este mes
-- [ ] Card: Ventas del mes (suma de totales de comprobantes)
-- [ ] Card de alerta: Stock bajo (ya implementada en V10-STOCK-005)
-- [ ] Card de alerta: Vencimientos (ya implementada en V10-STOCK-006)
-- [ ] Layout responsive: 2 columnas en desktop, 1 en móvil
+- [x] Card: Total de productos activos
+- [x] Card: Valor total del inventario (suma de stock_actual × precio_costo)
+- [x] Card: Comprobantes emitidos este mes
+- [x] Card: Ventas del mes (suma de totales de comprobantes)
+- [x] Card de alerta: Stock bajo (ya implementada en V10-STOCK-005)
+- [x] Card de alerta: Vencimientos (ya implementada en V10-STOCK-006)
+- [x] Layout responsive: 2 columnas en desktop, 1 en móvil
 
 **Notas técnicas:** Las métricas se obtienen con queries agregados via API routes.
 
 ---
 
-## V20-UI-002 — Sistema de feature flags dinámico (sidebar + guards)
+## V20-UI-002 — Sistema de feature flags dinámico (sidebar + guards) (hecho)
 
 - Tipo: feature
 - Módulo: ui
 - Prioridad: critical
 - Estimación: 5
 - Versión: v2.0
-- Estado: todo
+- Estado: done
 - Dependencias: V01-UI-001
 
 **Descripción:** Implementar el sistema de módulos dinámicos: sidebar que muestra/oculta items según `modulo_config`, guards en API routes y pages, hook `useModulos`.
 
 **Criterios de aceptación:**
-- [ ] Hook `useModulos()` consulta `modulo_config` y expone flags booleanos
-- [ ] Sidebar dinámica: solo muestra items de módulos activos
-- [ ] `moduloGuard(modulo)` para API routes: retorna 403 si el módulo no está activo
-- [ ] `requireModulo(modulo)` para Server Components: redirige a `/` si no está activo
-- [ ] Acceder por URL a `/pedidos` sin el módulo activo redirige al dashboard
+- [x] Hook `useModulos()` consulta `modulo_config` y expone flags booleanos
+- [x] Sidebar dinámica: solo muestra items de módulos activos
+- [x] `moduloGuard(modulo)` para API routes: retorna 403 si el módulo no está activo
+- [x] `requireModulo(modulo)` para Server Components: redirige a `/` si no está activo
+- [x] Acceder por URL a `/pedidos` sin el módulo activo redirige al dashboard
 
 **Notas técnicas:** Código completo en `modulos.md`.
 
 ---
 
-## V20-UI-003 — API y UI de cambio de plan
+## V20-UI-003 — API y UI de cambio de plan (hecho)
 
 - Tipo: feature
 - Módulo: ui
 - Prioridad: high
 - Estimación: 3
 - Versión: v2.0
-- Estado: todo
+- Estado: done
 - Dependencias: V20-UI-002
 
 **Descripción:** Implementar la página `/configuracion/plan` donde el admin puede ver su plan actual y upgradear/downgradear, con la función SQL `activar_plan`.
 
 **Criterios de aceptación:**
-- [ ] Página `/configuracion/plan` muestra plan actual y módulos activos
-- [ ] Comparativa visual Plan Base vs Plan Completo
-- [ ] Botón "Cambiar a Plan Completo" / "Cambiar a Plan Base"
-- [ ] API route `POST /api/configuracion/plan` llama a `activar_plan` RPC
-- [ ] Solo admin puede cambiar el plan
-- [ ] Al cambiar plan, la sidebar se actualiza inmediatamente
+- [x] Página `/configuracion/plan` muestra plan actual y módulos activos
+- [x] Comparativa visual Plan Base vs Plan Completo
+- [x] Botón "Cambiar a Plan Completo" / "Cambiar a Plan Base"
+- [x] API route `POST /api/configuracion/plan` llama a `activar_plan` RPC
+- [x] Solo admin puede cambiar el plan
+- [x] Al cambiar plan, la sidebar se actualiza inmediatamente
 
-**Notas técnicas:** Función SQL `activar_plan` en `modulos.md`.
+**Notas técnicas:** Función SQL `activar_plan` en `modulos.md`. Migración `014_activar_plan.sql` en el repo.
 
 ---
 
-## V20-UI-004 — Onboarding de primer uso
+## V20-UI-004 — Onboarding de primer uso (hecho)
 
 - Tipo: feature
 - Módulo: ui
 - Prioridad: medium
 - Estimación: 5
 - Versión: v2.0
-- Estado: todo
+- Estado: done
 - Dependencias: V15-FAC-011
 
 **Descripción:** Crear un wizard de onboarding que guía al nuevo usuario en los primeros pasos: completar datos del negocio, crear la primera categoría, crear el primer producto.
 
 **Criterios de aceptación:**
-- [ ] Detectar si es la primera vez (no hay productos ni datos fiscales completos)
-- [ ] Paso 1: Completar datos del negocio (razón social, CUIT, condición IVA)
-- [ ] Paso 2: Crear al menos una categoría
-- [ ] Paso 3: Crear el primer producto o importar un Excel
-- [ ] Opción de "Saltear" cada paso
-- [ ] No volver a mostrar si se completó o se salteó
+- [x] Detectar si es la primera vez (no hay productos ni datos fiscales completos)
+- [x] Paso 1: Completar datos del negocio (razón social, CUIT, condición IVA)
+- [x] Paso 2: Crear al menos una categoría
+- [x] Paso 3: Crear el primer producto o importar un Excel
+- [x] Opción de "Saltear" cada paso
+- [x] No volver a mostrar si se completó o se salteó
 
 **Notas técnicas:** Guardar estado del onboarding en localStorage o en un campo del tenant.
 
 ---
 
-## V20-UI-005 — Responsive design completo
+## V20-UI-005 — Responsive design completo (hecho)
 
 - Tipo: feature
 - Módulo: ui
 - Prioridad: high
 - Estimación: 5
 - Versión: v2.0
-- Estado: todo
+- Estado: done
 - Dependencias: V15-FAC-008, V10-STOCK-003
 
 **Descripción:** Asegurar que toda la UI funciona correctamente en mobile y tablet: sidebar colapsable, tablas scrolleables, formularios adaptados.
 
 **Criterios de aceptación:**
-- [ ] Sidebar se colapsa en un menú hamburguesa en pantallas < 768px
-- [ ] Tablas de productos, movimientos y comprobantes scroll horizontal en móvil
-- [ ] Formularios de emisión y creación usables en móvil
-- [ ] Dashboard cards apiladas en móvil
-- [ ] No hay overflow horizontal en ninguna página
-- [ ] Testeado en Chrome DevTools para iPhone SE, iPhone 14, iPad
+- [x] Sidebar se colapsa en un menú hamburguesa en pantallas < 768px
+- [x] Tablas de productos, movimientos y comprobantes scroll horizontal en móvil
+- [x] Formularios de emisión y creación usables en móvil
+- [x] Dashboard cards apiladas en móvil
+- [x] No hay overflow horizontal en ninguna página
+- [x] Testeado en Chrome DevTools para iPhone SE, iPhone 14, iPad
 
 **Notas técnicas:** Usar clases responsive de Tailwind (`sm:`, `md:`, `lg:`).
 
@@ -1312,27 +1312,27 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V20-UI-006 — Gestión de usuarios del tenant
+## V20-UI-006 — Gestión de usuarios del tenant (hecho)
 
 - Tipo: feature
 - Módulo: auth
 - Prioridad: medium
 - Estimación: 5
 - Versión: v2.0
-- Estado: todo
+- Estado: done
 - Dependencias: V01-AUTH-003
 
 **Descripción:** Permitir al admin del tenant invitar nuevos usuarios con roles (operador, visor) y gestionar usuarios existentes.
 
 **Criterios de aceptación:**
-- [ ] Página `/configuracion/usuarios` lista usuarios del tenant
-- [ ] Formulario para invitar: email, nombre, apellido, rol
-- [ ] API crea auth user + registro en tabla `usuario` con el `tenant_id` del admin
-- [ ] Admin puede cambiar el rol de un usuario
-- [ ] Admin puede desactivar un usuario (activo = false)
-- [ ] Solo admin accede a esta página
+- [x] Página `/configuracion/usuarios` lista usuarios del tenant
+- [x] Formulario para invitar: email, nombre, apellido, rol
+- [x] API crea auth user + registro en tabla `usuario` con el `tenant_id` del admin
+- [x] Admin puede cambiar el rol de un usuario
+- [x] Admin puede desactivar un usuario (activo = false)
+- [x] Solo admin accede a esta página
 
-**Notas técnicas:** Usar `supabase.auth.admin.createUser` con service role.
+**Notas técnicas:** Invitación vía `auth.admin.inviteUserByEmail` + insert en `usuario` (service role); alternativa documentada: `createUser`.
 
 ---
 

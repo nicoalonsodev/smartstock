@@ -25,14 +25,14 @@ El objetivo de esta versión es levantar toda la infraestructura base del proyec
 
 ## Próximos 3 tickets a trabajar
 
-1. **V01-INFRA-001 — Inicializar proyecto Next.js 14+ con estructura definitiva** (Estimación: 3 pts)
-   Crear el proyecto con `create-next-app`, configurar TypeScript, Tailwind, estructura de carpetas `src/app/`, `src/lib/`, `src/components/`, `src/hooks/`, `src/types/`. Instalar dependencias base (`@supabase/supabase-js`, `@supabase/ssr`, `shadcn/ui`).
+1. **V20-DEPLOY-001 — Deploy a producción en Vercel** (Estimación: 3 pts)
+   Proyecto en Vercel, env, build, dominio y SSL.
 
-2. **V01-INFRA-002 — Configurar Supabase y variables de entorno** (Estimación: 2 pts)
-   Crear proyecto en Supabase Dashboard, obtener URL + anon key + service role key. Configurar `.env.local` con las variables. Crear archivos `lib/supabase/client.ts` y `lib/supabase/server.ts` con los clients configurados.
+2. **V20-DEPLOY-002 — Checklist de go-live** (Estimación: 3 pts)
+   Verificación pre-producción según `deploy.md`.
 
-3. **V01-INFRA-003 — Migraciones de base de datos (001→012)** (Estimación: 8 pts)
-   Escribir y ejecutar las 12 migraciones en orden: enums → tenant → usuario → producto → movimiento → facturación → pedidos → importación → precios → arca → RLS → funciones. Habilitar extensiones `uuid-ossp`, `pgcrypto`, `moddatetime`.
+3. **V20-TEST-001 — Tests de integración del flujo de facturación** (Estimación: 5 pts)
+   Vitest: emisión, stock, NC, presupuesto, numeración.
 
 ---
 
@@ -53,9 +53,8 @@ El objetivo de esta versión es levantar toda la infraestructura base del proyec
 
 | Bloqueo | Estado | Acción requerida |
 |---|---|---|
-| No hay proyecto Next.js creado todavía | Bloqueante | Ejecutar `create-next-app` como primer paso de desarrollo |
-| No hay proyecto Supabase creado todavía | Bloqueante | Crear proyecto en Supabase Dashboard y obtener URL + keys |
-| No se definió la librería UI | No bloqueante (se puede empezar sin ella) | Decidir antes de construir componentes del dashboard |
+| Hook JWT en Dashboard (V01-DB-003 / V01-AUTH-006) | Necesario para `tenant_id` en sesión | Registrar `custom_access_token_hook` en Supabase |
+| No se definió la librería UI | Resuelto para v0.1 | shadcn/ui instalado (V01-INFRA-002) |
 
 ---
 
@@ -76,5 +75,5 @@ El objetivo de esta versión es levantar toda la infraestructura base del proyec
 ## Última actualización
 
 **Fecha:** 2026-04-13
-**Fase completada:** Fase 5 — TICKETS.md (79 tickets en 3 bloques: A=35 v0.1+v1.0, B=21 v1.5+v2.0, C=23 v3.0+v4.0)
-**Siguiente paso:** Iniciar desarrollo con V01-INFRA-001 (crear proyecto Next.js)
+**Último ticket completado:** V20-UI-006 — Gestión de usuarios del tenant (cerrada la tanda de UI v2.0 previa al Bloque C)
+**Siguiente paso:** V20-DEPLOY-001 — Deploy a producción en Vercel

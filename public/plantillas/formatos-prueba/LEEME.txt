@@ -1,0 +1,15 @@
+Plantillas de prueba — formatos distintos
+
+Uso: Importar → subir cualquiera de estos archivos.
+Revisá el paso de mapeo si los encabezados no coinciden solos.
+
+Archivos:
+01_estandar_misma_plantilla.csv     — igual que la plantilla oficial
+02_columnas_reordenadas.csv        — mismos títulos, otro orden
+03_headers_distribuidor_arg.csv    — COD ART, DESCRIPCION, PVP, EXIST…
+04_headers_ingles.csv              — SKU, Description, Cost…
+05_minimo_mas_notas.csv            — pocas columnas + notas
+06_con_columnas_extra.csv          — columnas basura al final
+07_precios_formato_argentina.csv  — precios con $ y miles
+08_excel_headers_mixtos.xlsx       — Excel, columnas mezcladas
+09_excel_solo_nombre_precio_codigo.xlsx — pocos campos

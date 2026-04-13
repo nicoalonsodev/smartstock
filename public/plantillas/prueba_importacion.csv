@@ -1,0 +1,12 @@
+Código,Nombre,Precio Costo,Precio Venta,Stock,Stock Mínimo,Categoría,Unidad,Vencimiento
+ALK-001,Alcohol en gel 500 ml,850.50,"$1.234,56",120,15,Higiene,unidad,31/12/2026
+JAB-002,Jabón líquido 1 L,1100.25,1599.99,80,10,Limpieza,unidad,15-06-2026
+FAIL-EMPTY-NOMBRE,,100,150,10,5,Pruebas,unidad,2026-01-01
+DUP-001,Primera fila código duplicado,100,200,5,1,Repetidos,unidad,01/01/2026
+DUP-001,Segunda fila mismo código (debe ganar esta),150,250,20,2,Repetidos,unidad,01/01/2026
+,Producto sin código en Excel,45.00,89.90,30,5,Categoría Nueva CSV,unidad,2026-03-15
+BAD-STOCK,Stock no numérico,10,20,treinta,5,Ferretería,kg,2025-12-31
+WEIRD-UOM,Unidad no estándar,1.00,2.50,12,2,Varios,caja_misteriosa,2030-01-01
+HAR-010,Tornillo hexagonal 6x25 x100u,3200,5490.50,200,40,Ferretería,unidad,2026-08-20
+BEB-021,Gaseosa cola 2.25 L,890,"$1.150,00",48,12,Bebidas,litro,2026-11-30
+LAC-030,Leche entera sachet 1L,650,899,60,20,Lácteos,unidad,2026-02-28

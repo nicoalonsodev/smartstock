@@ -1,0 +1,4 @@
+﻿codigo,nombre,precio_costo,precio_venta,stock,stock_minimo,categoria,unidad,fecha_vencimiento
+MAR-101,Martillo carpintero 16 oz,"$ 2.500,00","$ 4.200,50",18,5,Ferretería,unidad,01/12/2026
+CLA-202,Clavo zincado bolsa,"890,50","$1.500,00",200,40,Ferretería,kg,15-01-2027
+HERR-003,Cinta métrica 5 m,3200,"5.200,00",12,3,Herramientas,unidad,2026-06-30

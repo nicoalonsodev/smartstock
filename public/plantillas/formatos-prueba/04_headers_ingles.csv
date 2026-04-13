@@ -1,0 +1,4 @@
+﻿SKU,Description,Cost,List Price,On Hand,Reorder Point,Category,UOM,Expiry
+MAR-101,Martillo carpintero 16 oz,2500,4200,18,5,Ferretería,unidad,2026-12-01
+CLA-202,"Clavo zincado 2"" bolsa x100",890,1500,200,40,Ferretería,kg,2027-01-15
+HERR-003,Cinta métrica 5 m,3200,5200,12,3,Herramientas,unidad,2026-06-30

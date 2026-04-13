@@ -1,0 +1,4 @@
+﻿Código,Nombre,Precio Costo,Precio Venta,Stock,Stock Mínimo,Categoría,Unidad,Vencimiento,OBSERVACIONES,NRO_PEDIDO,CONTACTO
+MAR-101,Martillo carpintero 16 oz,2500,4200,18,5,Ferretería,unidad,2026-12-01,Fragil,PED-9921,
+CLA-202,"Clavo zincado 2"" bolsa x100",890,1500,200,40,Ferretería,kg,2027-01-15,,PED-9921,Juan
+HERR-003,Cinta métrica 5 m,3200,5200,12,3,Herramientas,unidad,2026-06-30,Display,,

@@ -1,0 +1,197 @@
+import { createServerClient } from '@/lib/supabase/server';
+import { NextResponse, type NextRequest } from 'next/server';
+
+import { getTenantSession, rejectIfVisor } from '@/lib/api/tenant-session';
+import { moduloGuard } from '@/lib/modulos/guard';
+import type { Database } from '@/types/database';
+
+type ProductoListRow = {
+  id: string;
+  codigo: string;
+  nombre: string;
+  stock_actual: number;
+  stock_minimo: number;
+  precio_costo: number;
+  precio_venta: number;
+  unidad: Database['public']['Enums']['unidad_medida'];
+  fecha_vencimiento: string | null;
+  categoria: { id: string; nombre: string } | null;
+  proveedor: { id: string; nombre: string } | null;
+};
+
+const selectList =
+  'id, codigo, nombre, stock_actual, stock_minimo, precio_costo, precio_venta, unidad, fecha_vencimiento, categoria:categoria_id(id, nombre), proveedor:proveedor_id(id, nombre)';
+
+export async function GET(request: NextRequest) {
+  const guard = await moduloGuard('stock');
+  if (!guard.allowed) return guard.response;
+
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const busqueda = searchParams.get('q');
+  const categoriaId = searchParams.get('categoria_id');
+  const proveedorId = searchParams.get('proveedor_id');
+  const soloStockBajo = searchParams.get('stock_bajo') === 'true';
+  const soloVencidos = searchParams.get('vencidos') === 'true';
+  const pagina = Math.max(1, parseInt(searchParams.get('pagina') ?? '1', 10));
+  const porPagina = Math.min(100, Math.max(1, parseInt(searchParams.get('por_pagina') ?? '25', 10)));
+  const offset = (pagina - 1) * porPagina;
+
+  if (soloStockBajo) {
+    let q = supabase
+      .from('producto')
+      .select(selectList)
+      .eq('activo', true)
+      .gt('stock_minimo', 0)
+      .order('nombre');
+
+    if (busqueda) {
+      q = q.textSearch('nombre', busqueda, { type: 'websearch', config: 'spanish' });
+    }
+    if (categoriaId) q = q.eq('categoria_id', categoriaId);
+    if (proveedorId) q = q.eq('proveedor_id', proveedorId);
+
+    const { data, error } = await q;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const rows = (data ?? []) as unknown as ProductoListRow[];
+    const filtered = rows.filter((p) => p.stock_actual <= p.stock_minimo);
+    const total = filtered.length;
+    const productos = filtered.slice(offset, offset + porPagina);
+
+    return NextResponse.json({
+      productos,
+      total,
+      pagina,
+      por_pagina: porPagina,
+      total_paginas: Math.ceil(total / porPagina),
+    });
+  }
+
+  let query = supabase
+    .from('producto')
+    .select(selectList, { count: 'exact' })
+    .eq('activo', true)
+    .order('nombre')
+    .range(offset, offset + porPagina - 1);
+
+  if (busqueda) {
+    query = query.textSearch('nombre', busqueda, { type: 'websearch', config: 'spanish' });
+  }
+  if (categoriaId) query = query.eq('categoria_id', categoriaId);
+  if (proveedorId) query = query.eq('proveedor_id', proveedorId);
+
+  if (soloVencidos) {
+    const en30dias = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    query = query.not('fecha_vencimiento', 'is', null).lte('fecha_vencimiento', en30dias);
+  }
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    productos: data ?? [],
+    total: count ?? 0,
+    pagina,
+    por_pagina: porPagina,
+    total_paginas: Math.ceil((count ?? 0) / porPagina),
+  });
+}
+
+export async function POST(request: Request) {
+  const guard = await moduloGuard('stock');
+  if (!guard.allowed) return guard.response;
+
+  const session = await getTenantSession();
+  if ('error' in session) return session.error;
+
+  const forbidden = rejectIfVisor(session.rol);
+  if (forbidden) return forbidden;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+  }
+
+  const b =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : {};
+
+  const codigo = String(b.codigo ?? '').trim();
+  const nombre = String(b.nombre ?? '').trim();
+  if (!codigo || !nombre) {
+    return NextResponse.json({ error: 'codigo y nombre son obligatorios' }, { status: 400 });
+  }
+
+  const unidad =
+    (b.unidad as Database['public']['Enums']['unidad_medida'] | undefined) ?? 'unidad';
+
+  const { data: producto, error } = await session.supabase
+    .from('producto')
+    .insert({
+      tenant_id: session.tenantId,
+      codigo,
+      nombre,
+      descripcion: b.descripcion != null ? String(b.descripcion) || null : null,
+      categoria_id: typeof b.categoria_id === 'string' ? b.categoria_id : null,
+      proveedor_id: typeof b.proveedor_id === 'string' ? b.proveedor_id : null,
+      unidad,
+      precio_costo: Number(b.precio_costo) || 0,
+      precio_venta: Number(b.precio_venta) || 0,
+      stock_actual: 0,
+      stock_minimo: Number(b.stock_minimo) || 0,
+      fecha_vencimiento:
+        typeof b.fecha_vencimiento === 'string' && b.fecha_vencimiento
+          ? b.fecha_vencimiento
+          : null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return NextResponse.json(
+        { error: `Ya existe un producto con el código '${codigo}'` },
+        { status: 409 }
+      );
+    }
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  const stockInicial = Number(b.stock_inicial);
+  if (producto && stockInicial > 0) {
+    const { error: movError } = await session.supabase.rpc('registrar_movimiento', {
+      p_tenant_id: session.tenantId,
+      p_producto_id: producto.id,
+      p_tipo: 'entrada',
+      p_cantidad: stockInicial,
+      p_motivo: 'Stock inicial al crear producto',
+      p_referencia_tipo: 'manual',
+      p_referencia_id: null,
+      p_usuario_id: session.userId,
+    });
+    if (movError) {
+      return NextResponse.json(
+        { error: `Producto creado pero falló el stock inicial: ${movError.message}` },
+        { status: 500 }
+      );
+    }
+  }
+
+  return NextResponse.json(producto, { status: 201 });
+}

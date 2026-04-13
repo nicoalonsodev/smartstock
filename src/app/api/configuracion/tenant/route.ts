@@ -1,0 +1,88 @@
+import { NextResponse } from 'next/server';
+
+import { getTenantSession, rejectIfVisor } from '@/lib/api/tenant-session';
+import type { Database } from '@/types/database';
+
+export async function GET() {
+  const session = await getTenantSession();
+  if ('error' in session) return session.error;
+
+  const { data, error } = await session.supabase
+    .from('tenant')
+    .select(
+      'id, nombre, razon_social, cuit, domicilio, telefono, email, condicion_iva, punto_de_venta, plan, logo_url',
+    )
+    .eq('id', session.tenantId)
+    .single();
+
+  if (error || !data) {
+    return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
+export async function PATCH(request: Request) {
+  const session = await getTenantSession();
+  if ('error' in session) return session.error;
+
+  const forbidden = rejectIfVisor(session.rol);
+  if (forbidden) return forbidden;
+
+  if (session.rol !== 'admin') {
+    return NextResponse.json(
+      { error: 'Solo el administrador puede editar los datos del negocio' },
+      { status: 403 },
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+  }
+
+  const b =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : {};
+
+  const updates: Record<string, unknown> = {};
+  const str = (v: unknown) =>
+    v === null || v === undefined ? null : String(v).trim() || null;
+
+  if (b.nombre !== undefined) updates.nombre = String(b.nombre ?? '').trim();
+  if (b.razon_social !== undefined) updates.razon_social = str(b.razon_social);
+  if (b.cuit !== undefined) updates.cuit = str(b.cuit);
+  if (b.domicilio !== undefined) updates.domicilio = str(b.domicilio);
+  if (b.telefono !== undefined) updates.telefono = str(b.telefono);
+  if (b.email !== undefined) updates.email = str(b.email);
+  if (b.condicion_iva !== undefined) updates.condicion_iva = b.condicion_iva;
+  if (b.punto_de_venta !== undefined)
+    updates.punto_de_venta = Number(b.punto_de_venta) || 1;
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'Sin cambios' }, { status: 400 });
+  }
+
+  if (updates.nombre === '') {
+    return NextResponse.json(
+      { error: 'El nombre del negocio no puede estar vacío' },
+      { status: 400 },
+    );
+  }
+
+  const { data, error } = await session.supabase
+    .from('tenant')
+    .update(updates as Database['public']['Tables']['tenant']['Update'])
+    .eq('id', session.tenantId)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  return NextResponse.json(data);
+}
