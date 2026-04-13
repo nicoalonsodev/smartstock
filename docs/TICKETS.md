@@ -1264,51 +1264,51 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V20-TEST-001 — Tests de integración del flujo de facturación
+## V20-TEST-001 — Tests de integración del flujo de facturación (hecho)
 
 - Tipo: test
 - Módulo: facturacion
 - Prioridad: high
 - Estimación: 5
 - Versión: v2.0
-- Estado: todo
+- Estado: done
 - Dependencias: V15-FAC-006
 
 **Descripción:** Tests automatizados del flujo completo de facturación: crear cliente, crear productos, emitir factura, verificar stock descontado, verificar PDF generado.
 
 **Criterios de aceptación:**
-- [ ] Test: emitir Factura C descuenta stock correctamente
-- [ ] Test: emitir Nota de Crédito devuelve stock
-- [ ] Test: presupuesto no afecta stock
-- [ ] Test: numeración secuencial sin huecos
-- [ ] Test: stock insuficiente rechaza la emisión
-- [ ] Tests pasan con `npm test`
+- [x] Test: emitir Factura C descuenta stock correctamente
+- [x] Test: emitir Nota de Crédito devuelve stock
+- [x] Test: presupuesto no afecta stock
+- [x] Test: numeración secuencial sin huecos
+- [x] Test: stock insuficiente rechaza la emisión
+- [x] Tests pasan con `npm test`
 
-**Notas técnicas:** Usar Vitest con el client de Supabase.
+**Notas técnicas:** Usar Vitest con el client de Supabase. Lógica de emisión en `src/lib/facturacion/emitir-comprobante.ts`; tests en `src/test/facturacion-integration.test.ts` (entorno `node`). PDF: smoke con `generarPDF` (buffer no vacío); emisión en tests sin subida a Storage.
 
 ---
 
-## V20-TEST-002 — Tests del importador Excel
+## V20-TEST-002 — Tests del importador Excel (hecho)
 
 - Tipo: test
 - Módulo: importador
 - Prioridad: high
 - Estimación: 5
 - Versión: v2.0
-- Estado: todo
+- Estado: done
 - Dependencias: V10-IMP-006
 
 **Descripción:** Tests del pipeline de importación: normalizador, validación, upsert, precio_historial, importacion_log.
 
 **Criterios de aceptación:**
-- [ ] Test: normalizador detecta "COD ART" como `codigo`, "PVP" como `precio_venta`
-- [ ] Test: precios argentinos "$1.234,56" se parsean a 1234.56
-- [ ] Test: upsert crea producto si no existe, actualiza si existe
-- [ ] Test: precio_historial se registra cuando cambia un precio
-- [ ] Test: importacion_log tiene métricas correctas
-- [ ] Test: deduplicación toma la última fila con el mismo código
+- [x] Test: normalizador detecta "COD ART" como `codigo`, "PVP" como `precio_venta`
+- [x] Test: precios argentinos "$1.234,56" se parsean a 1234.56
+- [x] Test: upsert crea producto si no existe, actualiza si existe
+- [x] Test: precio_historial se registra cuando cambia un precio
+- [x] Test: importacion_log tiene métricas correctas
+- [x] Test: deduplicación toma la última fila con el mismo código
 
-**Notas técnicas:** Crear archivos Excel de prueba con SheetJS en el test.
+**Notas técnicas:** Crear archivos Excel de prueba con SheetJS en el test. Tests unitarios en `src/test/normalizador-import.test.ts`; integración y pipeline XLSX en `src/test/importacion-integration.test.ts`. Lógica de ejecución en `src/lib/importar/ejecutar-importacion.ts`.
 
 ---
 
@@ -1340,266 +1340,266 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V30-PED-001 — CRUD de pedidos (crear, listar, detalle)
+## V30-PED-001 — CRUD de pedidos (crear, listar, detalle) (hecho)
 
 - Tipo: feature
 - Módulo: pedidos
 - Prioridad: critical
 - Estimación: 8
 - Versión: v3.0
-- Estado: todo
+- Estado: done
 - Dependencias: V20-UI-002, V10-STOCK-003, V15-FAC-001
 
 **Descripción:** Implementar la creación, listado y detalle de pedidos. Un pedido se arma seleccionando cliente, agregando productos con cantidades y precios, y se guarda como borrador.
 
 **Criterios de aceptación:**
-- [ ] API route `POST /api/pedidos` crea pedido con items en estado `borrador`
-- [ ] API route `GET /api/pedidos` con filtros por estado y cliente, paginado
-- [ ] Página `/pedidos` con tabla: #pedido, cliente, fecha, items, total, estado (badge)
-- [ ] Página `/pedidos/nuevo` con formulario: selector de cliente, buscador de productos, tabla de items
-- [ ] Página `/pedidos/[id]` con detalle completo y acciones según estado
-- [ ] Guard de módulo: requiere `pedidos`
-- [ ] Guard de rol: visor no puede crear
+- [x] API route `POST /api/pedidos` crea pedido con items en estado `borrador`
+- [x] API route `GET /api/pedidos` con filtros por estado y cliente, paginado
+- [x] Página `/pedidos` con tabla: #pedido, cliente, fecha, items, total, estado (badge)
+- [x] Página `/pedidos/nuevo` con formulario: selector de cliente, buscador de productos, tabla de items
+- [x] Página `/pedidos/[id]` con detalle completo y acciones según estado
+- [x] Guard de módulo: requiere `pedidos`
+- [x] Guard de rol: visor no puede crear
 
 **Notas técnicas:** Código completo en `pedidos.md`.
 
 ---
 
-## V30-PED-002 — Máquina de estados del pedido
+## V30-PED-002 — Máquina de estados del pedido (hecho)
 
 - Tipo: feature
 - Módulo: pedidos
 - Prioridad: critical
 - Estimación: 5
 - Versión: v3.0
-- Estado: todo
+- Estado: done
 - Dependencias: V30-PED-001
 
 **Descripción:** Implementar las transiciones de estado del pedido: borrador → confirmado → entregado → (facturado), y borrador/confirmado → cancelado. Cada transición tiene efectos en stock.
 
 **Criterios de aceptación:**
-- [ ] API route `PATCH /api/pedidos/[id]/estado` con validación de transiciones
-- [ ] Confirmar: valida que hay stock suficiente para todos los items
-- [ ] Entregar: descuenta stock via `registrar_movimiento` con referencia `pedido`
-- [ ] Cancelar: válido desde borrador o confirmado (no entregado)
-- [ ] Transiciones inválidas retornan 400 con mensaje claro
-- [ ] Botones de acción en la UI según estado actual
+- [x] API route `PATCH /api/pedidos/[id]/estado` con validación de transiciones
+- [x] Confirmar: valida que hay stock suficiente para todos los items
+- [x] Entregar: descuenta stock via `registrar_movimiento` con referencia `pedido`
+- [x] Cancelar: válido desde borrador o confirmado (no entregado)
+- [x] Transiciones inválidas retornan 400 con mensaje claro
+- [x] Botones de acción en la UI según estado actual
 
 **Notas técnicas:** Mapa de transiciones y código en `pedidos.md`.
 
 ---
 
-## V30-PED-003 — Stock comprometido (vista dinámica)
+## V30-PED-003 — Stock comprometido (vista dinámica) (hecho)
 
 - Tipo: feature
 - Módulo: pedidos
 - Prioridad: high
 - Estimación: 3
 - Versión: v3.0
-- Estado: todo
+- Estado: done
 - Dependencias: V30-PED-002
 
 **Descripción:** Implementar el cálculo de stock comprometido (pedidos confirmados no entregados) y mostrarlo en la UI de productos.
 
 **Criterios de aceptación:**
-- [ ] Vista SQL `v_stock_comprometido` o query dinámica que suma cantidades de pedidos confirmados por producto
-- [ ] En el detalle del producto: "Stock actual: 100 | Comprometido: 25 | Disponible: 75"
-- [ ] En la tabla de productos: columna "Disponible" (stock_actual - comprometido)
-- [ ] Al confirmar un pedido, el stock comprometido se actualiza
+- [x] Vista SQL `v_stock_comprometido` o query dinámica que suma cantidades de pedidos confirmados por producto
+- [x] En el detalle del producto: "Stock actual: 100 | Comprometido: 25 | Disponible: 75"
+- [x] En la tabla de productos: columna "Disponible" (stock_actual - comprometido)
+- [x] Al confirmar un pedido, el stock comprometido se actualiza
 
 **Notas técnicas:** Vista y función en `pedidos.md`.
 
 ---
 
-## V30-PED-004 — Conversión de pedido a factura
+## V30-PED-004 — Conversión de pedido a factura (hecho)
 
 - Tipo: feature
 - Módulo: pedidos
 - Prioridad: high
 - Estimación: 5
 - Versión: v3.0
-- Estado: todo
+- Estado: done
 - Dependencias: V30-PED-002, V15-FAC-006
 
 **Descripción:** Permitir generar una factura desde un pedido entregado con un click. El stock no se descuenta de nuevo (ya se descontó al entregar). El comprobante se vincula al pedido.
 
 **Criterios de aceptación:**
-- [ ] API route `POST /api/pedidos/[id]/facturar` crea comprobante desde pedido
-- [ ] Solo pedidos en estado `entregado` pueden facturarse
-- [ ] No descuenta stock de nuevo (ya se hizo al entregar)
-- [ ] El usuario elige tipo de factura (A/B/C)
-- [ ] Se genera PDF y se sube a Storage
-- [ ] `pedido.comprobante_id` se actualiza con el ID del comprobante
-- [ ] Un pedido no puede facturarse dos veces (409 si ya tiene `comprobante_id`)
-- [ ] En la UI, botón "Generar factura" visible solo en pedidos entregados sin factura
+- [x] API route `POST /api/pedidos/[id]/facturar` crea comprobante desde pedido
+- [x] Solo pedidos en estado `entregado` pueden facturarse
+- [x] No descuenta stock de nuevo (ya se hizo al entregar)
+- [x] El usuario elige tipo de factura (A/B/C)
+- [x] Se genera PDF y se sube a Storage
+- [x] `pedido.comprobante_id` se actualiza con el ID del comprobante
+- [x] Un pedido no puede facturarse dos veces (409 si ya tiene `comprobante_id`)
+- [x] En la UI, botón "Generar factura" visible solo en pedidos entregados sin factura
 
 **Notas técnicas:** Código completo en `pedidos.md`.
 
 ---
 
-## V30-PED-005 — Presupuestos y conversión a pedido/factura
+## V30-PED-005 — Presupuestos y conversión a pedido/factura (hecho)
 
 - Tipo: feature
 - Módulo: pedidos
 - Prioridad: high
 - Estimación: 5
 - Versión: v3.0
-- Estado: todo
+- Estado: done
 - Dependencias: V30-PED-001, V15-FAC-006
 
 **Descripción:** Los presupuestos son comprobantes tipo `presupuesto` que no afectan stock. Se pueden convertir a pedido (hereda items) o directamente a factura.
 
 **Criterios de aceptación:**
-- [ ] Emitir presupuesto reutiliza el flujo de facturación con tipo `presupuesto`
-- [ ] API route `POST /api/presupuestos/[id]/convertir-a-pedido` crea pedido borrador con mismos items
-- [ ] API route `POST /api/presupuestos/[id]/convertir-a-factura` crea comprobante directo
-- [ ] Guard de módulo: requiere `presupuestos`
-- [ ] En listado de presupuestos, botones "Convertir a pedido" y "Convertir a factura"
-- [ ] El presupuesto original se conserva (no se borra)
+- [x] Emitir presupuesto reutiliza el flujo de facturación con tipo `presupuesto`
+- [x] API route `POST /api/presupuestos/[id]/convertir-a-pedido` crea pedido borrador con mismos items
+- [x] API route `POST /api/presupuestos/[id]/convertir-a-factura` crea comprobante directo
+- [x] Guard de módulo: requiere `presupuestos`
+- [x] En listado de presupuestos, botones "Convertir a pedido" y "Convertir a factura"
+- [x] El presupuesto original se conserva (no se borra)
 
 **Notas técnicas:** Código en `pedidos.md`.
 
 ---
 
-## V30-IA-001 — Cliente Gemini y prompt de extracción
+## V30-IA-001 — Cliente Gemini y prompt de extracción (hecho)
 
 - Tipo: feature
 - Módulo: ia
 - Prioridad: critical
 - Estimación: 3
 - Versión: v3.0
-- Estado: todo
+- Estado: done
 - Dependencias: V01-INFRA-002
 
 **Descripción:** Implementar el cliente REST para Gemini 1.5 Pro y los prompts de extracción de precios desde PDF/imagen.
 
 **Criterios de aceptación:**
-- [ ] Función `llamarGemini(prompt, archivo)` envía base64 + prompt y retorna texto
-- [ ] Temperatura 0.1 para máxima consistencia
-- [ ] `responseMimeType: 'application/json'` para forzar JSON
-- [ ] Max output tokens: 8192
-- [ ] Prompts definidos en `src/lib/ia/prompts.ts`
-- [ ] Manejo de errores: API key inválida, timeout, respuesta no-JSON
+- [x] Función `llamarGemini(prompt, archivo)` envía base64 + prompt y retorna texto
+- [x] Temperatura 0.1 para máxima consistencia
+- [x] `responseMimeType: 'application/json'` para forzar JSON
+- [x] Max output tokens: 8192
+- [x] Prompts definidos en `src/lib/ia/prompts.ts`
+- [x] Manejo de errores: API key inválida, timeout, respuesta no-JSON
 
 **Notas técnicas:** Código en `ia-precios.md`. Requiere variable `GEMINI_API_KEY`.
 
 ---
 
-## V30-IA-002 — API de extracción desde PDF/imagen
+## V30-IA-002 — API de extracción desde PDF/imagen (hecho)
 
 - Tipo: feature
 - Módulo: ia
 - Prioridad: critical
 - Estimación: 5
 - Versión: v3.0
-- Estado: todo
+- Estado: done
 - Dependencias: V30-IA-001
 
 **Descripción:** Implementar la API route que recibe un PDF o imagen, lo envía a Gemini, parsea la respuesta JSON y retorna productos normalizados listos para el preview.
 
 **Criterios de aceptación:**
-- [ ] API route `POST /api/ia/extraer` acepta FormData con archivo
-- [ ] Valida formato (PDF, JPG, PNG, WebP) y tamaño (máx 20 MB)
-- [ ] Guard de módulo: requiere `ia_precios`
-- [ ] Convierte archivo a base64 y llama a Gemini
-- [ ] Parsea JSON de respuesta (con fallback si viene con texto extra)
-- [ ] Normaliza productos: trim, precios numéricos, filtra nombres vacíos
-- [ ] Response: `{ productos, total_extraidos, total_validos, archivo_nombre }`
-- [ ] Errores descriptivos si Gemini falla o no devuelve JSON válido
+- [x] API route `POST /api/ia/extraer` acepta FormData con archivo
+- [x] Valida formato (PDF, JPG, PNG, WebP) y tamaño (máx 20 MB)
+- [x] Guard de módulo: requiere `ia_precios`
+- [x] Convierte archivo a base64 y llama a Gemini
+- [x] Parsea JSON de respuesta (con fallback si viene con texto extra)
+- [x] Normaliza productos: trim, precios numéricos, filtra nombres vacíos
+- [x] Response: `{ productos, total_extraidos, total_validos, archivo_nombre }`
+- [x] Errores descriptivos si Gemini falla o no devuelve JSON válido
 
 **Notas técnicas:** Código completo en `ia-precios.md`.
 
 ---
 
-## V30-IA-003 — UI de extracción IA con preview reutilizado
+## V30-IA-003 — UI de extracción IA con preview reutilizado (hecho)
 
 - Tipo: feature
 - Módulo: ia
 - Prioridad: high
 - Estimación: 5
 - Versión: v3.0
-- Estado: todo
+- Estado: done
 - Dependencias: V30-IA-002, V10-IMP-005
 
 **Descripción:** Crear la página `/ia-precios` con upload de PDF/imagen, indicador de progreso, y reutilización del preview de importación para revisar y confirmar los datos extraídos.
 
 **Criterios de aceptación:**
-- [ ] Componente de upload específico para IA (acepta PDF, JPG, PNG, WebP)
-- [ ] Spinner/loader durante la extracción (5-30 segundos)
-- [ ] Los datos extraídos se muestran en el mismo `PreviewTable` del importador
-- [ ] El usuario puede editar, descartar filas y corregir precios
-- [ ] Al confirmar, llama a `POST /api/importar/ejecutar` con `origen: 'ia_pdf'`
-- [ ] Resumen final con métricas (creados, actualizados, errores)
+- [x] Componente de upload específico para IA (acepta PDF, JPG, PNG, WebP)
+- [x] Spinner/loader durante la extracción (5-30 segundos)
+- [x] Los datos extraídos se muestran en el mismo `PreviewTable` del importador
+- [x] El usuario puede editar, descartar filas y corregir precios
+- [x] Al confirmar, llama a `POST /api/importar/ejecutar` con `origen: 'ia_pdf'`
+- [x] Resumen final con métricas (creados, actualizados, errores)
 
 **Notas técnicas:** Componente `ExtraerPrecios` en `ia-precios.md`. Reutiliza pipeline de importación.
 
 ---
 
-## V30-IA-004 — Preview de cambios de precio (subieron/bajaron)
+## V30-IA-004 — Preview de cambios de precio (subieron/bajaron) (hecho)
 
 - Tipo: feature
 - Módulo: ia
 - Prioridad: high
 - Estimación: 3
 - Versión: v3.0
-- Estado: todo
+- Estado: done
 - Dependencias: V30-IA-003
 
 **Descripción:** Cuando la importación IA actualiza productos existentes, mostrar un preview que resalta qué precios subieron, bajaron o se mantuvieron, con la variación porcentual.
 
 **Criterios de aceptación:**
-- [ ] Componente `PrecioCambioPreview` con tabla: producto, precio anterior → nuevo, variación %
-- [ ] Filas coloreadas: rojo si subió, verde si bajó, gris si sin cambio
-- [ ] Resumen: "X subieron, Y bajaron, Z sin cambio"
-- [ ] Ordenado por mayor variación absoluta
-- [ ] Se muestra antes de confirmar la importación
+- [x] Componente `PrecioCambioPreview` con tabla: producto, precio anterior → nuevo, variación %
+- [x] Filas coloreadas: rojo si subió, verde si bajó, gris si sin cambio
+- [x] Resumen: "X subieron, Y bajaron, Z sin cambio"
+- [x] Ordenado por mayor variación absoluta
+- [x] Se muestra antes de confirmar la importación
 
 **Notas técnicas:** Componente en `ia-precios.md`.
 
 ---
 
-## V30-IA-005 — Historial de precios y sugerencia de márgenes
+## V30-IA-005 — Historial de precios y sugerencia de márgenes (hecho)
 
 - Tipo: feature
 - Módulo: ia
 - Prioridad: medium
 - Estimación: 5
 - Versión: v3.0
-- Estado: todo
+- Estado: done
 - Dependencias: V30-IA-003
 
 **Descripción:** Página de historial de precios con filtros, y función de sugerencia de precio de venta basada en el margen habitual del producto o de su categoría.
 
 **Criterios de aceptación:**
-- [ ] API route `GET /api/precios/historial` con filtros por producto y origen
-- [ ] Página `/ia-precios/historial` con tabla: fecha, producto, origen (badge), costo ant/nuevo, venta ant/nuevo, margen
-- [ ] Filtros por origen (manual, excel, IA) y por producto
-- [ ] Función `sugerirPrecioVenta(supabase, productoId, nuevoCosto)` retorna precio sugerido
-- [ ] Lógica: margen actual del producto → margen promedio de la categoría → fallback 30%
-- [ ] En el preview de importación, mostrar precio sugerido junto al extraído
+- [x] API route `GET /api/precios/historial` con filtros por producto y origen
+- [x] Página `/ia-precios/historial` con tabla: fecha, producto, origen (badge), costo ant/nuevo, venta ant/nuevo, margen
+- [x] Filtros por origen (manual, excel, IA) y por producto
+- [x] Función `sugerirPrecioVenta(supabase, productoId, nuevoCosto)` retorna precio sugerido
+- [x] Lógica: margen actual del producto → margen promedio de la categoría → fallback 30%
+- [x] En el preview de importación, mostrar precio sugerido junto al extraído
 
 **Notas técnicas:** Código en `ia-precios.md`.
 
 ---
 
-## V30-IA-006 — Límite mensual de extracciones IA por tenant
+## V30-IA-006 — Límite mensual de extracciones IA por tenant (hecho)
 
 - Tipo: feature
 - Módulo: ia
 - Prioridad: medium
 - Estimación: 2
 - Versión: v3.0
-- Estado: todo
+- Estado: done
 - Dependencias: V30-IA-002
 
 **Descripción:** Implementar un límite mensual de extracciones IA por tenant para controlar costos de la API de Gemini.
 
 **Criterios de aceptación:**
-- [ ] Función `verificarLimiteIA(supabase)` cuenta registros de `importacion_log` con `origen = 'ia_pdf'` del mes actual
-- [ ] Límite default: 50 extracciones/mes (configurable)
-- [ ] Si se supera, la API retorna 429 con mensaje "Límite mensual de extracciones alcanzado"
-- [ ] En la UI, mostrar "X/50 extracciones usadas este mes"
-- [ ] Advertencia visual cuando quedan menos de 5
+- [x] Función `verificarLimiteIA(supabase)` cuenta registros de `importacion_log` con `origen = 'ia_pdf'` del mes actual
+- [x] Límite default: 50 extracciones/mes (configurable)
+- [x] Si se supera, la API retorna 429 con mensaje "Límite mensual de extracciones alcanzado"
+- [x] En la UI, mostrar "X/50 extracciones usadas este mes"
+- [x] Advertencia visual cuando quedan menos de 5
 
 **Notas técnicas:** Código en `ia-precios.md`.
 

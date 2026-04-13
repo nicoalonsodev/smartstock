@@ -25,14 +25,14 @@ El objetivo de esta versión es levantar toda la infraestructura base del proyec
 
 ## Próximos 3 tickets a trabajar
 
-1. **V20-DEPLOY-001 — Deploy a producción en Vercel** (Estimación: 3 pts)
-   Proyecto en Vercel, env, build, dominio y SSL.
+1. **V40-ARCA-001 — Configuración ARCA (certificados y datos)** (Estimación: 5 pts)
+   Página `/configuracion/arca` y crypto según `arca.md`.
 
-2. **V20-DEPLOY-002 — Checklist de go-live** (Estimación: 3 pts)
-   Verificación pre-producción según `deploy.md`.
+2. **V40-ARCA-002 — Implementar WSAA** (Estimación: 8 pts)
+   Firma CMS, SOAP WSAA, ticket en `arca_config`.
 
-3. **V20-TEST-001 — Tests de integración del flujo de facturación** (Estimación: 5 pts)
-   Vitest: emisión, stock, NC, presupuesto, numeración.
+3. **V40-ARCA-003 — Renovación automática de ticket WSAA** (Estimación: 3 pts)
+   `asegurarTicketVigente` antes de WSFE.
 
 ---
 
@@ -75,5 +75,5 @@ El objetivo de esta versión es levantar toda la infraestructura base del proyec
 ## Última actualización
 
 **Fecha:** 2026-04-13
-**Último ticket completado:** V20-UI-006 — Gestión de usuarios del tenant (cerrada la tanda de UI v2.0 previa al Bloque C)
-**Siguiente paso:** V20-DEPLOY-001 — Deploy a producción en Vercel
+**Último ticket completado:** V30-IA-006 — Límite mensual de extracciones IA por tenant
+**Siguiente paso:** V40-ARCA-001 — Configuración ARCA (certificados y datos)

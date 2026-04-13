@@ -9,7 +9,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
-    environmentMatchGlobs: [['src/test/rls-isolation.test.ts', 'node']],
+    environmentMatchGlobs: [
+      ['src/test/rls-isolation.test.ts', 'node'],
+      ['src/test/facturacion-integration.test.ts', 'node'],
+      ['src/test/importacion-integration.test.ts', 'node'],
+    ],
     hookTimeout: 120_000,
     testTimeout: 60_000,
   },

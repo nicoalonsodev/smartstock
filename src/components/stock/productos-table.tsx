@@ -16,6 +16,8 @@ export type ProductoTabla = {
   categoria: { id: string; nombre: string } | null;
   proveedor: { id: string; nombre: string } | null;
   fecha_vencimiento?: string | null;
+  comprometido?: number;
+  disponible?: number;
 };
 
 export function ProductosTable({ productos }: { productos: ProductoTabla[] }) {
@@ -28,6 +30,7 @@ export function ProductosTable({ productos }: { productos: ProductoTabla[] }) {
             <th className="px-4 py-3 font-medium">Producto</th>
             <th className="px-4 py-3 font-medium">Categoría</th>
             <th className="px-4 py-3 text-right font-medium">Stock</th>
+            <th className="px-4 py-3 text-right font-medium">Disponible</th>
             <th className="px-4 py-3 text-right font-medium">Costo</th>
             <th className="px-4 py-3 text-right font-medium">Venta</th>
             <th className="px-4 py-3 text-right font-medium">Margen</th>
@@ -40,6 +43,7 @@ export function ProductosTable({ productos }: { productos: ProductoTabla[] }) {
                 ? (((p.precio_venta - p.precio_costo) / p.precio_costo) * 100).toFixed(1)
                 : '—';
             const stockBajo = p.stock_minimo > 0 && p.stock_actual <= p.stock_minimo;
+            const disp = p.disponible ?? p.stock_actual;
 
             return (
               <tr key={p.id} className="border-b last:border-0 hover:bg-muted/50">
@@ -58,6 +62,7 @@ export function ProductosTable({ productos }: { productos: ProductoTabla[] }) {
                   {p.stock_actual}
                   {p.unidad !== 'unidad' ? ` ${p.unidad}` : ''}
                 </td>
+                <td className="px-4 py-3 text-right font-mono text-muted-foreground">{disp}</td>
                 <td className="px-4 py-3 text-right">{formatCurrency(p.precio_costo)}</td>
                 <td className="px-4 py-3 text-right">{formatCurrency(p.precio_venta)}</td>
                 <td className="px-4 py-3 text-right text-muted-foreground">{margen}%</td>

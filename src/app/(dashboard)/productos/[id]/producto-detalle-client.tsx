@@ -50,6 +50,8 @@ type ProductoDetail = {
   precio_venta: number;
   stock_actual: number;
   stock_minimo: number;
+  comprometido?: number;
+  disponible?: number;
   fecha_vencimiento: string | null;
   activo: boolean;
   categoria: { id: string; nombre: string } | null;
@@ -342,9 +344,17 @@ export function ProductoDetalleClient({
           </div>
         ) : (
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
-            <div>
-              <dt className="text-muted-foreground">Stock actual</dt>
-              <dd className="text-lg font-semibold">{data.stock_actual}</dd>
+            <div className="sm:col-span-2">
+              <dt className="text-muted-foreground">Stock</dt>
+              <dd className="mt-1 text-sm">
+                <span className="font-semibold">Actual:</span> {data.stock_actual}
+                <span className="mx-2 text-muted-foreground">|</span>
+                <span className="font-semibold">Comprometido:</span>{' '}
+                {data.comprometido ?? 0}
+                <span className="mx-2 text-muted-foreground">|</span>
+                <span className="font-semibold">Disponible:</span>{' '}
+                {data.disponible ?? data.stock_actual}
+              </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Stock mínimo</dt>

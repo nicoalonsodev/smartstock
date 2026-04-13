@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { getTenantSession, rejectIfVisor } from '@/lib/api/tenant-session';
 import { moduloGuard } from '@/lib/modulos/guard';
+import { obtenerStockComprometidoPorProducto } from '@/lib/stock/comprometido';
 import type { Database } from '@/types/database';
 
 export async function GET(
@@ -46,7 +47,16 @@ export async function GET(
     return NextResponse.json({ error: mErr.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ...producto, movimientos: movimientos ?? [] });
+  const compMap = await obtenerStockComprometidoPorProducto(session.supabase, [id]);
+  const comprometido = compMap.get(id) ?? 0;
+  const disponible = producto.stock_actual - comprometido;
+
+  return NextResponse.json({
+    ...producto,
+    comprometido,
+    disponible,
+    movimientos: movimientos ?? [],
+  });
 }
 
 export async function PATCH(

@@ -2,6 +2,7 @@
 
 import { AlertCircle, Check, X } from 'lucide-react';
 
+import { formatCurrency } from '@/lib/utils/formatters';
 import { type CampoProducto } from '@/lib/normalizador/aliases';
 import { type FilaValidada } from '@/lib/normalizador/validar';
 
@@ -18,6 +19,12 @@ const CAMPO_LABELS: Record<CampoProducto, string> = {
   unidad: 'Unidad',
 };
 
+export type SugerenciaVentaFila = {
+  precioSugerido: number;
+  margenUsado: number;
+  fuente: string;
+};
+
 interface Props {
   filas: FilaValidada[];
   camposActivos: CampoProducto[];
@@ -25,6 +32,8 @@ interface Props {
   onFilaDescartar: (index: number) => void;
   onConfirmar: () => void;
   loading: boolean;
+  /** Índice de fila en `filas` → sugerencia de venta (ej. según margen histórico). */
+  sugerenciasVentaPorFila?: (SugerenciaVentaFila | null)[];
 }
 
 export function PreviewTable({
@@ -34,6 +43,7 @@ export function PreviewTable({
   onFilaDescartar,
   onConfirmar,
   loading,
+  sugerenciasVentaPorFila,
 }: Props) {
   const filasValidas = filas.filter((f) => f.valida);
   const filasConError = filas.filter((f) => !f.valida);
@@ -76,6 +86,8 @@ export function PreviewTable({
                 {camposActivos.map((campo) => {
                   const tieneError = fila.errores.some((e) => e.campo === campo);
                   const msg = fila.errores.find((e) => e.campo === campo)?.mensaje;
+                  const sug =
+                    campo === 'precio_venta' ? sugerenciasVentaPorFila?.[i] : undefined;
                   return (
                     <td
                       key={campo}
@@ -96,6 +108,17 @@ export function PreviewTable({
                           tieneError ? 'border-red-300 text-red-700' : ''
                         }`}
                       />
+                      {sug ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Sugerido:{' '}
+                          <span className="font-medium text-purple-700">
+                            {formatCurrency(sug.precioSugerido)}
+                          </span>{' '}
+                          <span className="text-muted-foreground/80">
+                            (~{sug.margenUsado.toFixed(0)}% · {sug.fuente.replace(/_/g, ' ')})
+                          </span>
+                        </p>
+                      ) : null}
                     </td>
                   );
                 })}

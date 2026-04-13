@@ -41,7 +41,7 @@ export function validarFilas(
 
         case 'precio_costo':
         case 'precio_venta': {
-          const precio = parsearPrecio(valorRaw);
+          const precio = parsearPrecioArgentino(valorRaw);
           if (valorRaw != null && String(valorRaw).trim() !== '' && precio === null) {
             errores.push({
               campo,
@@ -121,8 +121,8 @@ export function validarFilas(
   });
 }
 
-
-function parsearPrecio(valor: unknown): number | null {
+/** Precio con formato argentino: miles con punto, decimales con coma (ej. $1.234,56). */
+export function parsearPrecioArgentino(valor: unknown): number | null {
   if (valor == null || String(valor).trim() === '') return null;
   const str = String(valor)
     .replace(/\$/g, '')

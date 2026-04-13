@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { getTenantSession, rejectIfVisor } from '@/lib/api/tenant-session';
 import { moduloGuard } from '@/lib/modulos/guard';
+import { obtenerStockComprometidoPorProducto } from '@/lib/stock/comprometido';
 import type { Database } from '@/types/database';
 
 type ProductoListRow = {
@@ -18,6 +19,27 @@ type ProductoListRow = {
   categoria: { id: string; nombre: string } | null;
   proveedor: { id: string; nombre: string } | null;
 };
+
+type ProductoListConDisponible = ProductoListRow & {
+  comprometido: number;
+  disponible: number;
+};
+
+async function conStockDisponible(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  productos: ProductoListRow[]
+): Promise<ProductoListConDisponible[]> {
+  const ids = productos.map((p) => p.id);
+  const comp = await obtenerStockComprometidoPorProducto(supabase, ids);
+  return productos.map((p) => {
+    const c = comp.get(p.id) ?? 0;
+    return {
+      ...p,
+      comprometido: c,
+      disponible: p.stock_actual - c,
+    };
+  });
+}
 
 const selectList =
   'id, codigo, nombre, stock_actual, stock_minimo, precio_costo, precio_venta, unidad, fecha_vencimiento, categoria:categoria_id(id, nombre), proveedor:proveedor_id(id, nombre)';
@@ -66,7 +88,8 @@ export async function GET(request: NextRequest) {
     const rows = (data ?? []) as unknown as ProductoListRow[];
     const filtered = rows.filter((p) => p.stock_actual <= p.stock_minimo);
     const total = filtered.length;
-    const productos = filtered.slice(offset, offset + porPagina);
+    const slice = filtered.slice(offset, offset + porPagina);
+    const productos = await conStockDisponible(supabase, slice);
 
     return NextResponse.json({
       productos,
@@ -101,8 +124,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const rows = (data ?? []) as unknown as ProductoListRow[];
+  const productos = await conStockDisponible(supabase, rows);
+
   return NextResponse.json({
-    productos: data ?? [],
+    productos,
     total: count ?? 0,
     pagina,
     por_pagina: porPagina,
