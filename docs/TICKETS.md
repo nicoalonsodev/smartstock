@@ -3231,14 +3231,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-027 — Importador: aceptar columna de código de barras
+## V60-POS-027 — Importador: aceptar columna de código de barras (hecho)
 
 - Tipo: feature
 - Módulo: importador
 - Prioridad: medium
 - Estimación: 2
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-005
 
 **Descripción:** Extender el importador Excel para reconocer y mapear una columna de código de barras a `producto.codigo_barras` durante la importación.

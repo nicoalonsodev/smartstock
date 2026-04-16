@@ -30,6 +30,7 @@ export interface FilaImportacion {
   categoria?: string | null;
   unidad?: string | null;
   fecha_vencimiento?: string | null;
+  codigo_barras?: string | null;
 }
 
 export interface EjecutarImportacionParams {
@@ -119,6 +120,7 @@ export async function ejecutarImportacionFilas(
         if (fila.stock_minimo != null) updates.stock_minimo = fila.stock_minimo;
         if (fila.unidad) updates.unidad = mapUnidad(fila.unidad);
         if (fila.fecha_vencimiento) updates.fecha_vencimiento = fila.fecha_vencimiento;
+        if (fila.codigo_barras) updates.codigo_barras = fila.codigo_barras;
         if (categoriaId) updates.categoria_id = categoriaId;
         if (proveedor_id) updates.proveedor_id = proveedor_id;
 
@@ -181,11 +183,17 @@ export async function ejecutarImportacionFilas(
             stock_actual: 0,
             stock_minimo: fila.stock_minimo ?? 0,
             fecha_vencimiento: fila.fecha_vencimiento || null,
+            codigo_barras: fila.codigo_barras || null,
           })
           .select()
           .single();
 
-        if (insertErr) throw new Error(insertErr.message);
+        if (insertErr) {
+          if (insertErr.code === '23505' && insertErr.message.includes('barcode')) {
+            throw new Error(`Código de barras duplicado: ${fila.codigo_barras}`);
+          }
+          throw new Error(insertErr.message);
+        }
 
         if (fila.stock_actual && fila.stock_actual > 0 && nuevoProducto) {
           await supabase.rpc('registrar_movimiento', {
