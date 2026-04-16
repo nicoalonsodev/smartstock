@@ -2914,14 +2914,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-015 — Migración: tipo ticket en tipo_comprobante y metodo_pago en comprobante
+## V60-POS-015 — Migración: tipo ticket en tipo_comprobante y metodo_pago en comprobante (hecho)
 
 - Tipo: migration
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 3
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-002
 
 **Descripción:** Extender el ENUM `tipo_comprobante` con el valor `ticket`. Agregar columna `metodo_pago` a la tabla `comprobante` y opcionalmente columna `caja_id` para múltiples terminales.
