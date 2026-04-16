@@ -608,10 +608,11 @@ export default function PosPage() {
           clienteNombre={clienteActual?.nombre ?? 'Consumidor Final'}
           tipoComprobante={tipoComprobante}
           total={total}
+          subtotal={subtotalRounded}
           descuentoMonto={descuentoMonto}
-          onSuccess={() => {
-            // Will print ticket in POS-022
-          }}
+          ivaMonto={ivaMonto}
+          tenantNombre={tenantName}
+          onSuccess={() => {}}
           onClose={() => {
             setShowCobro(false);
             cancelVenta();

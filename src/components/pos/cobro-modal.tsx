@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { printTicket } from '@/components/pos/ticket-termico';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -17,7 +18,10 @@ interface Props {
   clienteNombre: string;
   tipoComprobante: 'ticket' | 'factura';
   total: number;
+  subtotal: number;
   descuentoMonto: number;
+  ivaMonto: number;
+  tenantNombre: string;
   onSuccess: (result: { comprobanteId: string; numero: number; pdfUrl: string | null }) => void;
   onClose: () => void;
 }
@@ -38,7 +42,10 @@ export function CobroModal({
   clienteNombre,
   tipoComprobante,
   total,
+  subtotal,
   descuentoMonto,
+  ivaMonto,
+  tenantNombre,
   onSuccess,
   onClose,
 }: Props) {
@@ -330,6 +337,33 @@ export function CobroModal({
                 </p>
               )}
               <div className="flex gap-2 justify-center pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    printTicket({
+                      tenantNombre,
+                      tipoComprobante,
+                      numero: resultData.numero,
+                      fecha: new Date().toLocaleString('es-AR'),
+                      clienteNombre,
+                      items: items.map((it) => ({
+                        nombre: it.producto.nombre,
+                        cantidad: it.cantidad,
+                        precio_unitario: it.producto.precio_venta,
+                        subtotal: Math.round(it.cantidad * it.producto.precio_venta * 100) / 100,
+                        unidad: it.producto.unidad,
+                      })),
+                      subtotal,
+                      descuento: descuentoMonto,
+                      ivaMonto,
+                      total,
+                      metodoPago: metodo,
+                      vuelto: vuelto > 0 ? vuelto : undefined,
+                    });
+                  }}
+                >
+                  Imprimir ticket
+                </Button>
                 <Button onClick={onClose}>Nueva venta</Button>
               </div>
             </div>

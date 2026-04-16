@@ -3102,14 +3102,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-022 — Impresión de ticket térmico (80mm / 57mm)
+## V60-POS-022 — Impresión de ticket térmico (80mm / 57mm) (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: high
 - Estimación: 5
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-021
 
 **Descripción:** Implementar la generación e impresión de tickets en formato térmico (80mm y 57mm) usando `window.print()` con CSS de impresión optimizado. El backend genera el PDF A4 estándar para archivo.
