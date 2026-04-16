@@ -3261,7 +3261,7 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 - Prioridad: low
 - Estimación: 3
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-020
 
 **Descripción:** Agregar botón "Enviar al POS" en el detalle de un pedido entregado que carga todos los items del pedido en el carrito POS para cobro rápido.

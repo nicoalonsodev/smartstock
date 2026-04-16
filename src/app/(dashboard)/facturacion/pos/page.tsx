@@ -105,7 +105,17 @@ export default function PosPage() {
         setUserName(p.userDisplayName ?? 'Usuario');
         setCanEmit(p.rol !== 'visor');
 
-        if (tid) {
+        // Check for items from pedido (sessionStorage)
+        const fromPedido = sessionStorage.getItem('smartstock_pos_from_pedido');
+        if (fromPedido) {
+          sessionStorage.removeItem('smartstock_pos_from_pedido');
+          try {
+            const parsed = JSON.parse(fromPedido);
+            if (parsed.items?.length) {
+              setItems(parsed.items as CartItem[]);
+            }
+          } catch { /* ignore bad data */ }
+        } else if (tid) {
           const saved = loadCart(tid);
           if (saved && saved.items?.length) {
             setPendingRestore(saved);
