@@ -18,14 +18,53 @@ export type ProductoTabla = {
   fecha_vencimiento?: string | null;
   comprometido?: number;
   disponible?: number;
+  codigo_barras?: string | null;
+  es_pesable?: boolean;
 };
 
-export function ProductosTable({ productos }: { productos: ProductoTabla[] }) {
+interface Props {
+  productos: ProductoTabla[];
+  selectable?: boolean;
+  selected?: Set<string>;
+  onSelectionChange?: (ids: Set<string>) => void;
+}
+
+export function ProductosTable({ productos, selectable, selected, onSelectionChange }: Props) {
+  const allIds = productos.map((p) => p.id);
+  const allSelected = selectable && selected && allIds.length > 0 && allIds.every((id) => selected.has(id));
+
+  function toggleAll() {
+    if (!onSelectionChange) return;
+    if (allSelected) {
+      onSelectionChange(new Set());
+    } else {
+      onSelectionChange(new Set(allIds));
+    }
+  }
+
+  function toggleOne(id: string) {
+    if (!onSelectionChange || !selected) return;
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onSelectionChange(next);
+  }
+
   return (
     <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left text-muted-foreground">
+            {selectable && (
+              <th className="w-10 px-3 py-3">
+                <input
+                  type="checkbox"
+                  checked={!!allSelected}
+                  onChange={toggleAll}
+                  className="size-4 rounded border-input"
+                />
+              </th>
+            )}
             <th className="px-4 py-3 font-medium">Código</th>
             <th className="px-4 py-3 font-medium">Producto</th>
             <th className="px-4 py-3 font-medium">Categoría</th>
@@ -47,6 +86,16 @@ export function ProductosTable({ productos }: { productos: ProductoTabla[] }) {
 
             return (
               <tr key={p.id} className="border-b last:border-0 hover:bg-muted/50">
+                {selectable && (
+                  <td className="px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selected?.has(p.id) ?? false}
+                      onChange={() => toggleOne(p.id)}
+                      className="size-4 rounded border-input"
+                    />
+                  </td>
+                )}
                 <td className="px-4 py-3 font-mono text-xs">{p.codigo}</td>
                 <td className="px-4 py-3">
                   <Link href={`/productos/${p.id}`} className="font-medium hover:underline">

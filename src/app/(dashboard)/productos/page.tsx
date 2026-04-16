@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useDashboardRole } from '@/components/dashboard/dashboard-role-context';
+import { EtiquetasLoteModal } from '@/components/pos/etiquetas-lote-modal';
 import { ProductosTable, type ProductoTabla } from '@/components/stock/productos-table';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useModulos } from '@/hooks/useModulos';
 import { cn } from '@/lib/utils';
 
 type Opt = { id: string; nombre: string };
@@ -30,6 +32,7 @@ function tryParseJson<T>(raw: string): T | null {
 
 function ProductosPageInner() {
   const { canEdit } = useDashboardRole();
+  const { modulos } = useModulos();
   const searchParams = useSearchParams();
   const [q, setQ] = useState('');
   const [categoriaId, setCategoriaId] = useState<string>('');
@@ -46,6 +49,13 @@ function ProductosPageInner() {
   const [loading, setLoading] = useState(true);
   const [categorias, setCategorias] = useState<Opt[]>([]);
   const [proveedores, setProveedores] = useState<Opt[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showLoteModal, setShowLoteModal] = useState(false);
+
+  const selectedConBarcode = useMemo(
+    () => productos.filter((p) => selected.has(p.id) && p.codigo_barras),
+    [productos, selected],
+  );
 
   const loadFilters = useCallback(async () => {
     const [cRes, pRes] = await Promise.all([fetch('/api/categorias'), fetch('/api/proveedores')]);
@@ -191,12 +201,51 @@ function ProductosPageInner() {
         </label>
       </div>
 
+      {modulos.facturador_pos && selected.size > 0 && (
+        <div className="flex items-center gap-3 rounded-xl border bg-card p-3 shadow-sm">
+          <span className="text-sm text-muted-foreground">
+            {selected.size} seleccionado(s)
+          </span>
+          {selectedConBarcode.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowLoteModal(true)}
+            >
+              Imprimir etiquetas ({selectedConBarcode.length})
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelected(new Set())}
+          >
+            Deseleccionar
+          </Button>
+        </div>
+      )}
+
       {loading ? (
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : productos.length === 0 ? (
         <p className="text-sm text-muted-foreground">No hay productos con esos criterios.</p>
       ) : (
-        <ProductosTable productos={productos} />
+        <ProductosTable
+          productos={productos}
+          selectable={modulos.facturador_pos}
+          selected={selected}
+          onSelectionChange={setSelected}
+        />
+      )}
+
+      {showLoteModal && (
+        <EtiquetasLoteModal
+          productos={productos.filter((p) => selected.has(p.id))}
+          open={showLoteModal}
+          onClose={() => setShowLoteModal(false)}
+        />
       )}
 
       {totalPaginas > 1 ? (

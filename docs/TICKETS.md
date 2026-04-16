@@ -2890,14 +2890,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-014 — Impresión masiva de etiquetas (lote)
+## V60-POS-014 — Impresión masiva de etiquetas (lote) (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: medium
 - Estimación: 5
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-013
 
 **Descripción:** Agregar acción batch en el listado de productos: "Imprimir etiquetas de los seleccionados", que abre un modal con los productos elegidos, permite definir copias por producto y genera la impresión en grilla.
