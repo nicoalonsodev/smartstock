@@ -1656,14 +1656,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-ARCA-003 — Renovación automática de ticket WSAA
+## V40-ARCA-003 — Renovación automática de ticket WSAA (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 3
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-002
 
 **Descripción:** Antes de cada operación con WSFE, verificar si el ticket sigue vigente (con 5 minutos de margen) y renovarlo si expiró.

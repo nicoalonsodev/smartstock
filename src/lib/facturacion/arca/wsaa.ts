@@ -141,7 +141,22 @@ export async function asegurarTicketVigente(
   const certPem = desencriptarCampo(config.certificado_pem);
   const keyPem = desencriptarCampo(config.clave_privada_pem);
 
-  const ticket = await obtenerTicketAcceso(certPem, keyPem, config.ambiente);
+  let ticket: TicketAcceso;
+  try {
+    ticket = await obtenerTicketAcceso(certPem, keyPem, config.ambiente);
+  } catch (err) {
+    const mensaje = err instanceof Error ? err.message : String(err);
+    await logArcaOperacion(supabase, tenantId, {
+      servicio: 'WSAA',
+      operacion: 'LoginCms',
+      requestXml: '[TRA firmado]',
+      responseXml: '',
+      exitoso: false,
+      errorCodigo: 'WSAA_RENEW_FAIL',
+      errorMensaje: mensaje,
+    });
+    throw new Error(`Error al renovar ticket WSAA: ${mensaje}`);
+  }
 
   await supabase
     .from('arca_config')
@@ -156,7 +171,7 @@ export async function asegurarTicketVigente(
     servicio: 'WSAA',
     operacion: 'LoginCms',
     requestXml: '[TRA firmado]',
-    responseXml: '[ticket obtenido]',
+    responseXml: '[ticket renovado]',
     exitoso: true,
   });
 
