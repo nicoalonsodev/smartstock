@@ -2616,14 +2616,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-003 — Migración: flag facturador_pos en modulo_config + activar_plan
+## V60-POS-003 — Migración: flag facturador_pos en modulo_config + activar_plan (hecho)
 
 - Tipo: migration
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 3
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-001
 
 **Descripción:** Agregar la columna `facturador_pos` (BOOLEAN, default false) a `modulo_config`. Crear CHECK constraint que obliga a tener `facturador_simple = true` si `facturador_pos = true`. Actualizar la función `activar_plan` para setear este flag en true con plan completo y false con plan base.
