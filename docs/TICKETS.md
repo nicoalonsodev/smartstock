@@ -3277,30 +3277,30 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-029 — Tests unitarios y de integración del POS
+## V60-POS-029 — Tests unitarios y de integración del POS (hecho)
 
 - Tipo: test
 - Módulo: pos
 - Prioridad: high
 - Estimación: 8
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-018, V60-POS-017, V60-POS-007, V60-POS-006
 
 **Descripción:** Suite de tests que cubren la lógica crítica del POS: librería EAN-13, parser de códigos, flujo de escaneo y emisión de ticket.
 
 **Criterios de aceptación:**
-- [ ] Unit tests EAN-13: check digit, validación, generación con prefijo 20, formatos inválidos
-- [ ] Unit tests parser: EAN normales, EAN-8, códigos de balanza reales, SKU alfanuméricos, vacíos
-- [ ] Unit tests cálculo de vuelto y mixto en modal de pago
-- [ ] Integration: asignar código de barras a producto y verificar UNIQUE
-- [ ] Integration: intentar código duplicado y recibir 409
-- [ ] Integration: generar código interno y verificar EAN-13 válido
-- [ ] Integration: escanear producto normal → se agrega al carrito (API)
-- [ ] Integration: escanear código de balanza → se parsea peso correctamente (API)
-- [ ] Integration: escanear producto inexistente → 404 (API)
-- [ ] Integration: emitir ticket y verificar comprobante creado con movimientos y PDF
-- [ ] Integration: aislamiento entre tenants (código de un tenant no encontrado por otro)
+- [x] Unit tests EAN-13: check digit, validación, generación con prefijo 20, formatos inválidos
+- [x] Unit tests parser: EAN normales, EAN-8, códigos de balanza reales, SKU alfanuméricos, vacíos
+- [x] Unit tests cálculo de vuelto y mixto en modal de pago
+- [x] Integration: asignar código de barras a producto y verificar UNIQUE
+- [x] Integration: intentar código duplicado y recibir 409
+- [x] Integration: generar código interno y verificar EAN-13 válido
+- [x] Integration: escanear producto normal → se agrega al carrito (API)
+- [x] Integration: escanear código de balanza → se parsea peso correctamente (API)
+- [x] Integration: escanear producto inexistente → 404 (API)
+- [x] Integration: emitir ticket y verificar comprobante creado con movimientos y PDF
+- [x] Integration: aislamiento entre tenants (código de un tenant no encontrado por otro)
 
 **Notas técnicas:** Tests unitarios en `src/test/ean13.test.ts` y `src/test/barcode-parser.test.ts`. Tests de integración en `src/test/pos-integration.test.ts`. Usar Vitest.
 

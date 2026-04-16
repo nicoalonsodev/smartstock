@@ -1,5 +1,5 @@
 ---
-estado: 🟡 En progreso
+estado: ✅ Completado
 version: v6.0
 ultima_actualizacion: 2026-04-16
 ---
@@ -8,7 +8,7 @@ ultima_actualizacion: 2026-04-16
 
 ## Qué estamos construyendo ahora
 
-**Versión v6.0 — Códigos de barra + POS con escáner**
+**Versión v6.0 — Códigos de barra + POS con escáner — COMPLETADO**
 
 Este bloque incorpora dos capacidades complementarias que conforman un facturador profesional con escáner láser:
 
@@ -22,18 +22,39 @@ Este bloque incorpora dos capacidades complementarias que conforman un facturado
 
 ---
 
-## Próximos 3 tickets a trabajar
+## Resumen de implementación completada
 
-Fase 1 completada (7 tickets). Ahora **Fase 2 — Productos**:
+### Fase 1 — Migraciones y tipos (V60-POS-001 a V60-POS-005)
+- 4 migraciones SQL (024-027): barcode columns, NUMERIC quantities, facturador_pos flag, ticket comprobante type
+- TypeScript types regenerated
 
-1. **V60-POS-008 — API: asignar código de barras a producto**
-   POST /api/productos/[id]/codigo-barras con validación EAN-13 y detección de duplicados.
+### Fase 2 — APIs de producto (V60-POS-006 a V60-POS-012)
+- EAN-13 library and barcode parser
+- APIs: assign barcode, generate internal EAN-13, extend PATCH, search by barcode
 
-2. **V60-POS-009 — API: generar EAN-13 interno automático**
-   POST /api/productos/[id]/generar-codigo con prefijo 20 y secuencial del tenant.
+### Fase 3 — Etiquetas (V60-POS-013 a V60-POS-014)
+- Individual and batch label printing with bwip-js
 
-3. **V60-POS-010 — Extender PATCH producto con campos barcode**
-   Aceptar codigo_barras, plu y es_pesable en la API existente de actualización.
+### Fase 4 — Motor de emisión (V60-POS-015 a V60-POS-018)
+- Migration for ticket type and metodo_pago
+- BarcodeInput component, barcode search API
+- Extended emission API (ticket type, metodo_pago, decimal quantities)
+
+### Fase 5 — Pantalla POS (V60-POS-019 a V60-POS-022)
+- Fullscreen POS layout, scan zone, cart management
+- Cobro modal with cash/debit/credit/transfer/mixed payments
+- Thermal ticket printing
+
+### Fase 6 — Ergonomía y robustez (V60-POS-023 a V60-POS-026)
+- Keyboard shortcuts (F1, F2, F4, F8, F12)
+- Edge cases (offline, stock warnings)
+- Cart persistence in localStorage
+- POS configuration in /configuracion
+
+### Fase 7 — Integración y tests (V60-POS-027 a V60-POS-029)
+- Barcode column in importer
+- Send to POS from orders
+- 69 tests passing (unit + integration)
 
 ---
 
@@ -49,23 +70,6 @@ Fase 1 completada (7 tickets). Ahora **Fase 2 — Productos**:
 | Tipo de comprobante ticket | Nuevo valor en el ENUM | Numeración propia, PDF distinto (térmico), no fiscal |
 | Impresión térmica | `window.print()` + CSS | Cubre 80% de los casos; qz-tray como opción futura documentada |
 
-## Decisiones pendientes de tomar
-
-| Decisión | Opciones | Contexto |
-|---|---|---|
-| Secuencial de EAN-13 interno | MAX sobre códigos existentes vs contador dedicado | MAX es más simple, contador es más robusto bajo concurrencia |
-| Múltiples cajas en v6.0 | Implementar desde el inicio vs dejar para v6.1 | Diseñar la columna `caja_id` pero no implementar UI multi-caja todavía |
-| PDF del ticket térmico | Solo frontend vs frontend + backend | Recomendación: ambos (frontend para impresión inmediata, backend PDF A4 para archivo) |
-
----
-
-## Bloqueos actuales
-
-| Bloqueo | Estado | Acción requerida |
-|---|---|---|
-| Migraciones v6.0 pendientes | Pendiente | Ejecutar 023-026 en Supabase antes de regenerar tipos |
-| Dependencia `bwip-js` no instalada | Pendiente | Instalar para renderizado de códigos de barra en etiquetas |
-
 ---
 
 ## Documentación completada
@@ -80,15 +84,14 @@ Fase 1 completada (7 tickets). Ahora **Fase 2 — Productos**:
 | Fase 4 — ARCA y deploy | `arca.md`, `deploy.md` | Completada |
 | Fase 5 — Analizador y rentabilidad | `analizador.md` | Completada |
 | Fase 6 — Tickets bloques A-E | `TICKETS.md` | Completada (104 tickets) |
-| Fase 7 — POS con escáner | `PLAN-BLOQUE-F.md`, `TICKETS.md` (bloque F) | Planificación completada (29 tickets) |
+| Fase 7 — POS con escáner | `PLAN-BLOQUE-F.md`, `TICKETS.md` (bloque F) | Implementación completada (29/29 tickets, 119 pts) |
 
 ---
 
 ## Última actualización
 
 **Fecha:** 2026-04-16
-**Último ticket completado:** V50-ANAL-025 — Alertas del analizador en dashboard + UI de cuenta corriente
+**Último ticket completado:** V60-POS-029 — Tests unitarios y de integración del POS
 **Bloque E (v5.0 Analizador):** Completado — 25/25 tickets
-**Bloque F (v6.0 POS):** Planificado — 0/29 tickets (119 pts)
-**Siguiente paso:** V60-POS-001 — Migración: columnas codigo_barras, plu y es_pesable en producto
-**Bloques pendientes de implementar:** v4.0 ARCA (10 tickets), v6.0 POS (29 tickets)
+**Bloque F (v6.0 POS):** Completado — 29/29 tickets (119 pts)
+**Bloques pendientes de implementar:** v4.0 ARCA (10 tickets)
