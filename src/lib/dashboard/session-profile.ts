@@ -5,6 +5,7 @@ import type { Database } from '@/types/database';
 
 export type SessionProfile = {
   userDisplayName: string;
+  tenantId: string;
   tenantName: string;
   rol: Database['public']['Enums']['rol_usuario'];
 };
@@ -35,6 +36,7 @@ export const getSessionProfile = cache(async (): Promise<SessionProfile | null> 
 
   return {
     userDisplayName,
+    tenantId: usuario?.tenant_id ?? '',
     tenantName,
     rol: usuario?.rol ?? 'visor',
   };

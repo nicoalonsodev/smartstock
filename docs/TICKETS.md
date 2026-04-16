@@ -3182,14 +3182,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-025 — Persistencia del carrito en localStorage
+## V60-POS-025 — Persistencia del carrito en localStorage (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: high
 - Estimación: 2
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-020
 
 **Descripción:** Persistir automáticamente el carrito del POS en `localStorage` para recuperarlo tras un corte de luz o crash del navegador.

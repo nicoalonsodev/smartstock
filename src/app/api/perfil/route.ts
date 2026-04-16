@@ -11,6 +11,7 @@ export async function GET() {
 
   return NextResponse.json({
     userDisplayName: profile.userDisplayName,
+    tenantId: profile.tenantId,
     tenantName: profile.tenantName,
     rol: profile.rol,
   });

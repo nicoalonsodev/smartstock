@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { clearCart, loadCart, saveCart } from '@/lib/pos/cart-persistence';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/formatters';
 
@@ -53,6 +54,7 @@ type DescuentoTipo = 'porcentaje' | 'monto';
 
 export default function PosPage() {
   const barcodeRef = useRef<BarcodeInputRef>(null);
+  const [tenantId, setTenantId] = useState('');
   const [tenantName, setTenantName] = useState('');
   const [userName, setUserName] = useState('');
   const [canEmit, setCanEmit] = useState(true);
@@ -81,6 +83,10 @@ export default function PosPage() {
   // Cancel confirmation
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
+  // Restore cart prompt
+  const [showRestorePrompt, setShowRestorePrompt] = useState(false);
+  const [pendingRestore, setPendingRestore] = useState<ReturnType<typeof loadCart>>(null);
+
   // Cobro modal
   const [showCobro, setShowCobro] = useState(false);
 
@@ -93,9 +99,19 @@ export default function PosPage() {
 
       if (profileRes.ok) {
         const p = await profileRes.json();
+        const tid = p.tenantId ?? '';
+        setTenantId(tid);
         setTenantName(p.tenantName ?? 'Mi Negocio');
         setUserName(p.userDisplayName ?? 'Usuario');
         setCanEmit(p.rol !== 'visor');
+
+        if (tid) {
+          const saved = loadCart(tid);
+          if (saved && saved.items?.length) {
+            setPendingRestore(saved);
+            setShowRestorePrompt(true);
+          }
+        }
       }
 
       if (clientesRes.ok) {
@@ -116,6 +132,15 @@ export default function PosPage() {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   }, []);
+
+  // Persist cart to localStorage (debounced)
+  useEffect(() => {
+    if (!tenantId || items.length === 0) return;
+    const t = setTimeout(() => {
+      saveCart(tenantId, { items, clienteId, tipoComprobante });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [items, clienteId, tipoComprobante, tenantId]);
 
   // Clear highlight after animation
   useEffect(() => {
@@ -236,7 +261,9 @@ export default function PosPage() {
     setDescuentoValor(0);
     setLastScanned(null);
     setScanError('');
+    setStockWarning('');
     setShowCancelConfirm(false);
+    if (tenantId) clearCart(tenantId);
     barcodeRef.current?.focus();
   }
 
@@ -668,6 +695,44 @@ export default function PosPage() {
             cancelVenta();
           }}
         />
+      )}
+
+      {/* Restore cart prompt */}
+      {showRestorePrompt && pendingRestore && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-96 rounded-xl border bg-background p-6 shadow-xl space-y-4">
+            <h3 className="text-lg font-semibold">Venta en curso detectada</h3>
+            <p className="text-sm text-muted-foreground">
+              Hay una venta sin emitir con {(pendingRestore.items as unknown[]).length} ítem(s).
+              ¿Querés restaurarla?
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowRestorePrompt(false);
+                  setPendingRestore(null);
+                  if (tenantId) clearCart(tenantId);
+                }}
+              >
+                No, empezar de cero
+              </Button>
+              <Button
+                onClick={() => {
+                  setItems(pendingRestore.items as CartItem[]);
+                  if (pendingRestore.clienteId) setClienteId(pendingRestore.clienteId);
+                  if (pendingRestore.tipoComprobante) {
+                    setTipoComprobante(pendingRestore.tipoComprobante as 'ticket' | 'factura');
+                  }
+                  setShowRestorePrompt(false);
+                  setPendingRestore(null);
+                }}
+              >
+                Sí, restaurar
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       <ShortcutsHelpModal open={showHelp} onClose={() => setShowHelp(false)} />
