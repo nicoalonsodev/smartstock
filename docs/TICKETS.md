@@ -2814,14 +2814,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-011 — UI: sección "Códigos y escaneo" en formulario de producto
+## V60-POS-011 — UI: sección "Códigos y escaneo" en formulario de producto (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: high
 - Estimación: 5
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-008, V60-POS-009, V60-POS-010
 
 **Descripción:** Agregar sección "Códigos y escaneo" en las pantallas `/productos/nuevo` y `/productos/[id]` con campos para código de barras, PLU, checkbox de pesable, y botón de generación automática.
@@ -2840,14 +2840,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-012 — Extender búsqueda de productos por código de barras
+## V60-POS-012 — Extender búsqueda de productos por código de barras (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: high
 - Estimación: 2
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-005
 
 **Descripción:** Extender la búsqueda del listado de productos (`/productos`) para incluir `codigo_barras` como campo de búsqueda, y agregar columna opcional de código de barras en la tabla.

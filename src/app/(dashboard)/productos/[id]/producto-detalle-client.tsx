@@ -54,6 +54,9 @@ type ProductoDetail = {
   disponible?: number;
   fecha_vencimiento: string | null;
   activo: boolean;
+  codigo_barras: string | null;
+  plu: string | null;
+  es_pesable: boolean;
   categoria: { id: string; nombre: string } | null;
   proveedor: { id: string; nombre: string } | null;
   movimientos: MovRow[];
@@ -96,6 +99,11 @@ export function ProductoDetalleClient({
   const [precioVenta, setPrecioVenta] = useState('0');
   const [stockMinimo, setStockMinimo] = useState('0');
   const [fechaVencimiento, setFechaVencimiento] = useState('');
+  const [codigoBarras, setCodigoBarras] = useState('');
+  const [plu, setPlu] = useState('');
+  const [esPesable, setEsPesable] = useState(false);
+  const [barcodeLoading, setBarcodeLoading] = useState(false);
+  const [barcodeMsg, setBarcodeMsg] = useState<{ type: 'ok' | 'warn' | 'err'; text: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -118,6 +126,10 @@ export function ProductoDetalleClient({
     setPrecioVenta(String(p.precio_venta));
     setStockMinimo(String(p.stock_minimo));
     setFechaVencimiento(p.fecha_vencimiento ? p.fecha_vencimiento.slice(0, 10) : '');
+    setCodigoBarras(p.codigo_barras ?? '');
+    setPlu(p.plu ?? '');
+    setEsPesable(p.es_pesable ?? false);
+    setBarcodeMsg(null);
     setLoading(false);
   }, [productoId]);
 
@@ -164,8 +176,11 @@ export function ProductoDetalleClient({
         unidad,
         precio_costo: parseFloat(precioCosto) || 0,
         precio_venta: parseFloat(precioVenta) || 0,
-        stock_minimo: parseInt(stockMinimo, 10) || 0,
+        stock_minimo: parseFloat(stockMinimo) || 0,
         fecha_vencimiento: fechaVencimiento || null,
+        codigo_barras: codigoBarras.trim() || null,
+        plu: esPesable && plu.trim() ? plu.trim() : null,
+        es_pesable: esPesable,
       }),
     });
     const json = await res.json();
@@ -177,6 +192,21 @@ export function ProductoDetalleClient({
     setEditMode(false);
     await load();
     router.refresh();
+  }
+
+  async function generarCodigo() {
+    setBarcodeLoading(true);
+    setBarcodeMsg(null);
+    const res = await fetch(`/api/productos/${productoId}/generar-codigo`, { method: 'POST' });
+    const json = await res.json();
+    setBarcodeLoading(false);
+    if (!res.ok) {
+      setBarcodeMsg({ type: 'err', text: json.error ?? 'Error al generar' });
+      return;
+    }
+    setCodigoBarras(json.codigo_generado);
+    setBarcodeMsg({ type: 'ok', text: `Código generado: ${json.codigo_generado}` });
+    await load();
   }
 
   async function softDelete() {
@@ -333,6 +363,59 @@ export function ProductoDetalleClient({
                 onChange={(e) => setFechaVencimiento(e.target.value)}
               />
             </label>
+
+            <div className="rounded-lg border p-4 space-y-3">
+              <h3 className="text-sm font-medium">Códigos y escaneo</h3>
+              <div className="flex items-end gap-2">
+                <label className="grid flex-1 gap-1 text-sm">
+                  <span className="text-muted-foreground">Código de barras</span>
+                  <Input
+                    value={codigoBarras}
+                    onChange={(e) => setCodigoBarras(e.target.value)}
+                    placeholder="EAN-13 o escaneá con la pistola"
+                    maxLength={14}
+                  />
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={barcodeLoading || !!codigoBarras}
+                  onClick={() => void generarCodigo()}
+                >
+                  {barcodeLoading ? '…' : 'Generar'}
+                </Button>
+              </div>
+              {barcodeMsg && (
+                <p className={`text-xs ${barcodeMsg.type === 'err' ? 'text-destructive' : barcodeMsg.type === 'warn' ? 'text-yellow-600' : 'text-green-600'}`}>
+                  {barcodeMsg.text}
+                </p>
+              )}
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={esPesable}
+                  onChange={(e) => {
+                    setEsPesable(e.target.checked);
+                    if (!e.target.checked) setPlu('');
+                  }}
+                  className="size-4 rounded border-input"
+                />
+                Producto pesable (balanza)
+              </label>
+              {esPesable && (
+                <label className="grid gap-1 text-sm">
+                  <span className="text-muted-foreground">PLU (código de balanza, hasta 5 dígitos)</span>
+                  <Input
+                    value={plu}
+                    onChange={(e) => setPlu(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                    placeholder="Ej: 00123"
+                    maxLength={5}
+                  />
+                </label>
+              )}
+            </div>
+
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => setEditMode(false)}>
                 Cancelar
@@ -384,6 +467,24 @@ export function ProductoDetalleClient({
                 <dd>{data.descripcion}</dd>
               </div>
             ) : null}
+            {(data.codigo_barras || data.plu || data.es_pesable) && (
+              <>
+                <div>
+                  <dt className="text-muted-foreground">Código de barras</dt>
+                  <dd className="font-mono">{data.codigo_barras ?? '—'}</dd>
+                </div>
+                {data.es_pesable && (
+                  <div>
+                    <dt className="text-muted-foreground">PLU (balanza)</dt>
+                    <dd className="font-mono">{data.plu ?? '—'}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt className="text-muted-foreground">Pesable</dt>
+                  <dd>{data.es_pesable ? 'Sí' : 'No'}</dd>
+                </div>
+              </>
+            )}
           </dl>
         )}
       </section>

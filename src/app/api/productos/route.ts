@@ -43,7 +43,7 @@ async function conStockDisponible(
 }
 
 const selectList =
-  'id, codigo, nombre, stock_actual, stock_minimo, precio_costo, precio_venta, unidad, fecha_vencimiento, categoria:categoria_id(id, nombre), proveedor:proveedor_id(id, nombre)';
+  'id, codigo, nombre, stock_actual, stock_minimo, precio_costo, precio_venta, unidad, fecha_vencimiento, codigo_barras, es_pesable, categoria:categoria_id(id, nombre), proveedor:proveedor_id(id, nombre)';
 
 export async function GET(request: NextRequest) {
   // #region agent log
@@ -119,7 +119,12 @@ export async function GET(request: NextRequest) {
       .order('nombre');
 
     if (busqueda) {
-      q = q.textSearch('nombre', busqueda, { type: 'websearch', config: 'spanish' });
+      const isNumeric = /^\d+$/.test(busqueda.trim());
+      if (isNumeric) {
+        q = q.or(`codigo_barras.eq.${busqueda.trim()},codigo.ilike.%${busqueda.trim()}%,nombre.ilike.%${busqueda.trim()}%`);
+      } else {
+        q = q.or(`nombre.wfts(spanish).${busqueda},codigo.ilike.%${busqueda.trim()}%`);
+      }
     }
     if (categoriaId) q = q.eq('categoria_id', categoriaId);
     if (proveedorId) q = q.eq('proveedor_id', proveedorId);
@@ -152,7 +157,12 @@ export async function GET(request: NextRequest) {
     .range(offset, offset + porPagina - 1);
 
   if (busqueda) {
-    query = query.textSearch('nombre', busqueda, { type: 'websearch', config: 'spanish' });
+    const isNumeric = /^\d+$/.test(busqueda.trim());
+    if (isNumeric) {
+      query = query.or(`codigo_barras.eq.${busqueda.trim()},codigo.ilike.%${busqueda.trim()}%,nombre.ilike.%${busqueda.trim()}%`);
+    } else {
+      query = query.or(`nombre.wfts(spanish).${busqueda},codigo.ilike.%${busqueda.trim()}%`);
+    }
   }
   if (categoriaId) query = query.eq('categoria_id', categoriaId);
   if (proveedorId) query = query.eq('proveedor_id', proveedorId);

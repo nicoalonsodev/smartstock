@@ -128,7 +128,7 @@ function ProductosPageInner() {
         <label className="grid min-w-[12rem] flex-1 gap-1 text-sm">
           <span className="text-muted-foreground">Buscar</span>
           <Input
-            placeholder="Nombre…"
+            placeholder="Nombre, código o código de barras…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
