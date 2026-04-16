@@ -5,6 +5,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { BarcodeInput, type BarcodeInputRef } from '@/components/pos/barcode-input';
 import { CobroModal } from '@/components/pos/cobro-modal';
+import {
+  ShortcutsHelpModal,
+  usePosKeyboardShortcuts,
+} from '@/components/pos/keyboard-shortcuts';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -248,6 +252,24 @@ export default function PosPage() {
     : clientes;
 
   const anyModalOpen = showClienteSearch || showWeightModal || showCancelConfirm || showCobro;
+
+  const { showHelp, setShowHelp } = usePosKeyboardShortcuts({
+    onCobrar: () => {
+      if (items.length > 0 && canEmit && !anyModalOpen) setShowCobro(true);
+    },
+    onCambiarCliente: () => {
+      if (!anyModalOpen) setShowClienteSearch(true);
+    },
+    onCancelarVenta: () => {
+      if (items.length > 0 && !anyModalOpen) setShowCancelConfirm(true);
+    },
+    onCambiarTipo: () => {
+      if (!anyModalOpen) {
+        setTipoComprobante((t) => (t === 'ticket' ? 'factura' : 'ticket'));
+      }
+    },
+    disabled: false,
+  });
 
   return (
     <>
@@ -530,6 +552,13 @@ export default function PosPage() {
           {items.reduce((sum, it) => sum + it.cantidad, 0).toFixed(items.some((it) => it.peso) ? 3 : 0)} unidades
         </span>
         <span>Cajero: {userName}</span>
+        <button
+          type="button"
+          className="hover:text-foreground underline"
+          onClick={() => setShowHelp(true)}
+        >
+          F1 Ayuda
+        </button>
       </footer>
 
       {/* Weight entry modal */}
@@ -619,6 +648,8 @@ export default function PosPage() {
           }}
         />
       )}
+
+      <ShortcutsHelpModal open={showHelp} onClose={() => setShowHelp(false)} />
     </>
   );
 }

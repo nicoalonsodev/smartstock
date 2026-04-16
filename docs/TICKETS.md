@@ -3134,7 +3134,7 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 - Prioridad: high
 - Estimación: 3
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-020
 
 **Descripción:** Implementar todos los atajos de teclado del POS para operación sin mouse, con modal de ayuda accesible con F1.
