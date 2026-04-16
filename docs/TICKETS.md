@@ -2560,14 +2560,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-001 — Migración: columnas codigo_barras, plu y es_pesable en producto
+## V60-POS-001 — Migración: columnas codigo_barras, plu y es_pesable en producto (hecho)
 
 - Tipo: migration
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 3
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V50-ANAL-005
 
 **Descripción:** Agregar tres columnas nuevas a la tabla `producto`: `codigo_barras` (VARCHAR(14), nullable), `plu` (VARCHAR(5), nullable) y `es_pesable` (BOOLEAN, default false). Crear índices UNIQUE parciales y CHECK constraints para garantizar consistencia.
