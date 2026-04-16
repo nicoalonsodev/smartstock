@@ -3206,14 +3206,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-026 — Configuración POS en /configuracion
+## V60-POS-026 — Configuración POS en /configuracion (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: medium
 - Estimación: 3
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-019
 
 **Descripción:** Agregar sección "POS" en `/configuracion` con opciones de personalización del comportamiento del punto de venta.

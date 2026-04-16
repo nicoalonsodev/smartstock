@@ -5,6 +5,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDashboardRole } from '@/components/dashboard/dashboard-role-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useModulos } from '@/hooks/useModulos';
 
 type TenantData = {
   id: string;
@@ -26,8 +34,31 @@ const CONDICION_IVA_LABELS: Record<string, string> = {
   consumidor_final: 'Consumidor Final',
 };
 
+type PosPrefs = {
+  sonidos: boolean;
+  anchoTicket: '80mm' | '57mm';
+  stockBloqueante: boolean;
+};
+
+const POS_PREFS_KEY = 'smartstock_pos_prefs';
+
+function loadPosPrefs(): PosPrefs {
+  if (typeof window === 'undefined') return { sonidos: true, anchoTicket: '80mm', stockBloqueante: false };
+  try {
+    const raw = localStorage.getItem(POS_PREFS_KEY);
+    if (raw) return JSON.parse(raw) as PosPrefs;
+  } catch { /* ignore */ }
+  return { sonidos: true, anchoTicket: '80mm', stockBloqueante: false };
+}
+
+function savePosPrefs(prefs: PosPrefs) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(POS_PREFS_KEY, JSON.stringify(prefs));
+}
+
 export default function ConfiguracionPage() {
   const { canEdit } = useDashboardRole();
+  const { modulos } = useModulos();
   const [tenant, setTenant] = useState<TenantData | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
@@ -43,6 +74,17 @@ export default function ConfiguracionPage() {
   const [email, setEmail] = useState('');
   const [condicionIva, setCondicionIva] = useState('');
   const [puntoDeVenta, setPuntoDeVenta] = useState('1');
+
+  // POS preferences (localStorage)
+  const [posPrefs, setPosPrefs] = useState<PosPrefs>(loadPosPrefs);
+
+  function updatePosPrefs(partial: Partial<PosPrefs>) {
+    setPosPrefs((prev) => {
+      const updated = { ...prev, ...partial };
+      savePosPrefs(updated);
+      return updated;
+    });
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -276,6 +318,53 @@ export default function ConfiguracionPage() {
           </dl>
         )}
       </section>
+
+      {modulos.facturador_pos && (
+        <section className="rounded-xl border bg-card p-5 shadow-sm">
+          <h2 className="font-medium mb-4">Preferencias POS</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Estas preferencias se guardan en este dispositivo (no en el servidor).
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="flex items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                checked={posPrefs.sonidos}
+                onChange={(e) => updatePosPrefs({ sonidos: e.target.checked })}
+                className="size-4 rounded border-input"
+              />
+              Sonidos de confirmación y error
+            </label>
+
+            <label className="grid gap-1 text-sm">
+              <span className="text-muted-foreground">Ancho de ticket térmico</span>
+              <Select
+                value={posPrefs.anchoTicket}
+                onValueChange={(v) => updatePosPrefs({ anchoTicket: v as '80mm' | '57mm' })}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="80mm">80 mm</SelectItem>
+                  <SelectItem value="57mm">57 mm</SelectItem>
+                </SelectContent>
+              </Select>
+            </label>
+
+            <label className="flex items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                checked={posPrefs.stockBloqueante}
+                onChange={(e) => updatePosPrefs({ stockBloqueante: e.target.checked })}
+                className="size-4 rounded border-input"
+              />
+              Bloquear ventas sin stock suficiente
+            </label>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
