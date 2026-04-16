@@ -3156,14 +3156,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-024 — Manejo de casos borde del POS
+## V60-POS-024 — Manejo de casos borde del POS (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: high
 - Estimación: 5
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-020, V60-POS-021
 
 **Descripción:** Implementar el manejo explícito de todos los casos borde: producto sin stock, inactivo, desconexión de red, doble disparo del escáner, pesable sin pesar.

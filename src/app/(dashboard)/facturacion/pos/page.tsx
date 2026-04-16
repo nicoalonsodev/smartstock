@@ -63,6 +63,7 @@ export default function PosPage() {
   const [tipoComprobante, setTipoComprobante] = useState<'ticket' | 'factura'>('ticket');
   const [lastScanned, setLastScanned] = useState<ProductoScanned | null>(null);
   const [scanError, setScanError] = useState('');
+  const [stockWarning, setStockWarning] = useState('');
   const [now, setNow] = useState(new Date());
   const [highlightIdx, setHighlightIdx] = useState<number | null>(null);
 
@@ -128,7 +129,13 @@ export default function PosPage() {
   const handleScan = useCallback(
     async (codigo: string) => {
       setScanError('');
+      setStockWarning('');
       setLastScanned(null);
+
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        setScanError('Sin conexión a internet. Verificá tu red y reintentá.');
+        return;
+      }
 
       try {
         const res = await fetch(
@@ -166,12 +173,21 @@ export default function PosPage() {
           );
           if (existing >= 0) {
             const updated = [...prev];
-            updated[existing] = {
-              ...updated[existing],
-              cantidad: updated[existing].cantidad + 1,
-            };
+            const newCant = updated[existing].cantidad + 1;
+            updated[existing] = { ...updated[existing], cantidad: newCant };
             setHighlightIdx(existing);
+            if (newCant > data.producto.stock_actual) {
+              setStockWarning(
+                `"${data.producto.nombre}" tiene stock ${data.producto.stock_actual}, se agregaron ${newCant}.`,
+              );
+            }
             return updated;
+          }
+
+          if (1 > data.producto.stock_actual) {
+            setStockWarning(
+              `"${data.producto.nombre}" tiene stock ${data.producto.stock_actual}.`,
+            );
           }
 
           const newItems = [...prev, { producto: data.producto, cantidad: 1 }];
@@ -377,6 +393,11 @@ export default function PosPage() {
           {scanError && (
             <div className="shrink-0 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
               {scanError}
+            </div>
+          )}
+          {stockWarning && (
+            <div className="shrink-0 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+              ⚠ Stock bajo — {stockWarning}
             </div>
           )}
           {lastScanned && !scanError && (
