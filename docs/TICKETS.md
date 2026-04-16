@@ -1679,14 +1679,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-ARCA-004 — Implementar WSFE (solicitar CAE)
+## V40-ARCA-004 — Implementar WSFE (solicitar CAE) (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 8
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-003
 
 **Descripción:** Implementar la operación `FECAESolicitar` de WSFE: construir XML del comprobante, enviar, parsear respuesta con CAE o errores.
