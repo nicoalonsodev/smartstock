@@ -242,6 +242,14 @@ export function ProductoDetalleClient({
         </div>
         {canEdit && !editMode ? (
           <div className="flex gap-2">
+            {data.codigo_barras && (
+              <Link
+                href={`/productos/${productoId}/etiquetas`}
+                className={cn(buttonVariants({ variant: 'outline' }))}
+              >
+                Imprimir etiquetas
+              </Link>
+            )}
             <Button type="button" variant="outline" onClick={() => setEditMode(true)}>
               Editar
             </Button>

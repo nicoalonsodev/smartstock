@@ -2863,14 +2863,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-013 — Pantalla de impresión de etiquetas individual
+## V60-POS-013 — Pantalla de impresión de etiquetas individual (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: high
 - Estimación: 8
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-011
 
 **Descripción:** Crear ruta `/productos/[id]/etiquetas` con selector de cantidad, preview visual del código de barras renderizado con `bwip-js`, selector de tamaño de etiqueta e impresión/descarga.
