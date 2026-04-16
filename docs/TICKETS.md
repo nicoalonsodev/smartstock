@@ -2937,14 +2937,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-016 — Componente `<BarcodeInput />` reutilizable
+## V60-POS-016 — Componente `<BarcodeInput />` reutilizable (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 5
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-005
 
 **Descripción:** Construir un componente de input HTML optimizado para captura de escáner, con autofoco, detección de velocidad de teclado, y callback al completar un escaneo (Enter/Tab).
