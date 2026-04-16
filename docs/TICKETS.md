@@ -2713,14 +2713,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-007 — Parser de código escaneado (parseBarcode)
+## V60-POS-007 — Parser de código escaneado (parseBarcode) (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 3
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-006
 
 **Descripción:** Construir función `parseBarcode(input: string)` en `src/lib/pos/barcode-parser.ts` que recibe el string del escáner y determina el tipo de código, el lookup key y opcionalmente el peso para códigos de balanza.
