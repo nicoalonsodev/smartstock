@@ -13,6 +13,9 @@ export interface EmitirComprobanteBody {
   items: { producto_id: string; cantidad: number; precio_unitario: number }[];
   notas?: string;
   iva_porcentaje?: number;
+  metodo_pago?: 'efectivo' | 'debito' | 'credito' | 'transferencia' | 'mixto';
+  metodo_pago_detalle?: Record<string, number>;
+  caja_id?: string;
 }
 
 export type EmitirComprobanteSuccess = {
@@ -120,6 +123,9 @@ export async function emitirComprobante(
       estado: 'emitido' as const,
       notas: body.notas || null,
       usuario_id: ctx.userId,
+      metodo_pago: body.metodo_pago ?? null,
+      metodo_pago_detalle: body.metodo_pago_detalle ?? null,
+      caja_id: body.caja_id ?? null,
     })
     .select()
     .single();

@@ -2990,14 +2990,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-018 — Extender API de emisión: tipo ticket, método de pago, cantidad decimal
+## V60-POS-018 — Extender API de emisión: tipo ticket, método de pago, cantidad decimal (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 5
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-015, V60-POS-005
 
 **Descripción:** Ajustar la API existente `POST /api/facturacion/emitir` para soportar el tipo de comprobante `ticket`, recibir `metodo_pago` y aceptar cantidades decimales en items.
