@@ -1704,14 +1704,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-ARCA-005 — Integrar ARCA en el flujo de emisión
+## V40-ARCA-005 — Integrar ARCA en el flujo de emisión (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 5
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-004, V15-FAC-006
 
 **Descripción:** Extender la API de emisión de comprobantes para que, si el módulo `facturador_arca` está activo, solicite CAE después de crear el comprobante. Manejar los 3 escenarios: aprobado, rechazado, timeout.

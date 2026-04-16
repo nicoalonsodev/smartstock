@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { calcularImportes } from '@/lib/facturacion/calcular-importes';
+import { solicitarCAE } from '@/lib/facturacion/arca/wsfe';
 import { formatearTipoComprobante } from '@/lib/facturacion/formato';
 import { generarPDF } from '@/lib/facturacion/pdf-generator';
 import type { Database } from '@/types/database';
@@ -225,10 +226,86 @@ export async function emitirComprobante(
     }
   }
 
+  // --- POST-EMISIÓN: solicitar CAE si el módulo facturador_arca está activo ---
+  let cae: string | null = null;
+  let caeVencimiento: string | null = null;
+
+  const { data: moduloConfig } = await supabase
+    .from('modulo_config')
+    .select('facturador_arca')
+    .maybeSingle();
+
+  const arcaActivo = moduloConfig && (moduloConfig as Record<string, boolean>).facturador_arca;
+
+  if (arcaActivo) {
+    const { data: arcaConfig } = await supabase
+      .from('arca_config')
+      .select('tenant_id, cuit_emisor, punto_de_venta, ambiente')
+      .eq('tenant_id', ctx.tenantId)
+      .single();
+
+    if (arcaConfig && arcaConfig.cuit_emisor && arcaConfig.punto_de_venta) {
+      const resultado = await solicitarCAE(
+        supabase,
+        {
+          tenant_id: arcaConfig.tenant_id,
+          cuit_emisor: arcaConfig.cuit_emisor,
+          punto_de_venta: arcaConfig.punto_de_venta,
+          ambiente: arcaConfig.ambiente,
+        },
+        {
+          tenantId: ctx.tenantId,
+          tipo: body.tipo,
+          numero,
+          fecha: comprobante.fecha,
+          clienteCuitDni: (await supabase
+            .from('cliente')
+            .select('cuit_dni')
+            .eq('id', body.cliente_id)
+            .single()
+          ).data?.cuit_dni ?? null,
+          importeTotal: importes.total,
+          importeNeto: importes.subtotal,
+          importeIVA: importes.iva_monto,
+          alicuotaIVA: importes.iva_porcentaje,
+        },
+        comprobante.id,
+      );
+
+      if (resultado.aprobado && resultado.cae) {
+        cae = resultado.cae;
+        caeVencimiento = resultado.caeVencimiento;
+        await supabase
+          .from('comprobante')
+          .update({
+            cae: resultado.cae,
+            cae_vencimiento: resultado.caeVencimiento,
+            estado: 'emitido' as never,
+          })
+          .eq('id', comprobante.id);
+      } else if (resultado.errores.some((e) => e.codigo === 'NETWORK')) {
+        await supabase
+          .from('comprobante')
+          .update({ estado: 'pendiente_arca' as never })
+          .eq('id', comprobante.id);
+      } else {
+        await supabase
+          .from('comprobante')
+          .update({ estado: 'error_arca' as never })
+          .eq('id', comprobante.id);
+      }
+    }
+  }
+
   return {
     ok: true,
     data: {
-      comprobante: { ...comprobante, numero, pdf_url: pdfUrl },
+      comprobante: {
+        ...comprobante,
+        numero,
+        pdf_url: pdfUrl,
+        ...(cae ? { cae, cae_vencimiento: caeVencimiento } : {}),
+      },
       importes,
     },
   };
