@@ -1797,14 +1797,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-ARCA-009 — Alerta de vencimiento de certificado ARCA
+## V40-ARCA-009 — Alerta de vencimiento de certificado ARCA (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: medium
 - Estimación: 2
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-001
 
 **Descripción:** Verificar la fecha de vencimiento del certificado ARCA y alertar al admin cuando faltan 30 días o menos.

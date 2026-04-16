@@ -20,6 +20,15 @@ export function ArcaConfigForm() {
   const [syncing, setSyncing] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
   const [syncResult, setSyncResult] = useState<Record<string, { arca: number; local: number; discrepancia: boolean }> | null>(null);
+  const [certStatus, setCertStatus] = useState<{
+    configurado: boolean;
+    valido?: boolean;
+    diasRestantes?: number;
+    fechaVencimiento?: string;
+    alerta?: boolean;
+    critico?: boolean;
+    expirado?: boolean;
+  } | null>(null);
 
   const [cuitEmisor, setCuitEmisor] = useState('');
   const [puntoDeVenta, setPuntoDeVenta] = useState('1');
@@ -37,6 +46,11 @@ export function ArcaConfigForm() {
         setCuitEmisor(data.config.cuit_emisor ?? '');
         setPuntoDeVenta(String(data.config.punto_de_venta ?? 1));
         setAmbiente(data.config.ambiente ?? 'homologacion');
+
+        const certRes = await fetch('/api/facturacion/arca/cert-status');
+        if (certRes.ok) {
+          setCertStatus(await certRes.json());
+        }
       }
     } finally {
       setLoading(false);
@@ -158,6 +172,29 @@ export function ArcaConfigForm() {
         <div className="rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-800">
           Configuración ARCA activa. Última actualización:{' '}
           {new Date(config.updated_at).toLocaleDateString('es-AR')}
+        </div>
+      )}
+
+      {certStatus?.expirado && (
+        <div className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+          <strong>Certificado expirado.</strong> La emisión con ARCA está bloqueada.
+          Subí un nuevo certificado para continuar.
+        </div>
+      )}
+
+      {certStatus?.critico && !certStatus.expirado && (
+        <div className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+          <strong>Certificado vence en {certStatus.diasRestantes} días</strong> (
+          {new Date(certStatus.fechaVencimiento!).toLocaleDateString('es-AR')}).
+          Renovalo urgente para evitar interrupciones en la facturación.
+        </div>
+      )}
+
+      {certStatus?.alerta && !certStatus.critico && !certStatus.expirado && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+          El certificado vence en <strong>{certStatus.diasRestantes} días</strong> (
+          {new Date(certStatus.fechaVencimiento!).toLocaleDateString('es-AR')}).
+          Planificá la renovación.
         </div>
       )}
 
