@@ -2963,14 +2963,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-017 — API: búsqueda de producto por código de barras
+## V60-POS-017 — API: búsqueda de producto por código de barras (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 3
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-007, V60-POS-005
 
 **Descripción:** Implementar `GET /api/productos/buscar-por-barcode?codigo=XXX` que recibe un código, lo parsea y busca el producto correspondiente según el tipo detectado.
