@@ -1605,14 +1605,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-ARCA-001 — Configuración ARCA (certificados y datos)
+## V40-ARCA-001 — Configuración ARCA (certificados y datos) (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 5
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V20-UI-002, V15-FAC-011
 
 **Descripción:** Crear la página `/configuracion/arca` donde el admin sube certificado y clave privada, configura CUIT, punto de venta y ambiente. Los certificados se encriptan con AES-256-CBC antes de guardar.
