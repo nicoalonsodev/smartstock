@@ -1775,14 +1775,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-ARCA-008 — Regenerar PDF con CAE y código de barras
+## V40-ARCA-008 — Regenerar PDF con CAE y código de barras (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: high
 - Estimación: 3
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-005
 
 **Descripción:** Cuando ARCA aprueba un comprobante, regenerar el PDF incluyendo el CAE, fecha de vencimiento del CAE, y el código de barras fiscal.

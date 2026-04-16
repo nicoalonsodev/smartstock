@@ -283,6 +283,65 @@ export async function emitirComprobante(
             estado: 'emitido' as never,
           })
           .eq('id', comprobante.id);
+
+        if (generarPdfYSubir) {
+          const itemsPDFCae = body.items.map((item) => {
+            const prod = productosMap.get(item.producto_id)!;
+            return {
+              cantidad: item.cantidad,
+              descripcion: prod.nombre,
+              precio_unitario: item.precio_unitario,
+              subtotal: Math.round(item.cantidad * item.precio_unitario * 100) / 100,
+            };
+          });
+
+          const pdfConCAE = generarPDF(
+            {
+              nombre: tenant.nombre,
+              razon_social: tenant.razon_social,
+              cuit: tenant.cuit,
+              domicilio: tenant.domicilio,
+              condicion_iva: tenant.condicion_iva ?? 'consumidor_final',
+              punto_de_venta: tenant.punto_de_venta,
+            },
+            {
+              nombre: cliente.nombre,
+              razon_social: cliente.razon_social,
+              cuit_dni: cliente.cuit_dni,
+              condicion_iva: cliente.condicion_iva ?? 'consumidor_final',
+              direccion: cliente.direccion,
+            },
+            {
+              tipo: body.tipo,
+              numero,
+              fecha: comprobante.fecha,
+              subtotal: importes.subtotal,
+              iva_monto: importes.iva_monto,
+              iva_porcentaje: importes.iva_porcentaje,
+              total: importes.total,
+              notas: body.notas || null,
+              cae: resultado.cae,
+              cae_vencimiento: resultado.caeVencimiento,
+            },
+            itemsPDFCae,
+          );
+
+          const pdfBufferCae = Buffer.from(pdfConCAE.output('arraybuffer'));
+          const pdfPathCae = `${ctx.tenantId}/comprobantes/${body.tipo}_${numero}.pdf`;
+
+          const { error: uploadErr } = await supabase.storage
+            .from('comprobantes')
+            .upload(pdfPathCae, pdfBufferCae, {
+              contentType: 'application/pdf',
+              upsert: true,
+            });
+
+          if (!uploadErr) {
+            const { data: pubUrl } = supabase.storage.from('comprobantes').getPublicUrl(pdfPathCae);
+            pdfUrl = pubUrl.publicUrl;
+            await supabase.from('comprobante').update({ pdf_url: pdfUrl }).eq('id', comprobante.id);
+          }
+        }
       } else if (resultado.errores.some((e) => e.codigo === 'NETWORK')) {
         await supabase
           .from('comprobante')
