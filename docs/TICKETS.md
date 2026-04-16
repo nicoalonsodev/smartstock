@@ -1750,14 +1750,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-ARCA-007 — Cola de reintentos con Edge Function cron
+## V40-ARCA-007 — Cola de reintentos con Edge Function cron (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 5
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-005
 
 **Descripción:** Crear la Edge Function que corre cada 15 minutos y procesa comprobantes en estado `pendiente_arca`, reintentando hasta 3 veces.
