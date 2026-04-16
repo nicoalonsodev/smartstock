@@ -2663,14 +2663,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-005 — Regenerar tipos TypeScript de Supabase
+## V60-POS-005 — Regenerar tipos TypeScript de Supabase (hecho)
 
 - Tipo: setup
 - Módulo: infra
 - Prioridad: critical
 - Estimación: 1
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-001, V60-POS-002, V60-POS-003, V60-POS-004
 
 **Descripción:** Ejecutar `npm run gen:types` para regenerar `src/types/database.ts` con las nuevas columnas de producto, el tipo NUMERIC en cantidad, el flag `facturador_pos` y los nuevos valores de ENUM.

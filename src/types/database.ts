@@ -325,6 +325,7 @@ export type Database = {
         Row: {
           cae: string | null;
           cae_vencimiento: string | null;
+          caja_id: string | null;
           cliente_id: string | null;
           created_at: string;
           estado: Database['public']['Enums']['estado_comprobante'];
@@ -332,6 +333,8 @@ export type Database = {
           id: string;
           iva_monto: number;
           iva_porcentaje: number;
+          metodo_pago: string | null;
+          metodo_pago_detalle: Json | null;
           notas: string | null;
           numero: number;
           pdf_url: string | null;
@@ -345,6 +348,7 @@ export type Database = {
         Insert: {
           cae?: string | null;
           cae_vencimiento?: string | null;
+          caja_id?: string | null;
           cliente_id?: string | null;
           created_at?: string;
           estado?: Database['public']['Enums']['estado_comprobante'];
@@ -352,6 +356,8 @@ export type Database = {
           id?: string;
           iva_monto?: number;
           iva_porcentaje?: number;
+          metodo_pago?: string | null;
+          metodo_pago_detalle?: Json | null;
           notas?: string | null;
           numero: number;
           pdf_url?: string | null;
@@ -365,6 +371,7 @@ export type Database = {
         Update: {
           cae?: string | null;
           cae_vencimiento?: string | null;
+          caja_id?: string | null;
           cliente_id?: string | null;
           created_at?: string;
           estado?: Database['public']['Enums']['estado_comprobante'];
@@ -372,6 +379,8 @@ export type Database = {
           id?: string;
           iva_monto?: number;
           iva_porcentaje?: number;
+          metodo_pago?: string | null;
+          metodo_pago_detalle?: Json | null;
           notas?: string | null;
           numero?: number;
           pdf_url?: string | null;
@@ -734,6 +743,7 @@ export type Database = {
           analizador_rentabilidad: boolean;
           created_at: string;
           facturador_arca: boolean;
+          facturador_pos: boolean;
           facturador_simple: boolean;
           ia_precios: boolean;
           id: string;
@@ -748,6 +758,7 @@ export type Database = {
           analizador_rentabilidad?: boolean;
           created_at?: string;
           facturador_arca?: boolean;
+          facturador_pos?: boolean;
           facturador_simple?: boolean;
           ia_precios?: boolean;
           id?: string;
@@ -762,6 +773,7 @@ export type Database = {
           analizador_rentabilidad?: boolean;
           created_at?: string;
           facturador_arca?: boolean;
+          facturador_pos?: boolean;
           facturador_simple?: boolean;
           ia_precios?: boolean;
           id?: string;
@@ -1094,12 +1106,15 @@ export type Database = {
           activo: boolean;
           categoria_id: string | null;
           codigo: string;
+          codigo_barras: string | null;
           created_at: string;
           descripcion: string | null;
+          es_pesable: boolean;
           fecha_vencimiento: string | null;
           id: string;
           imagen_url: string | null;
           nombre: string;
+          plu: string | null;
           precio_costo: number;
           precio_venta: number;
           proveedor_id: string | null;
@@ -1113,12 +1128,15 @@ export type Database = {
           activo?: boolean;
           categoria_id?: string | null;
           codigo: string;
+          codigo_barras?: string | null;
           created_at?: string;
           descripcion?: string | null;
+          es_pesable?: boolean;
           fecha_vencimiento?: string | null;
           id?: string;
           imagen_url?: string | null;
           nombre: string;
+          plu?: string | null;
           precio_costo?: number;
           precio_venta?: number;
           proveedor_id?: string | null;
@@ -1132,12 +1150,15 @@ export type Database = {
           activo?: boolean;
           categoria_id?: string | null;
           codigo?: string;
+          codigo_barras?: string | null;
           created_at?: string;
           descripcion?: string | null;
+          es_pesable?: boolean;
           fecha_vencimiento?: string | null;
           id?: string;
           imagen_url?: string | null;
           nombre?: string;
+          plu?: string | null;
           precio_costo?: number;
           precio_venta?: number;
           proveedor_id?: string | null;
@@ -1487,7 +1508,8 @@ export type Database = {
         | 'nota_credito_b'
         | 'nota_credito_c'
         | 'remito'
-        | 'presupuesto';
+        | 'presupuesto'
+        | 'ticket';
       tipo_movimiento: 'entrada' | 'salida' | 'ajuste';
       unidad_medida: 'unidad' | 'kg' | 'litro' | 'metro' | 'caja' | 'pack' | 'gramo' | 'ml';
     };
