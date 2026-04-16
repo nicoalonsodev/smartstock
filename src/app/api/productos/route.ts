@@ -1,4 +1,5 @@
 import { createServerClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { getTenantSession, rejectIfVisor } from '@/lib/api/tenant-session';
@@ -45,16 +46,59 @@ const selectList =
   'id, codigo, nombre, stock_actual, stock_minimo, precio_costo, precio_venta, unidad, fecha_vencimiento, categoria:categoria_id(id, nombre), proveedor:proveedor_id(id, nombre)';
 
 export async function GET(request: NextRequest) {
-  const guard = await moduloGuard('stock');
-  if (!guard.allowed) return guard.response;
+  // #region agent log
+  const agentLog = (
+    message: string,
+    hypothesisId: string,
+    data: Record<string, unknown>
+  ) => {
+    fetch('http://127.0.0.1:7729/ingest/b7d77d9b-b0af-4230-81eb-50c688422230', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'c9181b' },
+      body: JSON.stringify({
+        sessionId: 'c9181b',
+        runId: 'post-fix',
+        hypothesisId,
+        location: 'api/productos/route.ts:GET',
+        message,
+        data,
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  };
+  // #endregion
 
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-  }
+  try {
+    const cookieStore = await cookies();
+    const all = cookieStore.getAll();
+    const sb = all.filter(
+      (c) => c.name.startsWith('sb-') || c.name.toLowerCase().includes('auth')
+    );
+    // #region agent log
+    agentLog('GET entry', 'H1-H2', {
+      cookieCount: all.length,
+      sbNames: sb.map((c) => c.name),
+      sbValueLengths: sb.map((c) => c.value.length),
+      emptySbCookieNames: sb.filter((c) => c.value.length === 0).map((c) => c.name),
+    });
+    // #endregion
+
+    const guard = await moduloGuard('stock');
+    if (!guard.allowed) return guard.response;
+    // #region agent log
+    agentLog('after moduloGuard', 'H2-H4', { allowed: true });
+    // #endregion
+
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    // #region agent log
+    agentLog('after route getUser', 'H2-H4', { hasUser: !!user });
+    // #endregion
+    if (!user) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+    }
 
   const { searchParams } = new URL(request.url);
   const busqueda = searchParams.get('q');
@@ -127,13 +171,36 @@ export async function GET(request: NextRequest) {
   const rows = (data ?? []) as unknown as ProductoListRow[];
   const productos = await conStockDisponible(supabase, rows);
 
-  return NextResponse.json({
-    productos,
-    total: count ?? 0,
-    pagina,
-    por_pagina: porPagina,
-    total_paginas: Math.ceil((count ?? 0) / porPagina),
-  });
+    return NextResponse.json({
+      productos,
+      total: count ?? 0,
+      pagina,
+      por_pagina: porPagina,
+      total_paginas: Math.ceil((count ?? 0) / porPagina),
+    });
+  } catch (e) {
+    const err = e instanceof Error ? e : new Error(String(e));
+    // #region agent log
+    fetch('http://127.0.0.1:7729/ingest/b7d77d9b-b0af-4230-81eb-50c688422230', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'c9181b' },
+      body: JSON.stringify({
+        sessionId: 'c9181b',
+        runId: 'post-fix',
+        hypothesisId: 'H1-H4',
+        location: 'api/productos/route.ts:GET',
+        message: 'GET uncaught',
+        data: {
+          errName: err.name,
+          errMessage: err.message,
+          errStackHead: err.stack?.split('\n').slice(0, 4).join(' | '),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+    throw e;
+  }
 }
 
 export async function POST(request: Request) {

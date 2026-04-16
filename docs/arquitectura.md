@@ -99,25 +99,33 @@ smartstock/
 │   │   │   ├── movimientos/          # Historial de movimientos de stock
 │   │   │   ├── importar/             # Importador Excel: upload → mapeo → preview
 │   │   │   ├── facturacion/          # Comprobantes: lista, emisión, detalle
+│   │   │   │   └── pos/             # Terminal POS con escáner (fullscreen, sin sidebar)
 │   │   │   ├── clientes/             # CRUD de clientes
 │   │   │   ├── proveedores/          # CRUD de proveedores + perfil de mapeo Excel
 │   │   │   ├── pedidos/              # Pedidos con estados (Plan Completo)
 │   │   │   ├── presupuestos/         # Presupuestos (Plan Completo)
 │   │   │   ├── ia-precios/           # Extracción IA + historial (Plan Completo)
-│   │   │   └── configuracion/        # Config del negocio, plan, ARCA, usuarios
+│   │   │   ├── analizador/           # Listas de proveedores, rentabilidad y forecast (Plan Completo)
+│   │   │   └── configuracion/        # Config del negocio, plan, ARCA, POS, usuarios
 │   │   └── api/                      # API Routes (server-side)
 │   │       ├── auth/callback/        # Callback de Supabase Auth (magic link)
 │   │       ├── productos/            # CRUD API de productos
 │   │       ├── movimientos/          # Registrar movimientos
 │   │       ├── importar/             # Validar y ejecutar importación
 │   │       ├── facturacion/          # Emitir comprobantes + ARCA
+│   │       ├── productos/            # CRUD API de productos + barcode + generación código
+│   │       │   └── buscar-por-barcode/ # Lookup por código escaneado (POS)
 │   │       ├── pedidos/              # CRUD de pedidos
-│   │       └── ia/                   # Extracción con Gemini
+│   │       ├── ia/                   # Extracción con Gemini
+│   │       └── analizador/           # Matching, simulación y aplicación de listas
 │   ├── lib/                          # Lógica de negocio y utilidades
 │   │   ├── supabase/                 # Clientes Supabase (browser, server, middleware)
 │   │   ├── normalizador/             # Aliases, mapeo, validación, normalización
 │   │   ├── facturacion/              # PDF generator, numerador, ARCA (wsaa, wsfe)
+│   │   ├── pos/                      # EAN-13 (generar/validar), barcode-parser, utilidades POS
 │   │   ├── ia/                       # Cliente Gemini y prompts
+│   │   ├── analizador/               # Matching, análisis, simulador, forecast y radar
+│   │   ├── cuenta-corriente/         # Deuda de clientes y registro de pagos
 │   │   └── utils/                    # Formatters y validators genéricos
 │   ├── components/                   # Componentes React
 │   │   ├── ui/                       # Componentes base (buttons, inputs, modals)
@@ -125,7 +133,9 @@ smartstock/
 │   │   ├── stock/                    # Tabla de productos, cards de alerta
 │   │   ├── importar/                 # Wizard de importación
 │   │   ├── facturacion/              # Formulario de comprobante, preview PDF
+│   │   ├── pos/                      # BarcodeInput, carrito POS, modal cobro, ticket térmico
 │   │   ├── pedidos/                  # Formulario de pedido, tabla de estados
+│   │   ├── analizador/               # Paneles de listas, simulador y dashboards de rentabilidad
 │   │   └── dashboard/                # Widgets de métricas
 │   ├── hooks/                        # Custom hooks
 │   │   ├── useModulos.ts             # Lee modulo_config, expone flags de módulos
@@ -139,7 +149,7 @@ smartstock/
 │   └── plantillas/
 │       └── plantilla_importacion.xlsx  # Plantilla descargable para importar productos
 ├── supabase/
-│   ├── migrations/                   # Migraciones SQL ordenadas (001 → 012)
+│   ├── migrations/                   # Migraciones SQL ordenadas (001 → 022)
 │   └── seed.sql                      # Datos de prueba
 ├── docs/                             # Documentación del proyecto (Memory Bank)
 ├── .env.local                        # Variables de entorno (no se commitea)
@@ -208,3 +218,5 @@ App Router es el estándar actual de Next.js 14+. Permite:
 | **v2.0 — Lanzamiento** | Dashboard con métricas, feature flags por plan, onboarding, responsive, deploy a producción | Primer cliente real operando en producción |
 | **v3.0 — Pedidos + IA** | Pedidos con estados y conversión a factura, presupuestos, extracción IA con Gemini, historial de precios | Una distribuidora actualiza precios subiendo un PDF y genera pedidos |
 | **v4.0 — ARCA** | WSAA + WSFE, emisión de facturas A/B/C con CAE, cola de reintentos, modo offline | Factura electrónica emitida con CAE válido en producción |
+| **v5.0 — Analizador** | Listas de proveedores persistentes, simulación de márgenes, ranking, forecast, cuenta corriente y radar de inflación | Un comerciante carga una lista, analiza impacto, decide precios y aplica cambios con trazabilidad |
+| **v6.0 — POS con escáner** | Códigos de barra en productos (EAN-13, PLU, pesables), impresión de etiquetas, terminal POS fullscreen con captura de escáner, emisión de tickets, impresión térmica | Un operador abre el POS, escanea productos con pistola láser, cobra en efectivo y se imprime un ticket térmico |

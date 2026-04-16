@@ -36,6 +36,7 @@ type Producto = {
   codigo: string | null;
   nombre: string;
   precio_venta: number;
+  precio_costo: number;
   stock_actual: number;
 };
 
@@ -71,6 +72,12 @@ const TIPO_LABELS: Record<string, string> = {
   presupuesto: 'Presupuesto',
 };
 
+function margenColor(pct: number): string {
+  if (pct >= 30) return 'text-emerald-600';
+  if (pct >= 15) return 'text-yellow-600';
+  return 'text-red-600';
+}
+
 export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string }) {
   const router = useRouter();
 
@@ -78,6 +85,7 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
   const [productos, setProductos] = useState<Producto[]>([]);
   const [tenantIva, setTenantIva] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showMargen, setShowMargen] = useState(false);
 
   const [clienteId, setClienteId] = useState('');
   const [tipo, setTipo] = useState('');
@@ -94,10 +102,11 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [cRes, pRes, tRes] = await Promise.all([
+    const [cRes, pRes, tRes, mRes] = await Promise.all([
       fetch('/api/clientes'),
       fetch('/api/productos'),
       fetch('/api/configuracion/tenant'),
+      fetch('/api/configuracion/plan'),
     ]);
 
     if (cRes.ok) {
@@ -111,6 +120,11 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
     if (tRes.ok) {
       const tJson = await tRes.json();
       setTenantIva(tJson.condicion_iva ?? null);
+    }
+    if (mRes.ok) {
+      const mJson = await mRes.json();
+      const modulos = mJson.modulos ?? mJson;
+      setShowMargen(!!modulos.analizador_rentabilidad);
     }
     setLoading(false);
   }, []);
@@ -287,82 +301,111 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
                 <TableHead className="w-24">Cantidad</TableHead>
                 <TableHead className="w-32">Precio</TableHead>
                 <TableHead className="w-28 text-right">Subtotal</TableHead>
+                {showMargen && <TableHead className="w-20 text-right">Costo</TableHead>}
+                {showMargen && <TableHead className="w-20 text-right">Margen</TableHead>}
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item, i) => (
-                <TableRow key={item.producto.id}>
-                  <TableCell className="font-medium">
-                    {item.producto.nombre}
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={item.cantidad}
-                      onChange={(e) =>
-                        actualizarItem(
-                          i,
-                          'cantidad',
-                          parseInt(e.target.value) || 1,
-                        )
-                      }
-                      className="w-20"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      min={0}
-                      step={0.01}
-                      value={item.precio_unitario}
-                      onChange={(e) =>
-                        actualizarItem(
-                          i,
-                          'precio_unitario',
-                          parseFloat(e.target.value) || 0,
-                        )
-                      }
-                      className="w-28"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right font-mono">
-                    {formatCurrency(item.cantidad * item.precio_unitario)}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <button
-                      type="button"
-                      onClick={() => eliminarItem(i)}
-                      className="text-destructive hover:text-destructive/80"
-                    >
-                      ×
-                    </button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {items.map((item, i) => {
+                const lineaCosto = item.producto.precio_costo * item.cantidad;
+                const lineaVenta = item.precio_unitario * item.cantidad;
+                const lineaMargenPct = lineaCosto > 0
+                  ? ((lineaVenta - lineaCosto) / lineaCosto) * 100
+                  : 0;
+                return (
+                  <TableRow key={item.producto.id}>
+                    <TableCell className="font-medium">
+                      {item.producto.nombre}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={item.cantidad}
+                        onChange={(e) =>
+                          actualizarItem(
+                            i,
+                            'cantidad',
+                            parseInt(e.target.value) || 1,
+                          )
+                        }
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={item.precio_unitario}
+                        onChange={(e) =>
+                          actualizarItem(
+                            i,
+                            'precio_unitario',
+                            parseFloat(e.target.value) || 0,
+                          )
+                        }
+                        className="w-28"
+                      />
+                    </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {formatCurrency(lineaVenta)}
+                    </TableCell>
+                    {showMargen && (
+                      <TableCell className="text-right font-mono text-xs text-muted-foreground">
+                        {formatCurrency(lineaCosto)}
+                      </TableCell>
+                    )}
+                    {showMargen && (
+                      <TableCell className={cn('text-right font-mono text-xs font-medium', margenColor(lineaMargenPct))}>
+                        {lineaMargenPct.toFixed(1)}%
+                      </TableCell>
+                    )}
+                    <TableCell className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => eliminarItem(i)}
+                        className="text-destructive hover:text-destructive/80"
+                      >
+                        ×
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
       ) : null}
 
-      {items.length > 0 ? (
-        <div className="space-y-1 text-right text-sm">
-          <p>
-            Subtotal:{' '}
-            <span className="font-mono">{formatCurrency(subtotal)}</span>
-          </p>
-          {esFacturaA ? (
+      {items.length > 0 ? (() => {
+        const costoTotal = items.reduce((s, i) => s + i.producto.precio_costo * i.cantidad, 0);
+        const margenTotal = subtotal - costoTotal;
+        const margenTotalPct = costoTotal > 0 ? (margenTotal / costoTotal) * 100 : 0;
+        return (
+          <div className="space-y-1 text-right text-sm">
             <p>
-              IVA (21%):{' '}
-              <span className="font-mono">{formatCurrency(ivaMonto)}</span>
+              Subtotal:{' '}
+              <span className="font-mono">{formatCurrency(subtotal)}</span>
             </p>
-          ) : null}
-          <p className="text-lg font-bold">
-            Total: <span className="font-mono">{formatCurrency(total)}</span>
-          </p>
-        </div>
-      ) : null}
+            {esFacturaA ? (
+              <p>
+                IVA (21%):{' '}
+                <span className="font-mono">{formatCurrency(ivaMonto)}</span>
+              </p>
+            ) : null}
+            <p className="text-lg font-bold">
+              Total: <span className="font-mono">{formatCurrency(total)}</span>
+            </p>
+            {showMargen && (
+              <p className={cn('text-sm font-medium', margenColor(margenTotalPct))}>
+                Margen total: {formatCurrency(margenTotal)} ({margenTotalPct.toFixed(1)}%)
+              </p>
+            )}
+          </div>
+        );
+      })() : null}
 
       <label className="grid gap-1 text-sm">
         <span className="text-muted-foreground">

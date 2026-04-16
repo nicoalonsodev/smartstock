@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
   ArrowLeftRight,
+  BarChart3,
   Brain,
   CreditCard,
   FileSpreadsheet,
@@ -47,6 +48,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Pedidos', href: '/pedidos', icon: ShoppingCart, modulo: 'pedidos' },
   { label: 'Presupuestos', href: '/presupuestos', icon: FileSpreadsheet, modulo: 'presupuestos' },
   { label: 'IA Precios', href: '/ia-precios', icon: Brain, modulo: 'ia_precios' },
+  { label: 'Analizador', href: '/analizador', icon: BarChart3, modulo: 'analizador_rentabilidad' },
   { label: 'Plan y módulos', href: '/configuracion/plan', icon: CreditCard },
   { label: 'ARCA / AFIP', href: '/configuracion/arca', icon: FileText, modulo: 'facturador_arca' },
   { label: 'Usuarios', href: '/configuracion/usuarios', icon: UsersRound, adminOnly: true },
@@ -128,6 +130,34 @@ export function DashboardChrome({
       document.body.style.overflow = prev;
     };
   }, [mobileOpen]);
+
+  // #region agent log
+  useEffect(() => {
+    const bisSkinCheckedCount = document.querySelectorAll('[bis_skin_checked]').length;
+    const sampleAttrs =
+      document.body?.firstElementChild && document.body.firstElementChild instanceof HTMLElement
+        ? Array.from(document.body.firstElementChild.attributes).map((a) => a.name)
+        : [];
+    fetch('http://127.0.0.1:7729/ingest/b7d77d9b-b0af-4230-81eb-50c688422230', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'b3607a' },
+      body: JSON.stringify({
+        sessionId: 'b3607a',
+        location: 'dashboard-chrome.tsx:hydration-probe',
+        message: 'post-mount hydration probe',
+        data: {
+          bisSkinCheckedCount,
+          bodyChildAttrNames: sampleAttrs,
+          loading,
+          pathname,
+          visibleItemsLen: visibleItems.length,
+        },
+        timestamp: Date.now(),
+        hypothesisId: 'H1-H5',
+      }),
+    }).catch(() => {});
+  }, [loading, pathname, visibleItems.length]);
+  // #endregion
 
   return (
     <div className="flex min-h-screen overflow-x-hidden bg-muted/30">

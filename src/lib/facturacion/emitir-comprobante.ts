@@ -67,7 +67,7 @@ export async function emitirComprobante(
   const productoIds = body.items.map((i) => i.producto_id);
   const { data: productos } = await supabase
     .from('producto')
-    .select('id, codigo, nombre, stock_actual')
+    .select('id, codigo, nombre, stock_actual, precio_costo')
     .in('id', productoIds);
 
   if (!productos || productos.length !== productoIds.length) {
@@ -134,6 +134,7 @@ export async function emitirComprobante(
     cantidad: item.cantidad,
     precio_unitario: item.precio_unitario,
     subtotal: item.subtotal,
+    precio_costo: productosMap.get(item.producto_id)?.precio_costo ?? 0,
   }));
 
   const { error: itemsError } = await supabase.from('comprobante_item').insert(itemsInsert);
@@ -161,6 +162,34 @@ export async function emitirComprobante(
       if (movError) {
         return { ok: false, status: 500, error: `Error de stock: ${movError.message}` };
       }
+    }
+  }
+
+  // Actualizar cuenta corriente: facturas suman deuda, notas de crédito restan.
+  if (!esPresupuesto) {
+    const esNotaCredito = body.tipo.startsWith('nota_credito');
+    const deltaDeuda = esNotaCredito ? -importes.total : importes.total;
+
+    // Crear cuenta corriente lazy si no existe
+    await supabase
+      .from('cuenta_corriente')
+      .upsert(
+        { tenant_id: ctx.tenantId, cliente_id: body.cliente_id, saldo: 0 },
+        { onConflict: 'tenant_id,cliente_id', ignoreDuplicates: true },
+      );
+
+    const { data: cuenta } = await supabase
+      .from('cuenta_corriente')
+      .select('id, saldo')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('cliente_id', body.cliente_id)
+      .single();
+
+    if (cuenta) {
+      await supabase
+        .from('cuenta_corriente')
+        .update({ saldo: cuenta.saldo + deltaDeuda })
+        .eq('id', cuenta.id);
     }
   }
 

@@ -12,7 +12,7 @@ export async function GET() {
     session.supabase
       .from('modulo_config')
       .select(
-        'stock, importador_excel, facturador_simple, facturador_arca, pedidos, presupuestos, ia_precios',
+        'stock, importador_excel, facturador_simple, facturador_arca, pedidos, presupuestos, ia_precios, analizador_rentabilidad',
       )
       .eq('tenant_id', session.tenantId)
       .maybeSingle(),

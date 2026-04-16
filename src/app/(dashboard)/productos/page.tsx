@@ -19,6 +19,15 @@ import { cn } from '@/lib/utils';
 
 type Opt = { id: string; nombre: string };
 
+function tryParseJson<T>(raw: string): T | null {
+  if (!raw.trim()) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
 function ProductosPageInner() {
   const { canEdit } = useDashboardRole();
   const searchParams = useSearchParams();
@@ -40,41 +49,46 @@ function ProductosPageInner() {
 
   const loadFilters = useCallback(async () => {
     const [cRes, pRes] = await Promise.all([fetch('/api/categorias'), fetch('/api/proveedores')]);
-    const cJson = await cRes.json();
-    const pJson = await pRes.json();
-    if (cRes.ok) {
+    const [cRaw, pRaw] = await Promise.all([cRes.text(), pRes.text()]);
+    const cJson = tryParseJson<{ categorias?: { id: string; nombre: string; activa: boolean }[] }>(
+      cRaw
+    );
+    const pJson = tryParseJson<{ proveedores?: { id: string; nombre: string; activo: boolean }[] }>(
+      pRaw
+    );
+    if (cRes.ok && cJson?.categorias) {
       setCategorias(
-        (cJson.categorias as { id: string; nombre: string; activa: boolean }[])
-          .filter((x) => x.activa)
-          .map((x) => ({ id: x.id, nombre: x.nombre }))
+        cJson.categorias.filter((x) => x.activa).map((x) => ({ id: x.id, nombre: x.nombre }))
       );
     }
-    if (pRes.ok) {
+    if (pRes.ok && pJson?.proveedores) {
       setProveedores(
-        (pJson.proveedores as { id: string; nombre: string; activo: boolean }[])
-          .filter((x) => x.activo)
-          .map((x) => ({ id: x.id, nombre: x.nombre }))
+        pJson.proveedores.filter((x) => x.activo).map((x) => ({ id: x.id, nombre: x.nombre }))
       );
     }
   }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams();
-    if (q.trim()) params.set('q', q.trim());
-    if (categoriaId) params.set('categoria_id', categoriaId);
-    if (proveedorId) params.set('proveedor_id', proveedorId);
-    if (stockBajo) params.set('stock_bajo', 'true');
-    if (vencidos) params.set('vencidos', 'true');
-    params.set('pagina', String(pagina));
-    params.set('por_pagina', '25');
-    const res = await fetch(`/api/productos?${params.toString()}`);
-    const json = await res.json();
-    if (res.ok) {
-      setProductos(json.productos ?? []);
-      setTotalPaginas(json.total_paginas ?? 1);
+    try {
+      const params = new URLSearchParams();
+      if (q.trim()) params.set('q', q.trim());
+      if (categoriaId) params.set('categoria_id', categoriaId);
+      if (proveedorId) params.set('proveedor_id', proveedorId);
+      if (stockBajo) params.set('stock_bajo', 'true');
+      if (vencidos) params.set('vencidos', 'true');
+      params.set('pagina', String(pagina));
+      params.set('por_pagina', '25');
+      const res = await fetch(`/api/productos?${params.toString()}`);
+      const raw = await res.text();
+      const json = tryParseJson<{ productos?: ProductoTabla[]; total_paginas?: number }>(raw);
+      if (res.ok && json) {
+        setProductos(json.productos ?? []);
+        setTotalPaginas(json.total_paginas ?? 1);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [q, categoriaId, proveedorId, stockBajo, vencidos, pagina]);
 
   useEffect(() => {

@@ -1,0 +1,51 @@
+Vencimiento,Nombre,Stock Mínimo,Categoría,Unidad,Precio Venta,Stock,Código,Precio Costo
+2026-12-01,Martillo carpintero 16 oz,5,Ferretería,unidad,4200,18,MAR-101,2500
+2027-01-15,"Clavo zincado 2"" bolsa x100",40,Ferretería,kg,1500,200,CLA-202,890
+2026-06-30,Cinta métrica 5 m,3,Herramientas,unidad,5200,12,HERR-003,3200
+2027-03-10,Destornillador Phillips N°2,8,Herramientas,unidad,2800,45,DEST-004,1600
+2027-05-20,Destornillador plano 1/4,8,Herramientas,unidad,2600,40,DEST-005,1500
+2026-09-15,Llave francesa 10",4,Herramientas,unidad,6500,22,LLA-006,3900
+2027-02-28,Pinza universal 8",6,Herramientas,unidad,5800,30,PIN-007,3400
+2026-11-30,Nivel de burbuja 60 cm,3,Herramientas,unidad,7200,15,NIV-008,4300
+2027-04-01,Serrucho 22",3,Herramientas,unidad,8900,10,SER-009,5200
+2027-06-15,Taladro eléctrico 500W,2,Eléctrico,unidad,38000,8,TAL-010,22000
+2026-08-31,Disco de corte metal 115mm x10,20,Abrasivos,pack,3200,80,DIS-011,1900
+2027-01-20,Disco de corte madera 184mm,10,Abrasivos,unidad,2800,35,DIS-012,1650
+2026-10-10,Lija al agua grano 120 x pliego,50,Abrasivos,unidad,350,300,LIJ-013,190
+2026-10-10,Lija al agua grano 220 x pliego,50,Abrasivos,unidad,350,280,LIJ-014,190
+2027-07-01,Tornillo autoperforante 8x1 x100,30,Ferretería,pack,1200,150,TOR-015,700
+2027-07-01,Tornillo autoperforante 10x2 x50,30,Ferretería,pack,1100,120,TOR-016,650
+2027-08-15,Bulon hexagonal M8x40 x10,25,Ferretería,pack,950,200,BUL-017,550
+2027-08-15,Tuerca hexagonal M8 x20,25,Ferretería,pack,600,350,TUE-018,340
+2027-09-01,Arandela plana M8 x20,30,Ferretería,pack,450,400,ARA-019,250
+2026-07-31,Bisagra de puerta 3" par,10,Herrajes,par,1800,60,BIS-020,1050
+2026-07-31,Bisagra de puerta 4" par,10,Herrajes,par,2200,45,BIS-021,1300
+2027-02-14,Cerradura de pomo interior,4,Herrajes,unidad,12500,20,CER-022,7400
+2027-02-14,Cerradura de embutir doble paleta,3,Herrajes,unidad,18900,12,CER-023,11200
+2026-09-30,Cadena de seguridad 1 m,5,Herrajes,unidad,4500,25,CAD-024,2700
+2027-03-20,Cable eléctrico 2,5mm x metro,100,Eléctrico,metro,680,500,CAB-025,390
+2027-03-20,Cable eléctrico 4mm x metro,80,Eléctrico,metro,950,350,CAB-026,560
+2026-12-15,Interruptor simple universal,15,Eléctrico,unidad,2100,70,INT-027,1200
+2026-12-15,Toma corriente doble,15,Eléctrico,unidad,2800,65,TOM-028,1650
+2027-01-10,Llave térmica 16A bipolar,5,Eléctrico,unidad,9500,18,TERR-029,5600
+2027-01-10,Llave térmica 25A bipolar,5,Eléctrico,unidad,11200,15,TERR-030,6600
+2026-08-20,Cinta aisladora negra x10m,20,Eléctrico,unidad,850,120,CIN-031,490
+2027-05-10,Pintura látex interior blanco 4L,6,Pinturería,balde,9800,30,PIN-032,5800
+2027-05-10,Pintura látex exterior blanco 4L,6,Pinturería,balde,11500,25,PIN-033,6800
+2027-04-30,Esmalte sintético negro brillante 1L,8,Pinturería,litro,5200,40,ESM-034,3100
+2027-04-30,Esmalte sintético blanco brillante 1L,8,Pinturería,litro,5200,38,ESM-035,3100
+2026-11-15,Aguarrás mineral 1L,10,Pinturería,litro,3400,55,AGU-036,2000
+2026-11-15,Sellador acrílico multiuso 300ml,12,Pinturería,unidad,2900,50,SEL-037,1700
+2027-06-01,Rodillo de pintar 22 cm,8,Pinturería,unidad,3200,35,ROD-038,1900
+2026-10-25,Pincel cerda natural N°20,10,Pinturería,unidad,1500,60,PINC-039,870
+2027-08-01,Manguera reforzada 1/2" x metro,30,Plomería,metro,890,200,MAN-040,520
+2027-08-01,Caño PVC 110mm x 3m,8,Plomería,unidad,4200,40,CPVC-041,2500
+2026-09-20,Codo PVC 110mm 90°,15,Plomería,unidad,980,100,COD-042,570
+2026-09-20,Codo PVC 63mm 45°,15,Plomería,unidad,720,90,COD-043,420
+2027-02-01,Llave de paso esfera 1/2",6,Plomería,unidad,3800,35,LLP-044,2250
+2027-02-01,Llave de paso esfera 3/4",6,Plomería,unidad,4500,28,LLP-045,2650
+2026-06-15,Silicona selladora transparente 300ml,10,Plomería,unidad,3100,55,SIL-046,1850
+2027-07-20,Guantes de trabajo talle L,10,Seguridad,par,2400,50,GUA-047,1400
+2027-07-20,Gafas de protección transparente,8,Seguridad,unidad,1900,45,GAF-048,1100
+2027-09-30,Casco de seguridad blanco,4,Seguridad,unidad,5500,20,CAS-049,3200
+2027-10-01,Mascarilla antipolvo N95 x5,15,Seguridad,pack,3600,70,MAS-050,2100

@@ -5,7 +5,8 @@ export type ModuloKey =
   | 'facturador_arca'
   | 'pedidos'
   | 'presupuestos'
-  | 'ia_precios';
+  | 'ia_precios'
+  | 'analizador_rentabilidad';
 
 export interface ModulosConfig {
   stock: boolean;
@@ -15,6 +16,7 @@ export interface ModulosConfig {
   pedidos: boolean;
   presupuestos: boolean;
   ia_precios: boolean;
+  analizador_rentabilidad: boolean;
 }
 
 export const DEFAULT_MODULOS: ModulosConfig = {
@@ -25,4 +27,5 @@ export const DEFAULT_MODULOS: ModulosConfig = {
   pedidos: false,
   presupuestos: false,
   ia_precios: false,
+  analizador_rentabilidad: false,
 };

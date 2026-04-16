@@ -15,30 +15,35 @@ export type TenantSession =
   | { error: NextResponse };
 
 export async function getTenantSession(): Promise<TenantSession> {
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: NextResponse.json({ error: 'No autenticado' }, { status: 401 }) };
+  try {
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { error: NextResponse.json({ error: 'No autenticado' }, { status: 401 }) };
+    }
+
+    const { data: usuario, error } = await supabase
+      .from('usuario')
+      .select('tenant_id, rol')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (error || !usuario) {
+      return { error: NextResponse.json({ error: 'Perfil no encontrado' }, { status: 403 }) };
+    }
+
+    return {
+      supabase,
+      userId: user.id,
+      tenantId: usuario.tenant_id,
+      rol: usuario.rol,
+    };
+  } catch (e) {
+    console.error('[getTenantSession] error inesperado:', e);
+    return { error: NextResponse.json({ error: 'Error interno' }, { status: 503 }) };
   }
-
-  const { data: usuario, error } = await supabase
-    .from('usuario')
-    .select('tenant_id, rol')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  if (error || !usuario) {
-    return { error: NextResponse.json({ error: 'Perfil no encontrado' }, { status: 403 }) };
-  }
-
-  return {
-    supabase,
-    userId: user.id,
-    tenantId: usuario.tenant_id,
-    rol: usuario.rol,
-  };
 }
 
 export function rejectIfVisor(rol: RolUsuario) {

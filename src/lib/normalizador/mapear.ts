@@ -8,6 +8,8 @@ export interface MapeoColumna {
   campoDetectado: CampoProducto | null;
   confianza: 'exacta' | 'parcial' | 'ninguna';
   ignorar: boolean;
+  /** Columna agregada en el paso preview (no existe en el archivo). */
+  sintetica?: boolean;
 }
 
 export function mapearHeaders(headers: string[]): MapeoColumna[] {

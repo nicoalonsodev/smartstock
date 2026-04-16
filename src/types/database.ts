@@ -126,6 +126,110 @@ export type Database = {
           },
         ];
       };
+      cierre_mensual: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          periodo: string;
+          ingresos_brutos: number;
+          costo_mercaderia: number;
+          margen_bruto: number;
+          margen_bruto_pct: number | null;
+          unidades_vendidas: number;
+          comprobantes_emitidos: number;
+          ticket_promedio: number | null;
+          top_productos: Json | null;
+          por_categoria: Json | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          periodo: string;
+          ingresos_brutos?: number;
+          costo_mercaderia?: number;
+          margen_bruto?: number;
+          margen_bruto_pct?: number | null;
+          unidades_vendidas?: number;
+          comprobantes_emitidos?: number;
+          ticket_promedio?: number | null;
+          top_productos?: Json | null;
+          por_categoria?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          tenant_id?: string;
+          periodo?: string;
+          ingresos_brutos?: number;
+          costo_mercaderia?: number;
+          margen_bruto?: number;
+          margen_bruto_pct?: number | null;
+          unidades_vendidas?: number;
+          comprobantes_emitidos?: number;
+          ticket_promedio?: number | null;
+          top_productos?: Json | null;
+          por_categoria?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'cierre_mensual_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenant';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      cuenta_corriente: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          cliente_id: string;
+          saldo: number;
+          limite_credito: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          cliente_id: string;
+          saldo?: number;
+          limite_credito?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          tenant_id?: string;
+          cliente_id?: string;
+          saldo?: number;
+          limite_credito?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'cuenta_corriente_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenant';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'cuenta_corriente_cliente_id_fkey';
+            columns: ['cliente_id'];
+            isOneToOne: false;
+            referencedRelation: 'cliente';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       categoria: {
         Row: {
           activa: boolean;
@@ -308,6 +412,7 @@ export type Database = {
           comprobante_id: string;
           created_at: string;
           id: string;
+          precio_costo: number;
           precio_unitario: number;
           producto_id: string;
           subtotal: number;
@@ -317,6 +422,7 @@ export type Database = {
           comprobante_id: string;
           created_at?: string;
           id?: string;
+          precio_costo?: number;
           precio_unitario: number;
           producto_id: string;
           subtotal: number;
@@ -326,6 +432,7 @@ export type Database = {
           comprobante_id?: string;
           created_at?: string;
           id?: string;
+          precio_costo?: number;
           precio_unitario?: number;
           producto_id?: string;
           subtotal?: number;
@@ -417,8 +524,214 @@ export type Database = {
           },
         ];
       };
+      lista_precios: {
+        Row: {
+          created_at: string;
+          error_mensaje: string | null;
+          estado: Database['public']['Enums']['estado_lista_precios'];
+          fecha_recepcion: string;
+          fecha_vigencia_desde: string | null;
+          fecha_vigencia_hasta: string | null;
+          id: string;
+          impacto_por_categoria: Json | null;
+          items_con_aumento: number;
+          items_con_baja: number;
+          items_matcheados_dudosos: number;
+          items_matcheados_seguros: number;
+          items_sin_cambio: number;
+          items_sin_match: number;
+          margen_global_anterior_pct: number | null;
+          margen_global_nuevo_pct: number | null;
+          mime_type: string | null;
+          nombre_archivo: string;
+          origen_extraccion: Database['public']['Enums']['origen_precio'];
+          proveedor_id: string;
+          resumen_ia: Json | null;
+          storage_bucket: string;
+          storage_path: string | null;
+          tenant_id: string;
+          total_items: number;
+          updated_at: string;
+          usuario_id: string | null;
+          variacion_promedio_pct: number | null;
+        };
+        Insert: {
+          created_at?: string;
+          error_mensaje?: string | null;
+          estado?: Database['public']['Enums']['estado_lista_precios'];
+          fecha_recepcion?: string;
+          fecha_vigencia_desde?: string | null;
+          fecha_vigencia_hasta?: string | null;
+          id?: string;
+          impacto_por_categoria?: Json | null;
+          items_con_aumento?: number;
+          items_con_baja?: number;
+          items_matcheados_dudosos?: number;
+          items_matcheados_seguros?: number;
+          items_sin_cambio?: number;
+          items_sin_match?: number;
+          margen_global_anterior_pct?: number | null;
+          margen_global_nuevo_pct?: number | null;
+          mime_type?: string | null;
+          nombre_archivo: string;
+          origen_extraccion: Database['public']['Enums']['origen_precio'];
+          proveedor_id: string;
+          resumen_ia?: Json | null;
+          storage_bucket?: string;
+          storage_path?: string | null;
+          tenant_id: string;
+          total_items?: number;
+          updated_at?: string;
+          usuario_id?: string | null;
+          variacion_promedio_pct?: number | null;
+        };
+        Update: {
+          created_at?: string;
+          error_mensaje?: string | null;
+          estado?: Database['public']['Enums']['estado_lista_precios'];
+          fecha_recepcion?: string;
+          fecha_vigencia_desde?: string | null;
+          fecha_vigencia_hasta?: string | null;
+          id?: string;
+          impacto_por_categoria?: Json | null;
+          items_con_aumento?: number;
+          items_con_baja?: number;
+          items_matcheados_dudosos?: number;
+          items_matcheados_seguros?: number;
+          items_sin_cambio?: number;
+          items_sin_match?: number;
+          margen_global_anterior_pct?: number | null;
+          margen_global_nuevo_pct?: number | null;
+          mime_type?: string | null;
+          nombre_archivo?: string;
+          origen_extraccion?: Database['public']['Enums']['origen_precio'];
+          proveedor_id?: string;
+          resumen_ia?: Json | null;
+          storage_bucket?: string;
+          storage_path?: string | null;
+          tenant_id?: string;
+          total_items?: number;
+          updated_at?: string;
+          usuario_id?: string | null;
+          variacion_promedio_pct?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'lista_precios_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenant';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'lista_precios_proveedor_id_fkey';
+            columns: ['proveedor_id'];
+            isOneToOne: false;
+            referencedRelation: 'proveedor';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'lista_precios_usuario_id_fkey';
+            columns: ['usuario_id'];
+            isOneToOne: false;
+            referencedRelation: 'usuario';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      lista_precios_item: {
+        Row: {
+          codigo_proveedor: string | null;
+          created_at: string;
+          id: string;
+          incluir_en_aplicacion: boolean;
+          lista_id: string;
+          margen_anterior_pct: number | null;
+          margen_nuevo_pct: number | null;
+          match_confidence: number | null;
+          match_metodo: string | null;
+          nombre_normalizado: string | null;
+          nombre_raw: string;
+          notas: string | null;
+          orden: number | null;
+          precio_costo_anterior: number | null;
+          precio_lista: number;
+          precio_venta_actual: number | null;
+          precio_venta_decidido: number | null;
+          precio_venta_sugerido: number | null;
+          producto_id: string | null;
+          unidad: Database['public']['Enums']['unidad_medida'] | null;
+          updated_at: string;
+          variacion_pct: number | null;
+        };
+        Insert: {
+          codigo_proveedor?: string | null;
+          created_at?: string;
+          id?: string;
+          incluir_en_aplicacion?: boolean;
+          lista_id: string;
+          margen_anterior_pct?: number | null;
+          margen_nuevo_pct?: number | null;
+          match_confidence?: number | null;
+          match_metodo?: string | null;
+          nombre_normalizado?: string | null;
+          nombre_raw: string;
+          notas?: string | null;
+          orden?: number | null;
+          precio_costo_anterior?: number | null;
+          precio_lista: number;
+          precio_venta_actual?: number | null;
+          precio_venta_decidido?: number | null;
+          precio_venta_sugerido?: number | null;
+          producto_id?: string | null;
+          unidad?: Database['public']['Enums']['unidad_medida'] | null;
+          updated_at?: string;
+          variacion_pct?: number | null;
+        };
+        Update: {
+          codigo_proveedor?: string | null;
+          created_at?: string;
+          id?: string;
+          incluir_en_aplicacion?: boolean;
+          lista_id?: string;
+          margen_anterior_pct?: number | null;
+          margen_nuevo_pct?: number | null;
+          match_confidence?: number | null;
+          match_metodo?: string | null;
+          nombre_normalizado?: string | null;
+          nombre_raw?: string;
+          notas?: string | null;
+          orden?: number | null;
+          precio_costo_anterior?: number | null;
+          precio_lista?: number;
+          precio_venta_actual?: number | null;
+          precio_venta_decidido?: number | null;
+          precio_venta_sugerido?: number | null;
+          producto_id?: string | null;
+          unidad?: Database['public']['Enums']['unidad_medida'] | null;
+          updated_at?: string;
+          variacion_pct?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'lista_precios_item_lista_id_fkey';
+            columns: ['lista_id'];
+            isOneToOne: false;
+            referencedRelation: 'lista_precios';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'lista_precios_item_producto_id_fkey';
+            columns: ['producto_id'];
+            isOneToOne: false;
+            referencedRelation: 'producto';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       modulo_config: {
         Row: {
+          analizador_rentabilidad: boolean;
           created_at: string;
           facturador_arca: boolean;
           facturador_simple: boolean;
@@ -432,6 +745,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          analizador_rentabilidad?: boolean;
           created_at?: string;
           facturador_arca?: boolean;
           facturador_simple?: boolean;
@@ -445,6 +759,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          analizador_rentabilidad?: boolean;
           created_at?: string;
           facturador_arca?: boolean;
           facturador_simple?: boolean;
@@ -650,6 +965,73 @@ export type Database = {
           },
         ];
       };
+      pago: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          cliente_id: string;
+          cuenta_id: string;
+          comprobante_id: string | null;
+          monto: number;
+          tipo_pago: Database['public']['Enums']['tipo_pago'];
+          referencia: string | null;
+          notas: string | null;
+          fecha: string;
+          usuario_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          cliente_id: string;
+          cuenta_id: string;
+          comprobante_id?: string | null;
+          monto: number;
+          tipo_pago?: Database['public']['Enums']['tipo_pago'];
+          referencia?: string | null;
+          notas?: string | null;
+          fecha?: string;
+          usuario_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          tenant_id?: string;
+          cliente_id?: string;
+          cuenta_id?: string;
+          comprobante_id?: string | null;
+          monto?: number;
+          tipo_pago?: Database['public']['Enums']['tipo_pago'];
+          referencia?: string | null;
+          notas?: string | null;
+          fecha?: string;
+          usuario_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'pago_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenant';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'pago_cliente_id_fkey';
+            columns: ['cliente_id'];
+            isOneToOne: false;
+            referencedRelation: 'cliente';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'pago_cuenta_id_fkey';
+            columns: ['cuenta_id'];
+            isOneToOne: false;
+            referencedRelation: 'cuenta_corriente';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       precio_historial: {
         Row: {
           created_at: string;
@@ -788,6 +1170,97 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      producto_proveedor: {
+        Row: {
+          codigo_proveedor: string | null;
+          created_at: string;
+          id: string;
+          precio_costo: number;
+          producto_id: string;
+          proveedor_id: string;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          codigo_proveedor?: string | null;
+          created_at?: string;
+          id?: string;
+          precio_costo?: number;
+          producto_id: string;
+          proveedor_id: string;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          codigo_proveedor?: string | null;
+          created_at?: string;
+          id?: string;
+          precio_costo?: number;
+          producto_id?: string;
+          proveedor_id?: string;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'producto_proveedor_producto_id_fkey';
+            columns: ['producto_id'];
+            isOneToOne: false;
+            referencedRelation: 'producto';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'producto_proveedor_proveedor_id_fkey';
+            columns: ['proveedor_id'];
+            isOneToOne: false;
+            referencedRelation: 'proveedor';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'producto_proveedor_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenant';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      radar_inflacion: {
+        Row: {
+          id: string;
+          rubro: string;
+          proveedor_nombre: string;
+          periodo: string;
+          variacion_pct: number;
+          cantidad_items: number;
+          contribuciones: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          rubro: string;
+          proveedor_nombre: string;
+          periodo: string;
+          variacion_pct?: number;
+          cantidad_items?: number;
+          contribuciones?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          rubro?: string;
+          proveedor_nombre?: string;
+          periodo?: string;
+          variacion_pct?: number;
+          cantidad_items?: number;
+          contribuciones?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       proveedor: {
         Row: {
@@ -954,6 +1427,29 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['movimiento']['Row'];
       };
+      contribuir_radar: {
+        Args: {
+          p_rubro: string;
+          p_proveedor_nombre: string;
+          p_periodo: string;
+          p_variacion_pct: number;
+          p_cantidad_items?: number;
+        };
+        Returns: undefined;
+      };
+      registrar_pago: {
+        Args: {
+          p_tenant_id: string;
+          p_cliente_id: string;
+          p_monto: number;
+          p_tipo_pago?: Database['public']['Enums']['tipo_pago'];
+          p_comprobante_id?: string | null;
+          p_referencia?: string | null;
+          p_notas?: string | null;
+          p_usuario_id?: string | null;
+        };
+        Returns: Database['public']['Tables']['pago']['Row'];
+      };
       siguiente_numero_comprobante: {
         Args: {
           p_tenant_id: string;
@@ -970,11 +1466,19 @@ export type Database = {
         | 'exento'
         | 'consumidor_final';
       estado_comprobante: 'borrador' | 'emitido' | 'pendiente_arca' | 'error_arca' | 'anulado';
+      estado_lista_precios:
+        | 'pendiente'
+        | 'analizada'
+        | 'aplicada_total'
+        | 'aplicada_parcial'
+        | 'archivada'
+        | 'error';
       estado_pedido: 'borrador' | 'confirmado' | 'entregado' | 'cancelado';
-      origen_precio: 'manual' | 'importacion_excel' | 'ia_pdf';
+      origen_precio: 'manual' | 'importacion_excel' | 'ia_pdf' | 'lista_precios';
       plan_tipo: 'base' | 'completo';
       referencia_tipo: 'factura' | 'pedido' | 'importacion' | 'manual' | 'ajuste_inventario';
       rol_usuario: 'admin' | 'operador' | 'visor';
+      tipo_pago: 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta' | 'otro';
       tipo_comprobante:
         | 'factura_a'
         | 'factura_b'

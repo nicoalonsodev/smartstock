@@ -1,6 +1,6 @@
 import { cache } from 'react';
 
-import { createServerClient } from '@/lib/supabase/server';
+import { getCachedServerAuth } from '@/lib/supabase/cached-auth';
 import type { Database } from '@/types/database';
 
 export type SessionProfile = {
@@ -10,10 +10,7 @@ export type SessionProfile = {
 };
 
 export const getSessionProfile = cache(async (): Promise<SessionProfile | null> => {
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getCachedServerAuth();
   if (!user) return null;
 
   const { data: usuario } = await supabase

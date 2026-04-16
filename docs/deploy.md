@@ -217,7 +217,7 @@ REVOKE EXECUTE ON FUNCTION public.custom_access_token_hook FROM authenticated, a
 ### Infraestructura
 
 - [ ] Proyecto Supabase creado en tier adecuado (al menos Pro para producción)
-- [ ] Todas las migraciones (001-012) aplicadas exitosamente
+- [ ] Todas las migraciones requeridas por el entorno objetivo aplicadas exitosamente (base `001-012`, extendido hasta `022` si se despliega el analizador)
 - [ ] `custom_access_token_hook` registrado en Supabase Dashboard
 - [ ] Verificar RLS activo en las 16 tablas: `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';`
 - [ ] Proyecto desplegado en Vercel con build exitoso
@@ -244,6 +244,8 @@ REVOKE EXECUTE ON FUNCTION public.custom_access_token_hook FROM authenticated, a
 
 - [ ] Bucket `comprobantes` creado en Supabase Storage
 - [ ] Policies de Storage configuradas (solo el tenant dueño puede leer sus PDFs)
+- [ ] Bucket `listas-precios` creado en Supabase Storage para guardar PDFs, Excels e imágenes originales del analizador
+- [ ] Policies de Storage configuradas para que cada tenant solo acceda a sus propias listas cargadas
 
 ```sql
 -- Policy de Storage para comprobantes
