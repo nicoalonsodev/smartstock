@@ -24,16 +24,16 @@ Este bloque incorpora dos capacidades complementarias que conforman un facturado
 
 ## Próximos 3 tickets a trabajar
 
-Bloque F (v6.0 POS) planificado. Los primeros tickets son **Fase 1 — Fundacional**:
+Fase 1 completada (7 tickets). Ahora **Fase 2 — Productos**:
 
-1. **V60-POS-001 — Migración: columnas codigo_barras, plu y es_pesable en producto**
-   Nuevas columnas en `producto` con índices UNIQUE parciales y CHECK constraints.
+1. **V60-POS-008 — API: asignar código de barras a producto**
+   POST /api/productos/[id]/codigo-barras con validación EAN-13 y detección de duplicados.
 
-2. **V60-POS-002 — Migración: cantidad INTEGER → NUMERIC(12,3)**
-   Cambio de tipo en movimiento, comprobante_item, pedido_item y producto.
+2. **V60-POS-009 — API: generar EAN-13 interno automático**
+   POST /api/productos/[id]/generar-codigo con prefijo 20 y secuencial del tenant.
 
-3. **V60-POS-003 — Migración: flag facturador_pos en modulo_config**
-   Nuevo módulo con constraint de dependencia y actualización de `activar_plan`.
+3. **V60-POS-010 — Extender PATCH producto con campos barcode**
+   Aceptar codigo_barras, plu y es_pesable en la API existente de actualización.
 
 ---
 

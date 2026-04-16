@@ -99,6 +99,9 @@ export async function PATCH(
     'fecha_vencimiento',
     'imagen_url',
     'activo',
+    'codigo_barras',
+    'plu',
+    'es_pesable',
   ] as const;
 
   const updates: Record<string, unknown> = {};
@@ -110,6 +113,32 @@ export async function PATCH(
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Sin cambios' }, { status: 400 });
+  }
+
+  // If es_pesable changes to false, nullify plu
+  if (updates.es_pesable === false && updates.plu === undefined) {
+    updates.plu = null;
+  }
+
+  // If es_pesable changes to true, enforce unit is kg or gramo
+  if (updates.es_pesable === true) {
+    const targetUnidad = updates.unidad as string | undefined;
+    if (targetUnidad && targetUnidad !== 'kg' && targetUnidad !== 'gramo') {
+      return NextResponse.json(
+        { error: 'Un producto pesable debe usar la unidad kg o gramo' },
+        { status: 400 }
+      );
+    }
+    if (!targetUnidad) {
+      const { data: current } = await session.supabase
+        .from('producto')
+        .select('unidad')
+        .eq('id', id)
+        .maybeSingle();
+      if (current && current.unidad !== 'kg' && current.unidad !== 'gramo') {
+        updates.unidad = 'kg';
+      }
+    }
   }
 
   if (b.precio_costo !== undefined || b.precio_venta !== undefined) {
@@ -157,7 +186,12 @@ export async function PATCH(
 
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json({ error: 'Ya existe un producto con ese código' }, { status: 409 });
+      const msg = error.message.includes('codigo_barras')
+        ? 'Ya existe un producto activo con ese código de barras'
+        : error.message.includes('plu')
+          ? 'Ya existe un producto activo con ese PLU'
+          : 'Ya existe un producto con ese código';
+      return NextResponse.json({ error: msg }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }

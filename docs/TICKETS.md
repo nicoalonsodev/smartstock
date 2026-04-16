@@ -2738,14 +2738,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-008 — API: asignar código de barras a un producto
+## V60-POS-008 — API: asignar código de barras a un producto (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 3
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-006, V60-POS-005
 
 **Descripción:** Crear endpoint `POST /api/productos/[id]/codigo-barras` que asigna o actualiza el código de barras de un producto existente, validando formato, duplicados y permisos.
@@ -2764,14 +2764,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-009 — API: generar EAN-13 interno automáticamente
+## V60-POS-009 — API: generar EAN-13 interno automáticamente (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: high
 - Estimación: 3
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-006, V60-POS-005
 
 **Descripción:** Crear endpoint `POST /api/productos/[id]/generar-codigo` que genera un EAN-13 interno con prefijo `20` para un producto que no tiene código de barras, usando un secuencial del tenant.
@@ -2789,14 +2789,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-010 — Extender PATCH /api/productos/[id] con campos de barcode y pesable
+## V60-POS-010 — Extender PATCH /api/productos/[id] con campos de barcode y pesable (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: high
 - Estimación: 2
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-005
 
 **Descripción:** Extender la API de edición de producto existente para aceptar los campos `codigo_barras`, `plu` y `es_pesable`, con validaciones de consistencia.
