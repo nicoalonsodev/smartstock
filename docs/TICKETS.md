@@ -3016,14 +3016,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-019 — Pantalla POS: layout, barra superior y zona de escaneo
+## V60-POS-019 — Pantalla POS: layout, barra superior y zona de escaneo (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 8
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-016, V60-POS-017, V60-POS-018
 
 **Descripción:** Construir la pantalla `/facturacion/pos` con layout de pantalla completa (sin sidebar), barra superior con datos del tenant y selector de cliente, y zona de escaneo con `<BarcodeInput />`.
