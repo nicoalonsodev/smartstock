@@ -3044,14 +3044,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-020 — Pantalla POS: carrito de items y totales en tiempo real
+## V60-POS-020 — Pantalla POS: carrito de items y totales en tiempo real (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 8
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-019
 
 **Descripción:** Implementar el cuerpo principal del POS: lista de items acumulados con edición inline, y panel de resumen con subtotal, IVA y total calculados en tiempo real.
