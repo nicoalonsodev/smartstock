@@ -2688,14 +2688,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-006 — Librería de generación y validación EAN-13
+## V60-POS-006 — Librería de generación y validación EAN-13 (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 3
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-005
 
 **Descripción:** Construir módulo de librería en `src/lib/pos/ean13.ts` con funciones puras para calcular dígito verificador EAN-13, validar códigos completos, generar EAN-13 internos con prefijo `20`, y formatear para display.
