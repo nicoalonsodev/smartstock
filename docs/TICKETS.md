@@ -1630,14 +1630,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-ARCA-002 — Implementar WSAA (autenticación con certificado)
+## V40-ARCA-002 — Implementar WSAA (autenticación con certificado) (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 8
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-001
 
 **Descripción:** Implementar el flujo completo de WSAA: construir TRA XML, firmar con CMS/PKCS#7, enviar a WSAA, parsear respuesta, guardar ticket.
@@ -1887,3 +1887,830 @@ ultima_actualizacion: 2026-04-13
 - [ ] Test: la cola procesa máximo 10 comprobantes por ciclo
 
 **Notas técnicas:** Mockear las respuestas de ARCA para simular timeouts y errores.
+
+---
+
+# BLOQUE F — v6.0 (Códigos de barra + POS con escáner)
+
+---
+
+## V60-POS-001 — Migración: columnas codigo_barras, plu y es_pesable en producto (hecho)
+
+- Tipo: migration
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 3
+- Versión: v6.0
+- Estado: done
+- Dependencias: V50-ANAL-005
+
+**Descripción:** Agregar tres columnas nuevas a la tabla `producto`: `codigo_barras` (VARCHAR(14), nullable), `plu` (VARCHAR(5), nullable) y `es_pesable` (BOOLEAN, default false). Crear índices UNIQUE parciales y CHECK constraints para garantizar consistencia.
+
+**Criterios de aceptación:**
+- [x] Columna `codigo_barras` VARCHAR(14) nullable agregada a `producto`
+- [x] Columna `plu` VARCHAR(5) nullable agregada a `producto`
+- [x] Columna `es_pesable` BOOLEAN DEFAULT false agregada a `producto`
+- [x] Índice UNIQUE parcial `idx_producto_barcode_tenant` sobre `(tenant_id, codigo_barras)` WHERE `codigo_barras IS NOT NULL AND activo = true`
+- [x] Índice UNIQUE parcial `idx_producto_plu_tenant` sobre `(tenant_id, plu)` WHERE `plu IS NOT NULL AND activo = true`
+- [x] CHECK constraint `chk_plu_requiere_pesable`: `plu IS NULL OR es_pesable = true`
+- [x] CHECK constraint `chk_pesable_unidad`: `es_pesable = false OR unidad IN ('kg', 'gramo')`
+- [x] Migración ejecuta sin errores sobre el schema existente
+
+**Notas técnicas:** Archivo `supabase/migrations/023_producto_barcode.sql`. Los índices parciales siguen el patrón existente del sistema (ver `idx_producto_codigo_tenant`). Los 14 dígitos cubren EAN-13 y futura compatibilidad con ITF-14.
+
+---
+
+## V60-POS-002 — Migración: cantidad INTEGER → NUMERIC(12,3) en movimiento, comprobante_item y pedido_item
+
+- Tipo: migration
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 5
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-001
+
+**Descripción:** Migrar el tipo de dato de la columna `cantidad` de INTEGER a NUMERIC(12,3) en las tablas `movimiento`, `comprobante_item` y `pedido_item` para soportar productos pesables con cantidades decimales (ej: 0.450 kg). Ajustar los constraints existentes y las columnas de stock en `movimiento`.
+
+**Criterios de aceptación:**
+- [ ] `movimiento.cantidad` migrada de INTEGER a NUMERIC(12,3)
+- [ ] `movimiento.stock_anterior` migrada de INTEGER a NUMERIC(12,3)
+- [ ] `movimiento.stock_posterior` migrada de INTEGER a NUMERIC(12,3)
+- [ ] `comprobante_item.cantidad` migrada de INTEGER a NUMERIC(12,3)
+- [ ] `pedido_item.cantidad` migrada de INTEGER a NUMERIC(12,3)
+- [ ] `producto.stock_actual` migrada de INTEGER a NUMERIC(12,3)
+- [ ] `producto.stock_minimo` migrada de INTEGER a NUMERIC(12,3)
+- [ ] Constraint `chk_cantidad_positiva` ajustado para semántica decimal (`cantidad > 0`)
+- [ ] Constraint `chk_item_positivo` ajustado para semántica decimal
+- [ ] Constraint `chk_pedido_item_positivo` ajustado para semántica decimal
+- [ ] Constraint `chk_stock_positivo` ajustado (`stock_actual >= 0`)
+- [ ] Datos existentes preservados sin pérdida (INTEGER → NUMERIC es un cast seguro)
+
+**Notas técnicas:** Archivo `supabase/migrations/024_cantidad_decimal.sql`. NUMERIC(12,3) permite hasta 999.999.999,999 con precisión de milésimas (gramo). Los constraints se recrean con `ALTER TABLE ... DROP CONSTRAINT ... ADD CONSTRAINT`. Es la migración más invasiva del bloque porque toca tablas core.
+
+---
+
+## V60-POS-003 — Migración: flag facturador_pos en modulo_config + activar_plan
+
+- Tipo: migration
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 3
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-001
+
+**Descripción:** Agregar la columna `facturador_pos` (BOOLEAN, default false) a `modulo_config`. Crear CHECK constraint que obliga a tener `facturador_simple = true` si `facturador_pos = true`. Actualizar la función `activar_plan` para setear este flag en true con plan completo y false con plan base.
+
+**Criterios de aceptación:**
+- [ ] Columna `facturador_pos` BOOLEAN DEFAULT false agregada a `modulo_config`
+- [ ] CHECK constraint `chk_pos_requiere_facturador`: `facturador_pos = false OR facturador_simple = true`
+- [ ] Función `activar_plan` actualizada: plan completo activa `facturador_pos = true`, plan base desactiva `facturador_pos = false`
+- [ ] RLS policies de `modulo_config` siguen funcionando correctamente
+- [ ] Migración es idempotente y no rompe tenants existentes
+
+**Notas técnicas:** Archivo `supabase/migrations/025_facturador_pos.sql`. Sigue el mismo patrón que `chk_arca_requiere_facturador`.
+
+---
+
+## V60-POS-004 — Actualizar función registrar_movimiento para NUMERIC
+
+- Tipo: migration
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 2
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-002
+
+**Descripción:** Actualizar la firma y tipos internos de la función SQL `registrar_movimiento`: los parámetros `p_cantidad`, variables `v_stock_anterior` y `v_stock_posterior` pasan de INTEGER a NUMERIC(12,3). La lógica interna no cambia.
+
+**Criterios de aceptación:**
+- [ ] Parámetro `p_cantidad` cambia de INTEGER a NUMERIC(12,3)
+- [ ] Variables `v_stock_anterior` y `v_stock_posterior` cambian a NUMERIC(12,3)
+- [ ] La función sigue sumando/restando/asignando correctamente con decimales
+- [ ] `FOR UPDATE` sigue previniendo race conditions
+- [ ] Error de stock insuficiente sigue funcionando con valores decimales
+- [ ] Tests existentes de movimiento siguen pasando
+
+**Notas técnicas:** Se usa `CREATE OR REPLACE FUNCTION` para actualizar sin borrar la función existente. Incluir en la misma migración `024_cantidad_decimal.sql` o en una separada si conviene.
+
+---
+
+## V60-POS-005 — Regenerar tipos TypeScript de Supabase
+
+- Tipo: setup
+- Módulo: infra
+- Prioridad: critical
+- Estimación: 1
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-001, V60-POS-002, V60-POS-003, V60-POS-004
+
+**Descripción:** Ejecutar `npm run gen:types` para regenerar `src/types/database.ts` con las nuevas columnas de producto, el tipo NUMERIC en cantidad, el flag `facturador_pos` y los nuevos valores de ENUM.
+
+**Criterios de aceptación:**
+- [ ] `src/types/database.ts` regenerado con `codigo_barras`, `plu`, `es_pesable` en producto
+- [ ] `cantidad` aparece como `number` (no integer) en movimiento, comprobante_item, pedido_item
+- [ ] `stock_actual` y `stock_minimo` aparecen como `number` en producto
+- [ ] `facturador_pos` aparece en modulo_config
+- [ ] El tipo `tipo_comprobante` incluye `ticket` (si se agregó en migración)
+- [ ] Autocompletado funciona en el IDE para las nuevas columnas
+- [ ] Build de TypeScript compila sin errores
+
+**Notas técnicas:** Requiere que las migraciones se hayan ejecutado en el proyecto Supabase remoto o local antes de regenerar.
+
+---
+
+## V60-POS-006 — Librería de generación y validación EAN-13
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 3
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-005
+
+**Descripción:** Construir módulo de librería en `src/lib/pos/ean13.ts` con funciones puras para calcular dígito verificador EAN-13, validar códigos completos, generar EAN-13 internos con prefijo `20`, y formatear para display.
+
+**Criterios de aceptación:**
+- [ ] Función `calcularCheckDigitEAN13(digits12: string): string` implementa fórmula GS1 módulo 10
+- [ ] Función `validarEAN13(code: string): boolean` valida longitud, solo dígitos y check digit correcto
+- [ ] Función `generarEAN13Interno(secuencial: number): string` genera con prefijo `20` + padding + check digit
+- [ ] Función `formatearEAN13(code: string): string` devuelve formato visual separado en grupos
+- [ ] Tests con Vitest: códigos argentinos (prefijo 779), internos (prefijo 20), inválidos por longitud, por caracteres, por check digit
+- [ ] Cobertura del 100% de las funciones (lógica crítica)
+- [ ] Todas las funciones son puras (sin I/O, sin estado)
+
+**Notas técnicas:** Archivo `src/lib/pos/ean13.ts`, tests en `src/test/ean13.test.ts`. Rango 20-29 de GS1 es de uso interno y no se emite a fabricantes reales.
+
+---
+
+## V60-POS-007 — Parser de código escaneado (parseBarcode)
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 3
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-006
+
+**Descripción:** Construir función `parseBarcode(input: string)` en `src/lib/pos/barcode-parser.ts` que recibe el string del escáner y devuelve tipo de código (ean_normal, balanza_peso, desconocido), código de lookup para la DB, y peso en kg si aplica.
+
+**Criterios de aceptación:**
+- [ ] Función `parseBarcode` implementada con tipos `BarcodeType` y `ParsedBarcode`
+- [ ] Códigos de 13 dígitos que empiezan con `2`: extraer PLU (dígitos 2-6) y peso en gramos (dígitos 7-11), tipo `balanza_peso`
+- [ ] Códigos numéricos de 8-14 dígitos (no balanza): tipo `ean_normal`, codigoLookup = input
+- [ ] Strings alfanuméricos: tipo `ean_normal`, codigoLookup = input (para buscar por SKU)
+- [ ] Strings vacíos o inválidos: tipo `desconocido`
+- [ ] Tests con Vitest: códigos de balanza reales, EAN normales, SKU alfanuméricos, vacíos, inválidos
+- [ ] Función pura, compartida entre frontend y backend
+
+**Notas técnicas:** Archivo `src/lib/pos/barcode-parser.ts`, tests en `src/test/barcode-parser.test.ts`. El formato de balanza argentino: `2PPPPPGGGGGC` donde P=PLU, G=gramos, C=check digit.
+
+---
+
+## V60-POS-008 — API: asignar código de barras a producto
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: high
+- Estimación: 3
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-006
+
+**Descripción:** Crear endpoint `POST /api/productos/[id]/codigo-barras` que asigna o actualiza el código de barras de un producto existente, con validaciones de autenticación, módulo, rol, y duplicados.
+
+**Criterios de aceptación:**
+- [ ] Endpoint acepta `{ codigo: string }` en el body
+- [ ] Valida autenticación, módulo `facturador_pos`, y rol no visor
+- [ ] Valida que el producto exista y pertenezca al tenant
+- [ ] Si el código pasa validación EAN-13, lo acepta sin warning
+- [ ] Si no pasa EAN-13 pero es numérico, lo acepta con `{ warning: "..." }`
+- [ ] Si el código ya existe en otro producto activo del tenant, retorna 409 con producto duplicado
+- [ ] Guarda el código en `producto.codigo_barras`
+
+**Notas técnicas:** Ruta `src/app/api/productos/[id]/codigo-barras/route.ts`. Usar `validarEAN13` de la librería.
+
+---
+
+## V60-POS-009 — API: generar EAN-13 interno automático
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: high
+- Estimación: 3
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-006
+
+**Descripción:** Crear endpoint `POST /api/productos/[id]/generar-codigo` que genera automáticamente un EAN-13 interno con prefijo `20` para un producto, usando el siguiente secuencial del tenant.
+
+**Criterios de aceptación:**
+- [ ] Obtiene siguiente secuencial del tenant (MAX de códigos existentes con prefijo `20` + 1)
+- [ ] Genera EAN-13 con prefijo `20` + padding + check digit
+- [ ] Guarda en `producto.codigo_barras`
+- [ ] Si el producto ya tiene código, retorna 400 pidiendo confirmación
+- [ ] Retorna el EAN-13 generado en la respuesta
+- [ ] Guard de módulo `facturador_pos` y rol no visor
+
+**Notas técnicas:** Ruta `src/app/api/productos/[id]/generar-codigo/route.ts`. Usar `generarEAN13Interno` de la librería.
+
+---
+
+## V60-POS-010 — Extender PATCH producto con campos barcode
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: high
+- Estimación: 2
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-005
+
+**Descripción:** Extender el endpoint `PATCH /api/productos/[id]` para aceptar los nuevos campos `codigo_barras`, `plu` y `es_pesable`. Aplicar validaciones de duplicado y consistencia pesable/unidad.
+
+**Criterios de aceptación:**
+- [ ] Acepta `codigo_barras`, `plu`, `es_pesable` en el body del PATCH
+- [ ] Valida duplicado de `codigo_barras` contra otros productos activos del tenant
+- [ ] Valida duplicado de `plu` contra otros productos activos del tenant
+- [ ] Si `es_pesable` cambia a true, valida que unidad sea kg o gramo
+- [ ] Si `es_pesable` cambia a false, nulifica `plu` automáticamente
+- [ ] Los campos son opcionales (no rompe el PATCH existente)
+
+**Notas técnicas:** Modificar `src/app/api/productos/[id]/route.ts`.
+
+---
+
+## V60-POS-011 — UI: sección "Códigos y escaneo" en formulario de producto
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: high
+- Estimación: 5
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-008, V60-POS-009, V60-POS-010
+
+**Descripción:** Agregar sección "Códigos y escaneo" en las pantallas `/productos/nuevo` y `/productos/[id]` con campos para código de barras (con botón generar), checkbox pesable, campo PLU, e indicador de validación en tiempo real.
+
+**Criterios de aceptación:**
+- [ ] Campo código de barras con input que acepta escaneo directo
+- [ ] Botón "Generar" que llama al endpoint de generación automática
+- [ ] Indicador de validación: vacío/gris, válido/verde, warning/amarillo, duplicado/rojo
+- [ ] Validación al blur (no en cada keystroke)
+- [ ] Checkbox "Es producto pesable (balanza)" con cambio automático de unidad a kg
+- [ ] Campo PLU visible solo si pesable está activo, acepta hasta 5 dígitos
+- [ ] Sección solo visible si módulo `facturador_pos` está activo
+
+**Notas técnicas:** Extender componentes existentes en `/productos/`. Usar `useModulos` para condicionalmente mostrar la sección.
+
+---
+
+## V60-POS-012 — Extender búsqueda de productos por código de barras
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: medium
+- Estimación: 2
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-005
+
+**Descripción:** Extender la búsqueda del listado de productos para que también busque por `codigo_barras`, además de nombre y SKU. Agregar columna opcional "Código de barras" a la tabla.
+
+**Criterios de aceptación:**
+- [ ] Búsqueda en `/productos` incluye `codigo_barras` en los criterios
+- [ ] Columna "Código de barras" agregada a la tabla de productos
+- [ ] La columna muestra el código formateado si existe, o vacío si no
+
+**Notas técnicas:** Modificar el componente de listado y el endpoint de búsqueda.
+
+---
+
+## V60-POS-013 — Pantalla de impresión de etiquetas individual
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: medium
+- Estimación: 8
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-011
+
+**Descripción:** Crear pantalla `/productos/[id]/etiquetas` con preview de etiqueta (nombre, precio, código de barras SVG), selector de cantidad y tamaño, e impresión via `window.print()` con CSS de página optimizado.
+
+**Criterios de aceptación:**
+- [ ] Ruta `/productos/[id]/etiquetas` accesible desde el detalle del producto
+- [ ] Preview visual de la etiqueta con nombre, precio y código de barras SVG (bwip-js)
+- [ ] Selector de cantidad de copias (1, 5, 10, 20, custom)
+- [ ] Selector de tamaño: 50x30mm, 80x40mm, A4 con grilla
+- [ ] Botón "Imprimir" que abre diálogo nativo del navegador
+- [ ] CSS de impresión con media queries para distribución en hoja
+- [ ] Número humano-legible debajo del código de barras
+
+**Notas técnicas:** Instalar `bwip-js`. Usar CSS `@media print` para layout de impresión.
+
+---
+
+## V60-POS-014 — Impresión masiva de etiquetas (lote)
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: medium
+- Estimación: 5
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-013
+
+**Descripción:** Agregar acción batch "Imprimir etiquetas de los seleccionados" en el listado de productos. Modal con los productos elegidos, copias por producto, y generación de grilla de etiquetas para impresión.
+
+**Criterios de aceptación:**
+- [ ] Acción batch en listado de productos: "Imprimir etiquetas"
+- [ ] Modal con lista de productos seleccionados y copias por producto
+- [ ] Generación de grilla de etiquetas distribuidas en hojas A4
+- [ ] Botón "Imprimir" que abre diálogo nativo
+- [ ] Reutiliza componentes de etiqueta individual
+
+**Notas técnicas:** Reutilizar el renderizado de etiqueta de V60-POS-013.
+
+---
+
+## V60-POS-015 — Migración: tipo ticket + metodo_pago en comprobante
+
+- Tipo: migration
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 3
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-002
+
+**Descripción:** Agregar valor `ticket` al ENUM `tipo_comprobante`. Agregar columnas `metodo_pago` (VARCHAR(20)), `metodo_pago_detalle` (JSONB) y `caja_id` (VARCHAR(20)) a la tabla `comprobante`.
+
+**Criterios de aceptación:**
+- [ ] Valor `ticket` agregado al ENUM `tipo_comprobante`
+- [ ] Columna `metodo_pago` VARCHAR(20) nullable agregada a `comprobante`
+- [ ] Columna `metodo_pago_detalle` JSONB nullable agregada a `comprobante`
+- [ ] Columna `caja_id` VARCHAR(20) nullable agregada a `comprobante`
+- [ ] Índice `idx_comprobante_numero` sigue funcionando con el nuevo tipo
+- [ ] Migración no rompe comprobantes existentes
+
+**Notas técnicas:** Archivo `supabase/migrations/026_pos_comprobante.sql`. ALTER TYPE con ADD VALUE para agregar al ENUM.
+
+---
+
+## V60-POS-016 — Componente `<BarcodeInput />`
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 5
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-005
+
+**Descripción:** Construir componente reutilizable de captura de código de barras con autofoco, detección de escaneo por velocidad, y callback `onScan`.
+
+**Criterios de aceptación:**
+- [ ] Input con autofoco que se reenfoca automáticamente cada 500ms
+- [ ] Detección de escaneo por velocidad (< 30ms entre caracteres)
+- [ ] Al recibir Enter, pasa el buffer a `onScan` y se limpia
+- [ ] Props: `onScan`, `autoFocus`, `disabled`, `placeholder`
+- [ ] Buffer no atado al state de React (evitar rerenders)
+- [ ] Ref al DOM node para gestión imperativa del foco
+- [ ] Debounce de 300ms para evitar doble disparo del escáner
+
+**Notas técnicas:** Archivo `src/components/pos/barcode-input.tsx`. Usar `useRef` para buffer y DOM node.
+
+---
+
+## V60-POS-017 — API: búsqueda de producto por código de barras
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 3
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-007
+
+**Descripción:** Implementar `GET /api/productos/buscar-por-barcode?codigo=XXX` que usa `parseBarcode` para determinar el tipo de búsqueda y retorna el producto correspondiente.
+
+**Criterios de aceptación:**
+- [ ] `ean_normal`: busca por `codigo_barras`, luego por `codigo` (SKU) como fallback
+- [ ] `balanza_peso`: busca por `plu` en productos pesables
+- [ ] `desconocido`: retorna 404 con mensaje claro
+- [ ] Respuesta incluye producto completo, tipo de código y peso si aplica
+- [ ] 404 incluye el código buscado para mostrar en error
+- [ ] Guard de módulo `facturador_pos`
+- [ ] Solo retorna productos activos del tenant
+
+**Notas técnicas:** Ruta `src/app/api/productos/buscar-por-barcode/route.ts`. Usar `parseBarcode` del módulo compartido.
+
+---
+
+## V60-POS-018 — Extender API de emisión para soportar POS
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 5
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-015, V60-POS-005
+
+**Descripción:** Extender la ENTRADA del endpoint `POST /api/facturacion/emitir` para aceptar tipo `ticket`, campo `metodo_pago`, y cantidades decimales en los items. NO agregar lógica post-emisión.
+
+**Criterios de aceptación:**
+- [ ] Acepta tipo de comprobante `ticket`
+- [ ] Acepta campo `metodo_pago` (efectivo, debito, credito, transferencia, mixto)
+- [ ] Acepta campo opcional `metodo_pago_detalle` (JSONB para mixto)
+- [ ] Cantidades decimales en items funcionan correctamente
+- [ ] Guarda `metodo_pago` y `metodo_pago_detalle` en el comprobante
+- [ ] Tipo `ticket` genera numeración propia separada
+- [ ] NO se agrega lógica de ARCA ni post-emisión
+
+**Notas técnicas:** Modificar `src/lib/facturacion/emitir-comprobante.ts` (solo entrada) y `src/lib/facturacion/tipo-comprobante.ts`. Regla crítica: no tocar el flujo ARCA.
+
+---
+
+## V60-POS-019 — POS: layout, barra superior y zona de escaneo
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 8
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-016, V60-POS-017, V60-POS-018
+
+**Descripción:** Crear la pantalla base del POS en `/facturacion/pos` con layout fullscreen, barra superior (tenant, cliente, tipo comprobante), zona de escaneo con `<BarcodeInput />`, y estructura de dos columnas para carrito/resumen.
+
+**Criterios de aceptación:**
+- [ ] Layout fullscreen sin sidebar, tipografía grande
+- [ ] Barra superior: nombre del tenant, selector de cliente, tipo de comprobante, fecha/hora, usuario
+- [ ] Zona de escaneo con `<BarcodeInput />` centrado
+- [ ] Feedback visual del último producto escaneado
+- [ ] Botón "Buscar" alternativo para búsqueda textual
+- [ ] Estructura de dos columnas (65% items, 35% resumen)
+- [ ] Guard de módulo `facturador_pos` y página
+
+**Notas técnicas:** Ruta `src/app/(dashboard)/facturacion/pos/page.tsx`. Layout sin sidebar usando un layout especial.
+
+---
+
+## V60-POS-020 — POS: carrito de items y panel de totales
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 8
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-019
+
+**Descripción:** Implementar la lista de items del carrito POS con cantidad editable, precio, subtotal por línea, eliminación, y el panel de resumen con subtotal/IVA/total y botón COBRAR.
+
+**Criterios de aceptación:**
+- [ ] Lista de items: cantidad editable, unidad, nombre, precio unitario, subtotal, botón X
+- [ ] Resaltar último item escaneado con animación
+- [ ] Placeholder "Escaneá el primer producto para empezar" cuando vacío
+- [ ] Panel resumen: subtotal, IVA discriminado (para factura A), total en tipografía grande
+- [ ] Campo descuento (% o monto fijo) aplicable al total
+- [ ] Botón "COBRAR (F2)" que abre el modal de cobro
+- [ ] Botón "Cancelar venta (F8)" con confirmación
+- [ ] Lógica de escaneo: incrementar cantidad si ya está, o agregar nueva línea
+- [ ] Para pesables con código de balanza: agregar con peso en kg
+- [ ] Para pesables sin peso: modal de ingreso manual de peso
+
+**Notas técnicas:** Componentes en `src/components/pos/`. El carrito es estado local del componente POS.
+
+---
+
+## V60-POS-021 — Modal de cobro
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: critical
+- Estimación: 8
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-020
+
+**Descripción:** Modal overlay con confirmación de tipo de comprobante, selección de método de pago (con cálculo de vuelto para efectivo), y emisión del comprobante via API existente.
+
+**Criterios de aceptación:**
+- [ ] Paso 1: confirmar tipo de comprobante (ticket/factura A/B/C)
+- [ ] Si factura y cliente sin CUIT/DNI: sub-formulario para completar
+- [ ] Paso 2: seleccionar método de pago con botones grandes
+- [ ] Para efectivo: input "Recibido" con cálculo de vuelto en tiempo real
+- [ ] Para mixto: distribución entre métodos
+- [ ] Paso 3: botón "Confirmar cobro" que llama a la API de emisión
+- [ ] Éxito: pantalla verde con número de comprobante, vuelto, opciones "Nueva venta" e "Imprimir"
+- [ ] Error: pantalla roja manteniendo el carrito para reintentar
+
+**Notas técnicas:** Componente `src/components/pos/checkout-modal.tsx`. Usa el endpoint existente `/api/facturacion/emitir`.
+
+---
+
+## V60-POS-022 — Impresión de ticket térmico
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: high
+- Estimación: 5
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-021
+
+**Descripción:** Generar HTML optimizado para impresora térmica (80mm/57mm) con datos del comprobante, y disparar impresión via `window.print()` en ventana oculta.
+
+**Criterios de aceptación:**
+- [ ] HTML con tipografía monoespaciada y ancho 80mm
+- [ ] Contenido: cabecera tenant, tipo/número comprobante, fecha, items, totales, método de pago, pie fiscal
+- [ ] Soporte para ancho 80mm y 57mm
+- [ ] Impresión via `window.print()` en ventana oculta
+- [ ] Modo alternativo: descarga PDF
+- [ ] Número humano-legible para fallback
+
+**Notas técnicas:** Componente `src/components/pos/ticket-printer.tsx`. CSS optimizado para impresión térmica.
+
+---
+
+## V60-POS-023 — Atajos de teclado y ergonomía
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: medium
+- Estimación: 3
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-020
+
+**Descripción:** Implementar atajos de teclado para operación sin mouse: F2 (cobrar), F4 (cambiar cliente), F8 (cancelar), Escape (cerrar modal), +/- (ajustar cantidad), Del (eliminar línea), F1 (ayuda).
+
+**Criterios de aceptación:**
+- [ ] F2: abre modal de cobro
+- [ ] F4: abre selector de cliente
+- [ ] F8: cancelar venta con confirmación
+- [ ] Escape: cierra cualquier modal
+- [ ] +/- en línea seleccionada: ajusta cantidad
+- [ ] Del: elimina línea seleccionada
+- [ ] F1 o ?: modal de ayuda con lista de atajos
+- [ ] Atajos no interfieren con el input de escaneo
+
+**Notas técnicas:** Hook `useKeyboardShortcuts` en `src/hooks/`. Registrar listeners globales con `useEffect`.
+
+---
+
+## V60-POS-024 — Manejo de casos borde del POS
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: high
+- Estimación: 5
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-020
+
+**Descripción:** Manejar explícitamente los casos borde: producto sin stock, producto inactivo, desconexión de red, doble disparo del escáner, pesable sin pesar.
+
+**Criterios de aceptación:**
+- [ ] Producto sin stock: warning visual o bloqueo según config del tenant
+- [ ] Producto inactivo: 404 como si no existiera
+- [ ] Desconexión de red: toast "Sin conexión" con reintentar, carrito intacto
+- [ ] Doble disparo (< 300ms mismo código): ignorar segundo
+- [ ] Pesable escaneado sin peso (SKU manual): modal de peso manual
+- [ ] Error de red al emitir: bloquear emisión con mensaje, carrito intacto
+
+**Notas técnicas:** Integrar con la configuración del tenant para el comportamiento de stock.
+
+---
+
+## V60-POS-025 — Persistencia del carrito en localStorage
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: medium
+- Estimación: 2
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-020
+
+**Descripción:** Persistir el carrito POS en `localStorage` automáticamente (debounced 500ms). Al recargar, si hay carrito sin emitir, preguntar "¿Restaurar venta en curso?".
+
+**Criterios de aceptación:**
+- [ ] Carrito se guarda en localStorage en cada cambio (debounced 500ms)
+- [ ] Al cargar la página, detecta carrito previo y pregunta si restaurar
+- [ ] Al emitir exitosamente, limpia el localStorage
+- [ ] Al cancelar, limpia el localStorage
+- [ ] Incluye timestamp para detectar carritos muy antiguos
+
+**Notas técnicas:** Hook `useCartPersistence` con `useEffect` y debounce.
+
+---
+
+## V60-POS-026 — Configuración POS en /configuracion
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: medium
+- Estimación: 3
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-019
+
+**Descripción:** Agregar sección "POS" en `/configuracion` con opciones de sonidos, impresora, comportamiento ante falta de stock, y ancho de ticket.
+
+**Criterios de aceptación:**
+- [ ] Sección "POS" visible solo si módulo `facturador_pos` activo
+- [ ] Toggle de sonidos (activar/desactivar beep al escanear)
+- [ ] Selector de ancho de ticket: 80mm / 57mm
+- [ ] Selector de comportamiento sin stock: bloquear / permitir con warning
+- [ ] Las preferencias se guardan por tenant
+- [ ] Flag `facturador_pos` visible en la sección "Plan / Módulos"
+
+**Notas técnicas:** Extender `/configuracion` con nueva sección. Guardar en una columna JSONB o en una tabla de configuración dedicada.
+
+---
+
+## V60-POS-027 — Importador: aceptar columna código de barras
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: low
+- Estimación: 2
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-005
+
+**Descripción:** Extender el importador Excel/CSV para reconocer una columna opcional "Código de barras" en el mapeo, que se guarda en `producto.codigo_barras`.
+
+**Criterios de aceptación:**
+- [ ] Nueva columna "codigo_barras" disponible en el mapeo de importación
+- [ ] Se guarda en `producto.codigo_barras` al importar
+- [ ] Alias: "Código de barras", "EAN", "EAN-13", "Barcode", "Código barra"
+- [ ] Validación: si el valor no es numérico, se ignora con warning
+- [ ] No rompe importaciones existentes
+
+**Notas técnicas:** Modificar `src/lib/normalizador/aliases.ts` y `src/lib/importar/ejecutar-importacion.ts`.
+
+---
+
+## V60-POS-028 — "Enviar al POS" desde pedidos
+
+- Tipo: feature
+- Módulo: pos
+- Prioridad: low
+- Estimación: 3
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-020
+
+**Descripción:** Agregar botón "Enviar al POS" en el detalle de un pedido que carga todos los items del pedido en el carrito POS para agilizar el cobro.
+
+**Criterios de aceptación:**
+- [ ] Botón "Enviar al POS" visible en detalle de pedido si módulo `facturador_pos` activo
+- [ ] Al clickear, redirige a `/facturacion/pos` con los items del pedido pre-cargados
+- [ ] Los items se cargan con las cantidades y precios del pedido
+- [ ] Si hay un carrito en curso, pregunta si reemplazar o agregar
+- [ ] Solo visible para pedidos en estado `confirmado`
+
+**Notas técnicas:** Usar query params o localStorage para pasar los items del pedido al POS.
+
+---
+
+## V60-POS-029 — Tests unitarios y de integración
+
+- Tipo: test
+- Módulo: pos
+- Prioridad: high
+- Estimación: 8
+- Versión: v6.0
+- Estado: todo
+- Dependencias: V60-POS-006, V60-POS-007, V60-POS-017, V60-POS-018
+
+**Descripción:** Suite completa de tests unitarios para EAN-13 y parseBarcode, y tests de integración para las APIs de código de barras y emisión POS.
+
+**Criterios de aceptación:**
+- [ ] Tests unitarios EAN-13: check digit, validación, generación, formateo
+- [ ] Tests unitarios parseBarcode: balanza, EAN normal, SKU, vacíos, inválidos
+- [ ] Tests integración: asignar código, duplicado (409), generar interno
+- [ ] Tests integración: buscar por barcode normal, por PLU, 404
+- [ ] Tests integración: emitir ticket con items decimales
+- [ ] Tests integración: aislamiento entre tenants
+- [ ] Cobertura > 90% de lógica core
+
+**Notas técnicas:** Archivos `src/test/ean13.test.ts`, `src/test/barcode-parser.test.ts`, `src/test/pos-integration.test.ts`. Usar Vitest.
+
+---
+
+## Roadmap de implementación — Bloque F
+
+| Fase | Ticket | Descripción | Pts |
+|---|---|---|---|
+| 1 | V60-POS-001 | Migración: columnas codigo_barras, plu, es_pesable | 3 |
+| 1 | V60-POS-002 | Migración: cantidad INTEGER → NUMERIC(12,3) | 5 |
+| 1 | V60-POS-003 | Migración: flag facturador_pos en modulo_config | 3 |
+| 1 | V60-POS-004 | Actualizar registrar_movimiento para NUMERIC | 2 |
+| 1 | V60-POS-005 | Regenerar tipos TypeScript | 1 |
+| 1 | V60-POS-006 | Librería EAN-13 (generar, validar, formatear) | 3 |
+| 1 | V60-POS-007 | Parser de código escaneado (parseBarcode) | 3 |
+| 1 | **Subtotal Fase 1** | | **20** |
+| 2 | V60-POS-008 | API: asignar código de barras | 3 |
+| 2 | V60-POS-009 | API: generar EAN-13 interno | 3 |
+| 2 | V60-POS-010 | Extender PATCH producto con campos barcode | 2 |
+| 2 | V60-POS-011 | UI: sección "Códigos y escaneo" en producto | 5 |
+| 2 | V60-POS-012 | Extender búsqueda por código de barras | 2 |
+| 2 | **Subtotal Fase 2** | | **15** |
+| 3 | V60-POS-013 | Impresión de etiquetas individual | 8 |
+| 3 | V60-POS-014 | Impresión masiva de etiquetas (lote) | 5 |
+| 3 | **Subtotal Fase 3** | | **13** |
+| 4 | V60-POS-015 | Migración: tipo ticket + metodo_pago | 3 |
+| 4 | V60-POS-016 | Componente `<BarcodeInput />` | 5 |
+| 4 | V60-POS-017 | API: búsqueda por código de barras | 3 |
+| 4 | V60-POS-018 | Extender API emisión (ticket, pago, decimal) | 5 |
+| 4 | **Subtotal Fase 4** | | **16** |
+| 5 | V60-POS-019 | POS: layout, barra superior y zona escaneo | 8 |
+| 5 | V60-POS-020 | POS: carrito de items y totales | 8 |
+| 5 | V60-POS-021 | Modal de cobro | 8 |
+| 5 | V60-POS-022 | Impresión de ticket térmico | 5 |
+| 5 | **Subtotal Fase 5** | | **29** |
+| 6 | V60-POS-023 | Atajos de teclado y ergonomía | 3 |
+| 6 | V60-POS-024 | Manejo de casos borde | 5 |
+| 6 | V60-POS-025 | Persistencia del carrito en localStorage | 2 |
+| 6 | V60-POS-026 | Configuración POS en /configuracion | 3 |
+| 6 | **Subtotal Fase 6** | | **13** |
+| 7 | V60-POS-027 | Importador: columna código de barras | 2 |
+| 7 | V60-POS-028 | "Enviar al POS" desde pedidos | 3 |
+| 7 | V60-POS-029 | Tests unitarios y de integración | 8 |
+| 7 | **Subtotal Fase 7** | | **13** |
+| | **TOTAL BLOQUE F** | **29 tickets** | **119 pts** |
+
+---
+
+## Grafo de dependencias
+
+```text
+V60-POS-001 (producto barcode)
+  ├── V60-POS-002 (cantidad decimal)
+  │     ├── V60-POS-004 (registrar_movimiento NUMERIC)
+  │     └── V60-POS-015 (tipo ticket + metodo_pago)
+  └── V60-POS-003 (flag facturador_pos)
+
+V60-POS-001 + V60-POS-002 + V60-POS-003 + V60-POS-004
+  └── V60-POS-005 (regenerar tipos)
+        ├── V60-POS-006 (librería EAN-13)
+        │     ├── V60-POS-007 (parser barcode)
+        │     │     └── V60-POS-017 (API buscar por barcode)
+        │     ├── V60-POS-008 (API asignar código)
+        │     └── V60-POS-009 (API generar código)
+        ├── V60-POS-010 (PATCH producto + barcode)
+        ├── V60-POS-012 (búsqueda por barcode)
+        ├── V60-POS-016 (BarcodeInput component)
+        └── V60-POS-027 (importador barcode)
+
+V60-POS-008 + V60-POS-009 + V60-POS-010
+  └── V60-POS-011 (UI códigos en producto)
+        └── V60-POS-013 (etiquetas individual)
+              └── V60-POS-014 (etiquetas lote)
+
+V60-POS-015 + V60-POS-005
+  └── V60-POS-018 (API emisión extendida)
+
+V60-POS-016 + V60-POS-017 + V60-POS-018
+  └── V60-POS-019 (POS layout)
+        ├── V60-POS-020 (POS carrito)
+        │     ├── V60-POS-021 (modal cobro)
+        │     │     └── V60-POS-022 (ticket térmico)
+        │     ├── V60-POS-023 (atajos teclado)
+        │     ├── V60-POS-024 (casos borde)
+        │     ├── V60-POS-025 (localStorage)
+        │     └── V60-POS-028 (enviar desde pedidos)
+        └── V60-POS-026 (configuración POS)
+
+V60-POS-006 + V60-POS-007 + V60-POS-017 + V60-POS-018
+  └── V60-POS-029 (tests)
+```
+
+---
+
+## Orden de implementación recomendado
+
+**Sprint 1 (Fase 1 — Fundacional):** POS-001 → POS-002 → POS-003 → POS-004 → POS-005 → POS-006 → POS-007
+
+**Sprint 2 (Fase 2 — Productos):** POS-008 → POS-009 → POS-010 → POS-011 → POS-012
+
+**Sprint 3 (Fase 3 — Etiquetas):** POS-013 → POS-014
+
+**Sprint 4 (Fase 4 — Base POS):** POS-015 → POS-016 → POS-017 → POS-018
+
+**Sprint 5 (Fase 5a — UI POS core):** POS-019 → POS-020 → POS-021
+
+**Sprint 6 (Fase 5b — Impresión + Fase 6):** POS-022 → POS-023 → POS-024 → POS-025 → POS-026
+
+**Sprint 7 (Fase 7 — Integraciones + Tests):** POS-027 → POS-028 → POS-029
