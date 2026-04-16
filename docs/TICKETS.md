@@ -1843,14 +1843,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-TEST-001 — Tests de integración ARCA contra homologación
+## V40-TEST-001 — Tests de integración ARCA contra homologación (hecho)
 
 - Tipo: test
 - Módulo: arca
 - Prioridad: high
 - Estimación: 8
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-005
 
 **Descripción:** Tests end-to-end contra el ambiente de homologación de ARCA. Requiere certificado de homologación configurado.
