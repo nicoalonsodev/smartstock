@@ -1819,14 +1819,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-ARCA-010 — Botón "Probar conexión" con ARCA
+## V40-ARCA-010 — Botón "Probar conexión" con ARCA (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: high
 - Estimación: 2
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-002
 
 **Descripción:** En la página de configuración ARCA, agregar un botón que testea la conexión: intenta obtener un ticket WSAA y consultar el último comprobante.

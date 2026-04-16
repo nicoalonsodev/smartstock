@@ -20,6 +20,11 @@ export function ArcaConfigForm() {
   const [syncing, setSyncing] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
   const [syncResult, setSyncResult] = useState<Record<string, { arca: number; local: number; discrepancia: boolean }> | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    wsaa: { ok: boolean; error?: string };
+    wsfe: { ok: boolean; ultimoComprobante?: number; error?: string };
+  } | null>(null);
   const [certStatus, setCertStatus] = useState<{
     configurado: boolean;
     valido?: boolean;
@@ -68,6 +73,20 @@ export function ArcaConfigForm() {
       reader.onerror = reject;
       reader.readAsText(file);
     });
+  }
+
+  async function handleTestConnection() {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await fetch('/api/facturacion/arca/test-connection', { method: 'POST' });
+      const data = await res.json();
+      setTestResult(data);
+    } catch {
+      setMensaje({ tipo: 'error', texto: 'Error de conexión al probar' });
+    } finally {
+      setTesting(false);
+    }
   }
 
   async function handleSync() {
@@ -320,6 +339,51 @@ export function ArcaConfigForm() {
                   </span>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {config && (
+        <div className="space-y-3 rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-medium">Probar conexión</h2>
+            <button
+              type="button"
+              onClick={handleTestConnection}
+              disabled={testing}
+              className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
+            >
+              {testing ? 'Probando...' : 'Probar conexión'}
+            </button>
+          </div>
+
+          {testResult && (
+            <div className="space-y-2 text-sm">
+              <div
+                className={`rounded px-3 py-2 ${
+                  testResult.wsaa.ok
+                    ? 'border border-green-200 bg-green-50 text-green-800'
+                    : 'border border-red-200 bg-red-50 text-red-800'
+                }`}
+              >
+                <span className="font-medium">WSAA: </span>
+                {testResult.wsaa.ok ? 'Conexión exitosa' : testResult.wsaa.error}
+              </div>
+              <div
+                className={`rounded px-3 py-2 ${
+                  testResult.wsfe.ok
+                    ? 'border border-green-200 bg-green-50 text-green-800'
+                    : testResult.wsaa.ok
+                      ? 'border border-amber-200 bg-amber-50 text-amber-800'
+                      : 'border border-red-200 bg-red-50 text-red-800'
+                }`}
+              >
+                <span className="font-medium">WSFE: </span>
+                {testResult.wsfe.ok
+                  ? `Conexión exitosa. Último comprobante: #${testResult.wsfe.ultimoComprobante}`
+                  : testResult.wsfe.error}
+              </div>
             </div>
           )}
         </div>
