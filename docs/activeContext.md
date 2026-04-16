@@ -25,14 +25,9 @@ El objetivo de esta versión es levantar toda la infraestructura base del proyec
 
 ## Próximos 3 tickets a trabajar
 
-1. **V40-ARCA-001 — Configuración ARCA (certificados y datos)** (Estimación: 5 pts)
-   Página `/configuracion/arca` y crypto según `arca.md`.
+Bloque D (ARCA v4.0) completado. Todos los tickets V40-ARCA-001 a V40-ARCA-010 y V40-TEST-001/002 están implementados.
 
-2. **V40-ARCA-002 — Implementar WSAA** (Estimación: 8 pts)
-   Firma CMS, SOAP WSAA, ticket en `arca_config`.
-
-3. **V40-ARCA-003 — Renovación automática de ticket WSAA** (Estimación: 3 pts)
-   `asegurarTicketVigente` antes de WSFE.
+Próximos tickets dependen del backlog post-v4.0.
 
 ---
 
@@ -74,6 +69,6 @@ El objetivo de esta versión es levantar toda la infraestructura base del proyec
 
 ## Última actualización
 
-**Fecha:** 2026-04-13
-**Último ticket completado:** V30-IA-006 — Límite mensual de extracciones IA por tenant
-**Siguiente paso:** V40-ARCA-001 — Configuración ARCA (certificados y datos)
+**Fecha:** 2026-04-16
+**Último ticket completado:** V40-TEST-002 — Tests de la cola de reintentos
+**Siguiente paso:** Backlog post-v4.0

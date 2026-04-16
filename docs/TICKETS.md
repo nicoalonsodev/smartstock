@@ -1868,14 +1868,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-TEST-002 — Tests de la cola de reintentos
+## V40-TEST-002 — Tests de la cola de reintentos (hecho)
 
 - Tipo: test
 - Módulo: arca
 - Prioridad: high
 - Estimación: 3
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-007
 
 **Descripción:** Tests que verifican el comportamiento de la cola de reintentos: reintento exitoso, máximo de reintentos, transición a `error_arca`.
