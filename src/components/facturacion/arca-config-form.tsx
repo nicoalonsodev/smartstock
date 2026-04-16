@@ -17,7 +17,9 @@ export function ArcaConfigForm() {
   const [config, setConfig] = useState<ArcaConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
+  const [syncResult, setSyncResult] = useState<Record<string, { arca: number; local: number; discrepancia: boolean }> | null>(null);
 
   const [cuitEmisor, setCuitEmisor] = useState('');
   const [puntoDeVenta, setPuntoDeVenta] = useState('1');
@@ -52,6 +54,24 @@ export function ArcaConfigForm() {
       reader.onerror = reject;
       reader.readAsText(file);
     });
+  }
+
+  async function handleSync() {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch('/api/facturacion/arca/sync-numeracion', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        setMensaje({ tipo: 'error', texto: data.error ?? 'Error al sincronizar' });
+        return;
+      }
+      setSyncResult(data.resultados);
+    } catch {
+      setMensaje({ tipo: 'error', texto: 'Error de conexión al sincronizar' });
+    } finally {
+      setSyncing(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -231,6 +251,43 @@ export function ArcaConfigForm() {
         </div>
       </div>
 
+      {config && (
+        <div className="space-y-3 rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-medium">Numeración ARCA</h2>
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={syncing}
+              className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
+            >
+              {syncing ? 'Sincronizando...' : 'Sincronizar numeración'}
+            </button>
+          </div>
+
+          {syncResult && (
+            <div className="space-y-2 text-sm">
+              {Object.entries(syncResult).map(([tipo, r]) => (
+                <div
+                  key={tipo}
+                  className={`flex justify-between rounded px-3 py-2 ${
+                    r.discrepancia
+                      ? 'border border-amber-200 bg-amber-50 text-amber-800'
+                      : 'border border-green-200 bg-green-50 text-green-800'
+                  }`}
+                >
+                  <span className="font-medium">{formatTipoLabel(tipo)}</span>
+                  <span>
+                    ARCA: #{r.arca} | Local: #{r.local}
+                    {r.discrepancia && ' — Discrepancia'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {mensaje && (
         <div
           className={`rounded-md p-3 text-sm ${
@@ -252,4 +309,14 @@ export function ArcaConfigForm() {
       </button>
     </form>
   );
+}
+
+const TIPO_LABELS: Record<string, string> = {
+  factura_a: 'Factura A',
+  factura_b: 'Factura B',
+  factura_c: 'Factura C',
+};
+
+function formatTipoLabel(tipo: string): string {
+  return TIPO_LABELS[tipo] ?? tipo;
 }

@@ -1728,14 +1728,14 @@ ultima_actualizacion: 2026-04-13
 
 ---
 
-## V40-ARCA-006 — Consultar último comprobante en ARCA
+## V40-ARCA-006 — Consultar último comprobante en ARCA (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: high
 - Estimación: 2
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-004
 
 **Descripción:** Implementar la operación `FECompUltimoAutorizado` para sincronizar la numeración local con ARCA y detectar inconsistencias.
