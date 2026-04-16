@@ -3074,14 +3074,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-021 — Modal de cobro (tipo comprobante, método de pago, vuelto)
+## V60-POS-021 — Modal de cobro (tipo comprobante, método de pago, vuelto) (hecho)
 
 - Tipo: feature
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 8
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-020
 
 **Descripción:** Implementar el modal overlay que aparece al tocar "COBRAR" con confirmación de tipo de comprobante, selección de método de pago, cálculo de vuelto y emisión final.

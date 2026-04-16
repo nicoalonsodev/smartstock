@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { BarcodeInput, type BarcodeInputRef } from '@/components/pos/barcode-input';
+import { CobroModal } from '@/components/pos/cobro-modal';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -74,6 +75,9 @@ export default function PosPage() {
 
   // Cancel confirmation
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  // Cobro modal
+  const [showCobro, setShowCobro] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -243,7 +247,7 @@ export default function PosPage() {
       )
     : clientes;
 
-  const anyModalOpen = showClienteSearch || showWeightModal || showCancelConfirm;
+  const anyModalOpen = showClienteSearch || showWeightModal || showCancelConfirm || showCobro;
 
   return (
     <>
@@ -495,6 +499,7 @@ export default function PosPage() {
             <Button
               className="w-full h-16 text-xl font-bold"
               disabled={items.length === 0 || !canEmit}
+              onClick={() => setShowCobro(true)}
             >
               COBRAR (F2)
             </Button>
@@ -593,6 +598,25 @@ export default function PosPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Cobro modal */}
+      {showCobro && (
+        <CobroModal
+          items={items}
+          clienteId={clienteId}
+          clienteNombre={clienteActual?.nombre ?? 'Consumidor Final'}
+          tipoComprobante={tipoComprobante}
+          total={total}
+          descuentoMonto={descuentoMonto}
+          onSuccess={() => {
+            // Will print ticket in POS-022
+          }}
+          onClose={() => {
+            setShowCobro(false);
+            cancelVenta();
+          }}
+        />
       )}
     </>
   );
