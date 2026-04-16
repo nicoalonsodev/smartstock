@@ -2586,14 +2586,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-002 — Migración: cantidad INTEGER → NUMERIC(12,3) en movimiento, comprobante_item y pedido_item
+## V60-POS-002 — Migración: cantidad INTEGER → NUMERIC(12,3) en movimiento, comprobante_item y pedido_item (hecho)
 
 - Tipo: migration
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 5
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-001
 
 **Descripción:** Migrar el tipo de dato de la columna `cantidad` de INTEGER a NUMERIC(12,3) en las tablas `movimiento`, `comprobante_item` y `pedido_item` para soportar productos pesables con cantidades decimales (ej: 0.450 kg). Ajustar los constraints existentes y las columnas de stock en `movimiento`.
@@ -2639,14 +2639,14 @@ V50-ANAL-005 (cierre mensual + radar + flag)
 
 ---
 
-## V60-POS-004 — Actualizar función registrar_movimiento para NUMERIC
+## V60-POS-004 — Actualizar función registrar_movimiento para NUMERIC (hecho)
 
 - Tipo: migration
 - Módulo: pos
 - Prioridad: critical
 - Estimación: 2
 - Versión: v6.0
-- Estado: todo
+- Estado: done
 - Dependencias: V60-POS-002
 
 **Descripción:** Actualizar la firma y tipos internos de la función SQL `registrar_movimiento`: los parámetros `p_cantidad`, variables `v_stock_anterior` y `v_stock_posterior` pasan de INTEGER a NUMERIC(12,3). La lógica interna no cambia.
