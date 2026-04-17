@@ -186,7 +186,7 @@ export async function GET(request: Request) {
     query = query.eq('proveedor_id', proveedorId);
   }
   if (estado) {
-    query = query.eq('estado', estado);
+    query = query.eq('estado', estado as never);
   }
 
   const { data, error } = await query;

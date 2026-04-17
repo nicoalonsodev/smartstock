@@ -251,8 +251,8 @@ export function DashboardRentabilidad() {
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
-                formatter={(value: number, name: string) => [
-                  name === 'margen' ? `${value.toFixed(1)}%` : formatCurrency(value),
+                formatter={(value, name) => [
+                  name === 'margen' ? `${Number(value).toFixed(1)}%` : formatCurrency(Number(value)),
                   name === 'ingresos' ? 'Ingresos' : name === 'costos' ? 'Costos' : 'Margen %',
                 ]}
               />

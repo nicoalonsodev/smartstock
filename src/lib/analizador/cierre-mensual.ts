@@ -254,8 +254,8 @@ export async function obtenerCierreMensual(
       unidades_vendidas: existing.unidades_vendidas,
       comprobantes_emitidos: existing.comprobantes_emitidos,
       ticket_promedio: existing.ticket_promedio != null ? Number(existing.ticket_promedio) : null,
-      top_productos: (existing.top_productos as TopProducto[]) ?? [],
-      por_categoria: (existing.por_categoria as CategoriaResumen[]) ?? [],
+      top_productos: (existing.top_productos as unknown as TopProducto[]) ?? [],
+      por_categoria: (existing.por_categoria as unknown as CategoriaResumen[]) ?? [],
     };
   }
 

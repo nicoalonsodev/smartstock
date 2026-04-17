@@ -18,6 +18,7 @@ const MODULO_LABELS: Record<keyof ModulosConfig, string> = {
   presupuestos: 'Presupuestos',
   ia_precios: 'IA de precios',
   analizador_rentabilidad: 'Analizador de rentabilidad',
+  facturador_pos: 'Terminal POS con escáner',
 };
 
 type PlanState = 'base' | 'completo';
@@ -51,6 +52,7 @@ export default function PlanPage() {
           presupuestos: json.modulos.presupuestos ?? false,
           ia_precios: json.modulos.ia_precios ?? false,
           analizador_rentabilidad: json.modulos.analizador_rentabilidad ?? false,
+          facturador_pos: json.modulos.facturador_pos ?? false,
         });
       }
     }

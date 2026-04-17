@@ -18,6 +18,7 @@ const CAMPO_LABELS: Record<CampoProducto, string> = {
   proveedor: 'Proveedor',
   fecha_vencimiento: 'Vencimiento',
   unidad: 'Unidad',
+  codigo_barras: 'Código de barras',
 };
 
 const CAMPOS_AGREGABLES: { value: CampoProducto; label: string }[] = [

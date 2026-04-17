@@ -71,7 +71,7 @@ export async function aplicarLista(
 
       const { error: prodErr } = await supabase
         .from('producto')
-        .update(prodUpdate)
+        .update(prodUpdate as never)
         .eq('id', item.producto_id!);
 
       if (prodErr) {
@@ -85,10 +85,10 @@ export async function aplicarLista(
         producto_id: item.producto_id!,
         precio_costo: nuevoCosto,
         precio_venta: nuevaVenta ?? item.precio_venta_actual ?? 0,
-        origen: 'lista_precios',
+        origen: 'lista_precios' as const,
         usuario_id: params.userId,
         notas: `Lista: ${listaId}`,
-      });
+      } as never);
 
       if (histErr) {
         console.error('[aplicar-lista] precio_historial:', histErr.message);

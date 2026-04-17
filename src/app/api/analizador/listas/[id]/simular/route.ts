@@ -105,7 +105,7 @@ export async function PATCH(
 
     const { error } = await session.supabase
       .from('lista_precios_item')
-      .update(updateData)
+      .update(updateData as never)
       .eq('id', entry.item_id)
       .eq('lista_id', id);
 
