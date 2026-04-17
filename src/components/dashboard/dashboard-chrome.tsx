@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeftRight,
   BarChart3,
   Brain,
+  ChevronDown,
+  Contact,
   CreditCard,
   FileSpreadsheet,
   FileText,
@@ -15,11 +17,11 @@ import {
   Package,
   ScanBarcode,
   Settings,
-  ShoppingCart,
   Truck,
   Upload,
   Users,
   UsersRound,
+  Warehouse,
   X,
 } from 'lucide-react';
 
@@ -29,70 +31,219 @@ import { useModulos } from '@/hooks/useModulos';
 import type { ModuloKey } from '@/lib/modulos/modulo-key';
 import { cn } from '@/lib/utils';
 
-type NavItem = {
+type IconType = React.ComponentType<{ className?: string }>;
+
+type NavLeaf = {
+  type: 'leaf';
   label: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: IconType;
   modulo?: ModuloKey;
   adminOnly?: boolean;
 };
 
-const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { label: 'Productos', href: '/productos', icon: Package, modulo: 'stock' },
-  { label: 'Categorías', href: '/categorias', icon: FolderTree, modulo: 'stock' },
-  { label: 'Movimientos', href: '/movimientos', icon: ArrowLeftRight, modulo: 'stock' },
-  { label: 'Importar', href: '/importar', icon: Upload, modulo: 'importador_excel' },
-  { label: 'Proveedores', href: '/proveedores', icon: Truck, modulo: 'stock' },
-  { label: 'Clientes', href: '/clientes', icon: Users, modulo: 'facturador_simple' },
-  { label: 'Facturación', href: '/facturacion', icon: FileText, modulo: 'facturador_simple' },
-  { label: 'POS', href: '/facturacion/pos', icon: ScanBarcode, modulo: 'facturador_pos' },
-  { label: 'Pedidos', href: '/pedidos', icon: ShoppingCart, modulo: 'pedidos' },
-  { label: 'Presupuestos', href: '/presupuestos', icon: FileSpreadsheet, modulo: 'presupuestos' },
-  { label: 'IA Precios', href: '/ia-precios', icon: Brain, modulo: 'ia_precios' },
-  { label: 'Analizador', href: '/analizador', icon: BarChart3, modulo: 'analizador_rentabilidad' },
-  { label: 'Plan y módulos', href: '/configuracion/plan', icon: CreditCard },
-  { label: 'ARCA / AFIP', href: '/configuracion/arca', icon: FileText, modulo: 'facturador_arca' },
-  { label: 'Usuarios', href: '/configuracion/usuarios', icon: UsersRound, adminOnly: true },
-  { label: 'Mi negocio', href: '/configuracion', icon: Settings },
+type NavGroup = {
+  type: 'group';
+  key: string;
+  label: string;
+  icon: IconType;
+  items: NavLeaf[];
+};
+
+type NavEntry = NavLeaf | NavGroup;
+
+const NAV_ENTRIES: NavEntry[] = [
+  { type: 'leaf', label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  {
+    type: 'group',
+    key: 'inventario',
+    label: 'Inventario',
+    icon: Warehouse,
+    items: [
+      { type: 'leaf', label: 'Productos', href: '/productos', icon: Package, modulo: 'stock' },
+      { type: 'leaf', label: 'Categorías', href: '/categorias', icon: FolderTree, modulo: 'stock' },
+      { type: 'leaf', label: 'Movimientos', href: '/movimientos', icon: ArrowLeftRight, modulo: 'stock' },
+    ],
+  },
+  {
+    type: 'group',
+    key: 'importar',
+    label: 'Importar',
+    icon: Upload,
+    items: [
+      { type: 'leaf', label: 'Importar', href: '/importar', icon: Upload, modulo: 'importador_excel' },
+      { type: 'leaf', label: 'IA Precios', href: '/ia-precios', icon: Brain, modulo: 'ia_precios' },
+    ],
+  },
+  {
+    type: 'group',
+    key: 'contactos',
+    label: 'Contactos',
+    icon: Contact,
+    items: [
+      { type: 'leaf', label: 'Proveedores', href: '/proveedores', icon: Truck, modulo: 'stock' },
+      { type: 'leaf', label: 'Clientes', href: '/clientes', icon: Users, modulo: 'facturador_simple' },
+    ],
+  },
+  {
+    type: 'group',
+    key: 'facturacion',
+    label: 'Facturación',
+    icon: FileText,
+    items: [
+      { type: 'leaf', label: 'Facturación', href: '/facturacion', icon: FileText, modulo: 'facturador_simple' },
+      { type: 'leaf', label: 'POS', href: '/facturacion/pos', icon: ScanBarcode, modulo: 'facturador_pos' },
+    ],
+  },
+  { type: 'leaf', label: 'Presupuestos', href: '/presupuestos', icon: FileSpreadsheet, modulo: 'presupuestos' },
+  { type: 'leaf', label: 'Analizador', href: '/analizador', icon: BarChart3, modulo: 'analizador_rentabilidad' },
+  {
+    type: 'group',
+    key: 'configuracion',
+    label: 'Configuración',
+    icon: Settings,
+    items: [
+      { type: 'leaf', label: 'Mi negocio', href: '/configuracion', icon: Settings },
+      { type: 'leaf', label: 'Usuarios', href: '/configuracion/usuarios', icon: UsersRound, adminOnly: true },
+      { type: 'leaf', label: 'ARCA / AFIP', href: '/configuracion/arca', icon: FileText, modulo: 'facturador_arca' },
+      { type: 'leaf', label: 'Plan y módulos', href: '/configuracion/plan', icon: CreditCard },
+    ],
+  },
 ];
 
-function navItemActive(pathname: string, href: string) {
+function leafActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
+  if (href === '/facturacion') {
+    return pathname === '/facturacion' || pathname.startsWith('/facturacion/arca');
+  }
+  if (href === '/configuracion') {
+    return pathname === '/configuracion';
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function leafVisible(leaf: NavLeaf, modulos: Record<string, boolean>, isAdmin: boolean) {
+  if (leaf.adminOnly && !isAdmin) return false;
+  if (!leaf.modulo) return true;
+  return Boolean(modulos[leaf.modulo]);
+}
+
+type VisibleLeaf = { kind: 'leaf'; leaf: NavLeaf };
+type VisibleGroup = { kind: 'group'; group: NavGroup; items: NavLeaf[] };
+type VisibleEntry = VisibleLeaf | VisibleGroup;
+
+function buildVisibleEntries(
+  modulos: Record<string, boolean>,
+  isAdmin: boolean
+): VisibleEntry[] {
+  const result: VisibleEntry[] = [];
+  for (const entry of NAV_ENTRIES) {
+    if (entry.type === 'leaf') {
+      if (leafVisible(entry, modulos, isAdmin)) {
+        result.push({ kind: 'leaf', leaf: entry });
+      }
+      continue;
+    }
+    const items = entry.items.filter((leaf) => leafVisible(leaf, modulos, isAdmin));
+    if (items.length === 0) continue;
+    result.push({ kind: 'group', group: entry, items });
+  }
+  return result;
 }
 
 function SidebarNav({
   pathname,
   onNavigate,
   className,
-  visibleItems,
+  entries,
+  openGroups,
+  onToggleGroup,
 }: {
   pathname: string;
   onNavigate?: () => void;
   className?: string;
-  visibleItems: NavItem[];
+  entries: VisibleEntry[];
+  openGroups: Record<string, boolean>;
+  onToggleGroup: (key: string) => void;
 }) {
   return (
     <nav className={cn('flex flex-col gap-1 p-4', className)}>
-      {visibleItems.map((item) => {
-        const Icon = item.icon;
-        const active = navItemActive(pathname, item.href);
+      {entries.map((entry) => {
+        if (entry.kind === 'leaf') {
+          const { leaf } = entry;
+          const Icon = leaf.icon;
+          const active = leafActive(pathname, leaf.href);
+          return (
+            <Link
+              key={leaf.href}
+              href={leaf.href}
+              onClick={onNavigate}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                active
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" aria-hidden />
+              {leaf.label}
+            </Link>
+          );
+        }
+
+        const { group, items } = entry;
+        const GroupIcon = group.icon;
+        const hasActiveChild = items.some((leaf) => leafActive(pathname, leaf.href));
+        const open = openGroups[group.key] ?? hasActiveChild;
+
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
-              active
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-            )}
-          >
-            <Icon className="h-4 w-4 shrink-0" aria-hidden />
-            {item.label}
-          </Link>
+          <div key={group.key} className="flex flex-col">
+            <button
+              type="button"
+              onClick={() => onToggleGroup(group.key)}
+              aria-expanded={open}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                hasActiveChild
+                  ? 'text-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <GroupIcon className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="flex-1 text-left">{group.label}</span>
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 shrink-0 transition-transform duration-200',
+                  open ? 'rotate-0' : '-rotate-90'
+                )}
+                aria-hidden
+              />
+            </button>
+            {open ? (
+              <div className="mt-1 flex flex-col gap-1 border-l border-border/60 pl-3 ml-4">
+                {items.map((leaf) => {
+                  const Icon = leaf.icon;
+                  const active = leafActive(pathname, leaf.href);
+                  return (
+                    <Link
+                      key={leaf.href}
+                      href={leaf.href}
+                      onClick={onNavigate}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                        active
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      )}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                      {leaf.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
         );
       })}
     </nav>
@@ -112,13 +263,26 @@ export function DashboardChrome({
 }) {
   const pathname = usePathname() ?? '/';
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const { modulos, loading } = useModulos();
 
-  const visibleItems = NAV_ITEMS.filter((item) => {
-    if (item.adminOnly && !isAdmin) return false;
-    if (!item.modulo) return true;
-    return modulos[item.modulo];
-  });
+  const visibleEntries = useMemo(
+    () => buildVisibleEntries(modulos as Record<string, boolean>, isAdmin),
+    [modulos, isAdmin]
+  );
+
+  const handleToggleGroup = (key: string) => {
+    setOpenGroups((prev) => {
+      const currentEntry = visibleEntries.find(
+        (entry): entry is VisibleGroup => entry.kind === 'group' && entry.group.key === key
+      );
+      const hasActiveChild = currentEntry
+        ? currentEntry.items.some((leaf) => leafActive(pathname, leaf.href))
+        : false;
+      const currentlyOpen = prev[key] ?? hasActiveChild;
+      return { ...prev, [key]: !currentlyOpen };
+    });
+  };
 
   useEffect(() => {
     setMobileOpen(false);
@@ -133,34 +297,6 @@ export function DashboardChrome({
     };
   }, [mobileOpen]);
 
-  // #region agent log
-  useEffect(() => {
-    const bisSkinCheckedCount = document.querySelectorAll('[bis_skin_checked]').length;
-    const sampleAttrs =
-      document.body?.firstElementChild && document.body.firstElementChild instanceof HTMLElement
-        ? Array.from(document.body.firstElementChild.attributes).map((a) => a.name)
-        : [];
-    fetch('http://127.0.0.1:7729/ingest/b7d77d9b-b0af-4230-81eb-50c688422230', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'b3607a' },
-      body: JSON.stringify({
-        sessionId: 'b3607a',
-        location: 'dashboard-chrome.tsx:hydration-probe',
-        message: 'post-mount hydration probe',
-        data: {
-          bisSkinCheckedCount,
-          bodyChildAttrNames: sampleAttrs,
-          loading,
-          pathname,
-          visibleItemsLen: visibleItems.length,
-        },
-        timestamp: Date.now(),
-        hypothesisId: 'H1-H5',
-      }),
-    }).catch(() => {});
-  }, [loading, pathname, visibleItems.length]);
-  // #endregion
-
   return (
     <div className="flex min-h-screen overflow-x-hidden bg-muted/30">
       <aside className="hidden w-60 shrink-0 border-r bg-card md:flex md:flex-col">
@@ -172,7 +308,13 @@ export function DashboardChrome({
         {loading ? (
           <div className="flex-1 animate-pulse p-4" aria-hidden />
         ) : (
-          <SidebarNav pathname={pathname} className="flex-1" visibleItems={visibleItems} />
+          <SidebarNav
+            pathname={pathname}
+            className="flex-1 overflow-y-auto"
+            entries={visibleEntries}
+            openGroups={openGroups}
+            onToggleGroup={handleToggleGroup}
+          />
         )}
       </aside>
 
@@ -215,7 +357,9 @@ export function DashboardChrome({
             pathname={pathname}
             className="flex-1 overflow-y-auto"
             onNavigate={() => setMobileOpen(false)}
-            visibleItems={visibleItems}
+            entries={visibleEntries}
+            openGroups={openGroups}
+            onToggleGroup={handleToggleGroup}
           />
         )}
       </aside>

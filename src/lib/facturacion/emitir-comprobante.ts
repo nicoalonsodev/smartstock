@@ -10,7 +10,7 @@ type TipoComprobante = Database['public']['Enums']['tipo_comprobante'];
 
 export interface EmitirComprobanteBody {
   tipo: string;
-  cliente_id: string;
+  cliente_id?: string | null;
   items: { producto_id: string; cantidad: number; precio_unitario: number }[];
   notas?: string;
   iva_porcentaje?: number;
@@ -40,11 +40,11 @@ export async function emitirComprobante(
   const generarPdfYSubir = opciones?.generarPdfYSubir !== false;
   const omitirMovimientosStock = opciones?.omitirMovimientosStock === true;
 
-  if (!body.tipo || !body.cliente_id || !body.items?.length) {
+  if (!body.tipo || !body.items?.length) {
     return {
       ok: false,
       status: 400,
-      error: 'Faltan campos obligatorios: tipo, cliente_id, items',
+      error: 'Faltan campos obligatorios: tipo, items',
     };
   }
 
@@ -58,14 +58,27 @@ export async function emitirComprobante(
     return { ok: false, status: 500, error: 'Tenant no encontrado' };
   }
 
-  const { data: cliente } = await supabase
-    .from('cliente')
-    .select('*')
-    .eq('id', body.cliente_id)
-    .single();
+  const consumidorFinal = {
+    nombre: 'Consumidor Final',
+    razon_social: null as string | null,
+    cuit_dni: null as string | null,
+    condicion_iva: 'consumidor_final' as string,
+    direccion: null as string | null,
+  };
 
-  if (!cliente) {
-    return { ok: false, status: 404, error: 'Cliente no encontrado' };
+  let cliente = consumidorFinal;
+
+  if (body.cliente_id) {
+    const { data: clienteDb } = await supabase
+      .from('cliente')
+      .select('*')
+      .eq('id', body.cliente_id)
+      .single();
+
+    if (!clienteDb) {
+      return { ok: false, status: 404, error: 'Cliente no encontrado' };
+    }
+    cliente = clienteDb;
   }
 
   const productoIds = body.items.map((i) => i.producto_id);
@@ -116,7 +129,7 @@ export async function emitirComprobante(
       tipo: body.tipo as never,
       numero,
       fecha: new Date().toISOString().split('T')[0],
-      cliente_id: body.cliente_id,
+      cliente_id: body.cliente_id || null,
       subtotal: importes.subtotal,
       iva_monto: importes.iva_monto,
       iva_porcentaje: importes.iva_porcentaje,
@@ -172,7 +185,7 @@ export async function emitirComprobante(
     }
   }
 
-  if (!esPresupuesto) {
+  if (!esPresupuesto && body.cliente_id) {
     const esNotaCredito = body.tipo.startsWith('nota_credito');
     const deltaDeuda = esNotaCredito ? -importes.total : importes.total;
 
@@ -291,7 +304,7 @@ export async function emitirComprobante(
           tipo: body.tipo,
           numero,
           fecha: comprobante.fecha,
-          clienteCuitDni: cliente.cuit_dni ?? null,
+          clienteCuitDni: cliente.cuit_dni || null,
           importeTotal: importes.total,
           importeNeto: importes.subtotal,
           importeIVA: importes.iva_monto,

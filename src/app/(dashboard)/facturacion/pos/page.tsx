@@ -215,11 +215,6 @@ export default function PosPage() {
         const c = await clientesRes.json();
         const list = c.clientes ?? c ?? [];
         setClientes(list);
-        const cf = list.find(
-          (cl: Cliente) => cl.condicion_iva === 'consumidor_final',
-        );
-        if (cf) setClienteId(cf.id);
-        else if (list.length > 0) setClienteId(list[0].id);
       }
     }
     void init();
@@ -246,7 +241,8 @@ export default function PosPage() {
     return () => clearTimeout(t);
   }, [highlightIdx]);
 
-  const clienteActual = clientes.find((c) => c.id === clienteId);
+  const clienteActual = clienteId ? clientes.find((c) => c.id === clienteId) : null;
+  const clienteNombre = clienteActual?.nombre ?? 'Consumidor Final';
 
   const addUnitProduct = useCallback((producto: ProductoScanned) => {
     setItems((prev) => {
@@ -508,7 +504,7 @@ export default function PosPage() {
                 size="sm"
                 onClick={() => setShowClienteSearch(!showClienteSearch)}
               >
-                {clienteActual?.nombre ?? 'Seleccionar'}
+                {clienteNombre}
               </Button>
             </div>
 
@@ -522,6 +518,23 @@ export default function PosPage() {
                   className="mb-2"
                 />
                 <div className="max-h-48 overflow-y-auto">
+                  <button
+                    type="button"
+                    className={cn(
+                      'w-full rounded px-3 py-1.5 text-left text-sm hover:bg-muted font-medium',
+                      !clienteId && 'bg-primary/10 text-primary',
+                    )}
+                    onClick={() => {
+                      setClienteId('');
+                      setShowClienteSearch(false);
+                      setClienteSearch('');
+                    }}
+                  >
+                    Consumidor Final
+                  </button>
+                  {filteredClientes.length > 0 && (
+                    <div className="my-1 border-t" />
+                  )}
                   {filteredClientes.map((c) => (
                     <button
                       key={c.id}
@@ -539,7 +552,12 @@ export default function PosPage() {
                       {c.nombre}
                     </button>
                   ))}
-                  {filteredClientes.length === 0 && (
+                  {filteredClientes.length === 0 && !clienteSearch.trim() && (
+                    <p className="px-3 py-2 text-sm text-muted-foreground">
+                      No hay clientes registrados
+                    </p>
+                  )}
+                  {filteredClientes.length === 0 && clienteSearch.trim() && (
                     <p className="px-3 py-2 text-sm text-muted-foreground">
                       Sin resultados
                     </p>
@@ -868,7 +886,7 @@ export default function PosPage() {
         <CobroModal
           items={items}
           clienteId={clienteId}
-          clienteNombre={clienteActual?.nombre ?? 'Consumidor Final'}
+          clienteNombre={clienteNombre}
           tipoComprobante={tipoComprobante}
           total={total}
           subtotal={subtotalRounded}

@@ -88,7 +88,7 @@ export function CobroModal({
 
     const body: Record<string, unknown> = {
       tipo,
-      cliente_id: clienteId,
+      cliente_id: clienteId || null,
       items: items.map((it) => ({
         producto_id: it.producto.id,
         cantidad: it.cantidad,
