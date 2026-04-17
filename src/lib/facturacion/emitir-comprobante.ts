@@ -8,6 +8,11 @@ import type { Database } from '@/types/database';
 
 type TipoComprobante = Database['public']['Enums']['tipo_comprobante'];
 
+type ClienteFacturaSnapshot = Pick<
+  Database['public']['Tables']['cliente']['Row'],
+  'nombre' | 'razon_social' | 'cuit_dni' | 'condicion_iva' | 'direccion'
+>;
+
 export interface EmitirComprobanteBody {
   tipo: string;
   cliente_id?: string | null;
@@ -58,15 +63,15 @@ export async function emitirComprobante(
     return { ok: false, status: 500, error: 'Tenant no encontrado' };
   }
 
-  const consumidorFinal = {
+  const consumidorFinal: ClienteFacturaSnapshot = {
     nombre: 'Consumidor Final',
-    razon_social: null as string | null,
-    cuit_dni: null as string | null,
-    condicion_iva: 'consumidor_final' as string,
-    direccion: null as string | null,
+    razon_social: null,
+    cuit_dni: null,
+    condicion_iva: 'consumidor_final',
+    direccion: null,
   };
 
-  let cliente = consumidorFinal;
+  let cliente: ClienteFacturaSnapshot = consumidorFinal;
 
   if (body.cliente_id) {
     const { data: clienteDb } = await supabase
@@ -84,7 +89,7 @@ export async function emitirComprobante(
   const productoIds = body.items.map((i) => i.producto_id);
   const { data: productos } = await supabase
     .from('producto')
-    .select('id, codigo, nombre, stock_actual, precio_costo')
+    .select('id, codigo, nombre, stock_actual, precio_costo, iva_porcentaje')
     .in('id', productoIds);
 
   if (!productos || productos.length !== productoIds.length) {
@@ -107,7 +112,18 @@ export async function emitirComprobante(
     }
   }
 
-  const importes = calcularImportes(body.items, body.tipo, body.iva_porcentaje);
+  const tenantIvaDefault = (tenant as Record<string, unknown>).iva_porcentaje_default as number | undefined;
+  const ivaFallback = body.iva_porcentaje ?? tenantIvaDefault ?? 21;
+
+  const itemsConIva = body.items.map((item) => {
+    const prod = productosMap.get(item.producto_id);
+    return {
+      ...item,
+      iva_porcentaje: prod?.iva_porcentaje ?? ivaFallback,
+    };
+  });
+
+  const importes = calcularImportes(itemsConIva, body.tipo, ivaFallback);
 
   const { data: numero, error: numError } = await supabase.rpc('siguiente_numero_comprobante', {
     p_tenant_id: ctx.tenantId,

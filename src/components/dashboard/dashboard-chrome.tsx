@@ -28,7 +28,7 @@ import {
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { DashboardRoleProvider } from '@/components/dashboard/dashboard-role-context';
 import { useModulos } from '@/hooks/useModulos';
-import type { ModuloKey } from '@/lib/modulos/modulo-key';
+import type { ModuloKey, ModulosConfig } from '@/lib/modulos/modulo-key';
 import { cn } from '@/lib/utils';
 
 type IconType = React.ComponentType<{ className?: string }>;
@@ -122,7 +122,7 @@ function leafActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function leafVisible(leaf: NavLeaf, modulos: Record<string, boolean>, isAdmin: boolean) {
+function leafVisible(leaf: NavLeaf, modulos: ModulosConfig, isAdmin: boolean) {
   if (leaf.adminOnly && !isAdmin) return false;
   if (!leaf.modulo) return true;
   return Boolean(modulos[leaf.modulo]);
@@ -132,10 +132,7 @@ type VisibleLeaf = { kind: 'leaf'; leaf: NavLeaf };
 type VisibleGroup = { kind: 'group'; group: NavGroup; items: NavLeaf[] };
 type VisibleEntry = VisibleLeaf | VisibleGroup;
 
-function buildVisibleEntries(
-  modulos: Record<string, boolean>,
-  isAdmin: boolean
-): VisibleEntry[] {
+function buildVisibleEntries(modulos: ModulosConfig, isAdmin: boolean): VisibleEntry[] {
   const result: VisibleEntry[] = [];
   for (const entry of NAV_ENTRIES) {
     if (entry.type === 'leaf') {
@@ -267,7 +264,7 @@ export function DashboardChrome({
   const { modulos, loading } = useModulos();
 
   const visibleEntries = useMemo(
-    () => buildVisibleEntries(modulos as Record<string, boolean>, isAdmin),
+    () => buildVisibleEntries(modulos, isAdmin),
     [modulos, isAdmin]
   );
 

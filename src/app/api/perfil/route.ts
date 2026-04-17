@@ -14,5 +14,6 @@ export async function GET() {
     tenantId: profile.tenantId,
     tenantName: profile.tenantName,
     rol: profile.rol,
+    ivaDefault: profile.ivaDefault,
   });
 }

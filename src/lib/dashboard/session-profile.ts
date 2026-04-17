@@ -8,6 +8,7 @@ export type SessionProfile = {
   tenantId: string;
   tenantName: string;
   rol: Database['public']['Enums']['rol_usuario'];
+  ivaDefault: number;
 };
 
 export const getSessionProfile = cache(async (): Promise<SessionProfile | null> => {
@@ -21,13 +22,15 @@ export const getSessionProfile = cache(async (): Promise<SessionProfile | null> 
     .maybeSingle();
 
   let tenantName = 'Tu negocio';
+  let ivaDefault = 21;
   if (usuario?.tenant_id) {
     const { data: tenant } = await supabase
       .from('tenant')
-      .select('nombre')
+      .select('nombre, iva_porcentaje_default')
       .eq('id', usuario.tenant_id)
       .maybeSingle();
     if (tenant?.nombre) tenantName = tenant.nombre;
+    if (tenant?.iva_porcentaje_default != null) ivaDefault = tenant.iva_porcentaje_default;
   }
 
   const userDisplayName = usuario
@@ -39,5 +42,6 @@ export const getSessionProfile = cache(async (): Promise<SessionProfile | null> 
     tenantId: usuario?.tenant_id ?? '',
     tenantName,
     rol: usuario?.rol ?? 'visor',
+    ivaDefault,
   };
 });

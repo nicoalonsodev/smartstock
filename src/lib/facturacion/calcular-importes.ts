@@ -2,6 +2,7 @@ interface ItemComprobante {
   producto_id: string;
   cantidad: number;
   precio_unitario: number;
+  iva_porcentaje?: number | null;
 }
 
 interface Importes {
@@ -15,13 +16,15 @@ interface Importes {
 /**
  * Calcula importes de un comprobante.
  *
- * - Factura A / NC A: subtotal neto + IVA discriminado = total
- * - Factura B/C, Remito, Presupuesto: total = subtotal (IVA incluido en precio)
+ * - Factura / NC: subtotal neto + IVA discriminado por producto = total
+ * - Ticket, Remito, Presupuesto: total = subtotal (IVA incluido en precio)
+ *
+ * Each item can carry its own iva_porcentaje; falls back to ivaPorcentajeDefault.
  */
 export function calcularImportes(
   items: ItemComprobante[],
   tipoComprobante: string,
-  ivaPorcentaje: number = 21,
+  ivaPorcentajeDefault: number = 21,
 ): Importes {
   const itemsCalculados = items.map((item) => ({
     ...item,
@@ -31,15 +34,27 @@ export function calcularImportes(
   const subtotal = itemsCalculados.reduce((sum, item) => sum + item.subtotal, 0);
   const subtotalRedondeado = Math.round(subtotal * 100) / 100;
 
-  const esFacturaA =
-    tipoComprobante === 'factura_a' || tipoComprobante === 'nota_credito_a';
+  const esFactura =
+    tipoComprobante === 'factura_a' ||
+    tipoComprobante === 'nota_credito_a' ||
+    tipoComprobante === 'factura' ||
+    tipoComprobante === 'nota_credito';
 
-  if (esFacturaA) {
-    const ivaMonto =
-      Math.round(subtotalRedondeado * (ivaPorcentaje / 100) * 100) / 100;
+  if (esFactura) {
+    let ivaMonto = 0;
+    for (const item of itemsCalculados) {
+      const rate = item.iva_porcentaje ?? ivaPorcentajeDefault;
+      ivaMonto += Math.round(item.subtotal * (rate / 100) * 100) / 100;
+    }
+    ivaMonto = Math.round(ivaMonto * 100) / 100;
+
+    const rateUsed = itemsCalculados.length === 1
+      ? (itemsCalculados[0].iva_porcentaje ?? ivaPorcentajeDefault)
+      : ivaPorcentajeDefault;
+
     return {
       subtotal: subtotalRedondeado,
-      iva_porcentaje: ivaPorcentaje,
+      iva_porcentaje: rateUsed,
       iva_monto: ivaMonto,
       total: Math.round((subtotalRedondeado + ivaMonto) * 100) / 100,
       items: itemsCalculados,
@@ -48,7 +63,7 @@ export function calcularImportes(
 
   return {
     subtotal: subtotalRedondeado,
-    iva_porcentaje: ivaPorcentaje,
+    iva_porcentaje: ivaPorcentajeDefault,
     iva_monto: 0,
     total: subtotalRedondeado,
     items: itemsCalculados,

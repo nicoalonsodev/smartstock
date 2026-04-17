@@ -37,6 +37,7 @@ type ProductoScanned = {
   stock_actual: number;
   es_pesable?: boolean;
   unidad?: string;
+  iva_porcentaje?: number | null;
 };
 
 type ScanResult = {
@@ -141,6 +142,7 @@ export default function PosPage() {
   const [tenantName, setTenantName] = useState('');
   const [userName, setUserName] = useState('');
   const [canEmit, setCanEmit] = useState(true);
+  const [ivaDefault, setIvaDefault] = useState(21);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [clienteId, setClienteId] = useState('');
   const [clienteSearch, setClienteSearch] = useState('');
@@ -191,6 +193,7 @@ export default function PosPage() {
         setTenantName(p.tenantName ?? 'Mi Negocio');
         setUserName(p.userDisplayName ?? 'Usuario');
         setCanEmit(p.rol !== 'visor');
+        if (p.ivaDefault != null) setIvaDefault(p.ivaDefault);
 
         // Check for items from pedido (sessionStorage)
         const fromPedido = sessionStorage.getItem('smartstock_pos_from_pedido');
@@ -436,11 +439,20 @@ export default function PosPage() {
 
   const afterDiscount = Math.round((subtotalRounded - descuentoMonto) * 100) / 100;
 
-  const esFacturaA = tipoComprobante === 'factura' && clienteActual?.condicion_iva === 'responsable_inscripto';
-  const ivaRate = 21;
-  const ivaMonto = esFacturaA
-    ? Math.round(afterDiscount * (ivaRate / 100) * 100) / 100
-    : 0;
+  const esFactura = tipoComprobante === 'factura';
+
+  const ivaDesglose = esFactura
+    ? items.reduce<Record<number, number>>((acc, it) => {
+        const rate = it.producto.iva_porcentaje ?? ivaDefault;
+        const lineSubtotal = Math.round(it.cantidad * it.producto.precio_venta * 100) / 100;
+        const proportion = subtotalRounded > 0 ? lineSubtotal / subtotalRounded : 0;
+        const baseAfterDiscount = Math.round(afterDiscount * proportion * 100) / 100;
+        acc[rate] = Math.round(((acc[rate] ?? 0) + baseAfterDiscount * (rate / 100)) * 100) / 100;
+        return acc;
+      }, {})
+    : {};
+
+  const ivaMonto = Object.values(ivaDesglose).reduce((s, v) => s + v, 0);
   const total = Math.round((afterDiscount + ivaMonto) * 100) / 100;
 
   const filteredClientes = clienteSearch.trim()
@@ -754,12 +766,12 @@ export default function PosPage() {
               )}
             </div>
 
-            {esFacturaA && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">IVA {ivaRate}%</span>
-                <span>{formatCurrency(ivaMonto)}</span>
+            {esFactura && Object.entries(ivaDesglose).map(([rate, monto]) => (
+              <div key={rate} className="flex justify-between text-sm">
+                <span className="text-muted-foreground">IVA {rate}%</span>
+                <span>{formatCurrency(monto)}</span>
               </div>
-            )}
+            ))}
           </div>
 
           <div className="space-y-3 pt-4 border-t">
