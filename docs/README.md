@@ -124,5 +124,12 @@ El proyecto estará disponible en `http://localhost:3000`.
 | [pedidos.md](./pedidos.md) | Pedidos, presupuestos, estados, conversión a factura |
 | [ia-precios.md](./ia-precios.md) | Extracción con Gemini, prompt, preview, historial |
 | [arca.md](./arca.md) | WSAA, WSFE, CAE, reintentos, certificados |
+| [arca-cola-worker.md](./arca-cola-worker.md) | Cola `arca_job`, worker, cron, stub homologación |
+| [backend-nest-barcodes-plan.md](./backend-nest-barcodes-plan.md) | Plan de evolución backend NestJS + modelo de código de barras + cierre ARCA fiscal |
+| [backend-nest-architecture.md](./backend-nest-architecture.md) | Arquitectura backend completa en NestJS: módulos, capas, seguridad, observabilidad |
+| [backend-nest-data-algorithms.md](./backend-nest-data-algorithms.md) | Reglas de modelado de datos, algoritmos críticos y estrategia de migración segura |
+| [backend-nest-api-contracts.md](./backend-nest-api-contracts.md) | Contratos API versionados, convenciones de error, DTOs base e idempotencia |
+| [backend-nest-implementation-roadmap.md](./backend-nest-implementation-roadmap.md) | Roadmap por sprints para implementar y migrar backend sin romper operación |
+| [backend-nest-tickets.md](./backend-nest-tickets.md) | Backlog completo NestJS con dependencias, workflow Git y pipeline de migraciones/build |
 | [deploy.md](./deploy.md) | Vercel, VPS, migraciones en producción, checklist go-live |
 | [TICKETS.md](./TICKETS.md) | Backlog completo con 65+ tickets organizados por versión |

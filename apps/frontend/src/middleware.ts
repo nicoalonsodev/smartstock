@@ -8,6 +8,7 @@ const publicRoutes = [
   '/register',
   '/api/auth/callback',
   '/api/auth/register',
+  '/api/cron/arca-procesar',
 ];
 
 export async function middleware(request: NextRequest) {

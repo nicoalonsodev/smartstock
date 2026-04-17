@@ -126,6 +126,60 @@ export type Database = {
           },
         ];
       };
+      arca_job: {
+        Row: {
+          attempts: number;
+          comprobante_id: string;
+          created_at: string;
+          id: string;
+          last_error: string | null;
+          max_attempts: number;
+          next_attempt_at: string | null;
+          status: string;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          attempts?: number;
+          comprobante_id: string;
+          created_at?: string;
+          id?: string;
+          last_error?: string | null;
+          max_attempts?: number;
+          next_attempt_at?: string | null;
+          status?: string;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          attempts?: number;
+          comprobante_id?: string;
+          created_at?: string;
+          id?: string;
+          last_error?: string | null;
+          max_attempts?: number;
+          next_attempt_at?: string | null;
+          status?: string;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'arca_job_comprobante_id_fkey';
+            columns: ['comprobante_id'];
+            isOneToOne: true;
+            referencedRelation: 'comprobante';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'arca_job_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenant';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       categoria: {
         Row: {
           activa: boolean;
@@ -940,6 +994,14 @@ export type Database = {
       activar_plan: {
         Args: { p_plan: Database['public']['Enums']['plan_tipo']; p_tenant_id: string };
         Returns: undefined;
+      };
+      claim_arca_jobs: {
+        Args: { p_limit?: number };
+        Returns: Database['public']['Tables']['arca_job']['Row'][];
+      };
+      reset_stale_arca_jobs: {
+        Args: { p_stale_minutes?: number };
+        Returns: number;
       };
       registrar_movimiento: {
         Args: {

@@ -34,6 +34,19 @@ El objetivo de esta versión es levantar toda la infraestructura base del proyec
 3. **V40-ARCA-003 — Renovación automática de ticket WSAA** (Estimación: 3 pts)
    `asegurarTicketVigente` antes de WSFE.
 
+## Línea técnica paralela (documentada)
+
+- Se agregó el documento `backend-nest-barcodes-plan.md` para planificar la evolución a backend NestJS + PostgreSQL con foco en:
+  - separación semántica entre código interno y código de barras de producto,
+  - validaciones y normalización EAN/UPC en importador y catálogo,
+  - cierre del faltante de código de barras fiscal en PDF cuando ARCA aprueba CAE.
+- Se agregaron además documentos complementarios para cubrir backend completo:
+  - `backend-nest-architecture.md`
+  - `backend-nest-data-algorithms.md`
+  - `backend-nest-api-contracts.md`
+  - `backend-nest-implementation-roadmap.md`
+  - `backend-nest-tickets.md` (incluye workflow Git por ticket y pipeline `migration:generate` + `build` + `migration:run`)
+
 ---
 
 ## Decisiones pendientes de tomar
