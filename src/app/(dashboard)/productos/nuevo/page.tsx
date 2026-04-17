@@ -41,6 +41,12 @@ export default function NuevoProductoPage() {
   const [unidad, setUnidad] = useState<Unidad>('unidad');
   const [precioCosto, setPrecioCosto] = useState('0');
   const [precioVenta, setPrecioVenta] = useState('0');
+  const [porcentajeGanancia, setPorcentajeGanancia] = useState('');
+  const [ivaPorcentaje, setIvaPorcentaje] = useState('');
+  const [moneda, setMoneda] = useState('$');
+  const [rubro, setRubro] = useState('');
+  const [subrubro, setSubrubro] = useState('');
+  const [ubicacionField, setUbicacionField] = useState('');
   const [stockMinimo, setStockMinimo] = useState('0');
   const [stockInicial, setStockInicial] = useState('');
   const [fechaVencimiento, setFechaVencimiento] = useState('');
@@ -87,6 +93,12 @@ export default function NuevoProductoPage() {
         unidad,
         precio_costo: parseFloat(precioCosto) || 0,
         precio_venta: parseFloat(precioVenta) || 0,
+        porcentaje_ganancia: porcentajeGanancia ? parseFloat(porcentajeGanancia) : null,
+        iva_porcentaje: ivaPorcentaje ? parseFloat(ivaPorcentaje) : null,
+        moneda: moneda.trim() || '$',
+        rubro: rubro.trim() || null,
+        subrubro: subrubro.trim() || null,
+        ubicacion: ubicacionField.trim() || null,
         stock_minimo: parseInt(stockMinimo, 10) || 0,
         stock_inicial: stockInicial ? parseInt(stockInicial, 10) : 0,
         fecha_vencimiento: fechaVencimiento || null,
@@ -170,6 +182,17 @@ export default function NuevoProductoPage() {
           </label>
         </div>
 
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="grid gap-1 text-sm">
+            <span className="text-muted-foreground">Rubro</span>
+            <Input value={rubro} onChange={(e) => setRubro(e.target.value)} placeholder="Ej: Ferretería" />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span className="text-muted-foreground">Subrubro</span>
+            <Input value={subrubro} onChange={(e) => setSubrubro(e.target.value)} placeholder="Ej: Tornillería" />
+          </label>
+        </div>
+
         <label className="grid gap-1 text-sm">
           <span className="text-muted-foreground">Unidad</span>
           <Select
@@ -197,7 +220,14 @@ export default function NuevoProductoPage() {
               step="0.01"
               min="0"
               value={precioCosto}
-              onChange={(e) => setPrecioCosto(e.target.value)}
+              onChange={(e) => {
+                setPrecioCosto(e.target.value);
+                const c = parseFloat(e.target.value);
+                const g = parseFloat(porcentajeGanancia);
+                if (c > 0 && g > 0) {
+                  setPrecioVenta(String(Math.round(c * (1 + g / 100) * 100) / 100));
+                }
+              }}
             />
           </label>
           <label className="grid gap-1 text-sm">
@@ -211,6 +241,45 @@ export default function NuevoProductoPage() {
             />
           </label>
         </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <label className="grid gap-1 text-sm">
+            <span className="text-muted-foreground">Ganancia %</span>
+            <Input
+              type="number"
+              step="0.01"
+              value={porcentajeGanancia}
+              onChange={(e) => {
+                setPorcentajeGanancia(e.target.value);
+                const c = parseFloat(precioCosto);
+                const g = parseFloat(e.target.value);
+                if (c > 0 && g > 0) {
+                  setPrecioVenta(String(Math.round(c * (1 + g / 100) * 100) / 100));
+                }
+              }}
+              placeholder="Ej: 30"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span className="text-muted-foreground">IVA %</span>
+            <Input
+              type="number"
+              step="0.01"
+              value={ivaPorcentaje}
+              onChange={(e) => setIvaPorcentaje(e.target.value)}
+              placeholder="Default del tenant"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span className="text-muted-foreground">Moneda</span>
+            <Input value={moneda} onChange={(e) => setMoneda(e.target.value)} placeholder="$" />
+          </label>
+        </div>
+
+        <label className="grid gap-1 text-sm">
+          <span className="text-muted-foreground">Ubicación</span>
+          <Input value={ubicacionField} onChange={(e) => setUbicacionField(e.target.value)} placeholder="Ej: Estante A3" />
+        </label>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="grid gap-1 text-sm">

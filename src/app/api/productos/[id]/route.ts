@@ -102,6 +102,12 @@ export async function PATCH(
     'codigo_barras',
     'plu',
     'es_pesable',
+    'rubro',
+    'subrubro',
+    'iva_porcentaje',
+    'porcentaje_ganancia',
+    'ubicacion',
+    'moneda',
   ] as const;
 
   const updates: Record<string, unknown> = {};
@@ -137,6 +143,27 @@ export async function PATCH(
         .maybeSingle();
       if (current && current.unidad !== 'kg' && current.unidad !== 'gramo') {
         updates.unidad = 'kg';
+      }
+    }
+  }
+
+  if (
+    (b.porcentaje_ganancia !== undefined || b.precio_costo !== undefined) &&
+    b.precio_venta === undefined
+  ) {
+    const { data: current } = await session.supabase
+      .from('producto')
+      .select('precio_costo, porcentaje_ganancia')
+      .eq('id', id)
+      .maybeSingle();
+    if (current) {
+      const costo = b.precio_costo !== undefined ? Number(b.precio_costo) : current.precio_costo;
+      const ganancia =
+        b.porcentaje_ganancia !== undefined
+          ? Number(b.porcentaje_ganancia)
+          : current.porcentaje_ganancia;
+      if (costo > 0 && ganancia != null && ganancia > 0) {
+        updates.precio_venta = Math.round(costo * (1 + ganancia / 100) * 100) / 100;
       }
     }
   }

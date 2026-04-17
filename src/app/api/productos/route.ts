@@ -43,7 +43,7 @@ async function conStockDisponible(
 }
 
 const selectList =
-  'id, codigo, nombre, stock_actual, stock_minimo, precio_costo, precio_venta, unidad, fecha_vencimiento, codigo_barras, es_pesable, categoria:categoria_id(id, nombre), proveedor:proveedor_id(id, nombre)';
+  'id, codigo, nombre, stock_actual, stock_minimo, precio_costo, precio_venta, unidad, fecha_vencimiento, codigo_barras, es_pesable, rubro, subrubro, iva_porcentaje, porcentaje_ganancia, ubicacion, moneda, categoria:categoria_id(id, nombre), proveedor:proveedor_id(id, nombre)';
 
 export async function GET(request: NextRequest) {
   // #region agent log
@@ -257,6 +257,13 @@ export async function POST(request: Request) {
   const unidad =
     (b.unidad as Database['public']['Enums']['unidad_medida'] | undefined) ?? 'unidad';
 
+  const precioCosto = Number(b.precio_costo) || 0;
+  const porcentajeGanancia = b.porcentaje_ganancia != null ? Number(b.porcentaje_ganancia) : null;
+  let precioVenta = Number(b.precio_venta) || 0;
+  if (precioVenta === 0 && precioCosto > 0 && porcentajeGanancia != null && porcentajeGanancia > 0) {
+    precioVenta = Math.round(precioCosto * (1 + porcentajeGanancia / 100) * 100) / 100;
+  }
+
   const { data: producto, error } = await session.supabase
     .from('producto')
     .insert({
@@ -267,14 +274,20 @@ export async function POST(request: Request) {
       categoria_id: typeof b.categoria_id === 'string' ? b.categoria_id : null,
       proveedor_id: typeof b.proveedor_id === 'string' ? b.proveedor_id : null,
       unidad,
-      precio_costo: Number(b.precio_costo) || 0,
-      precio_venta: Number(b.precio_venta) || 0,
+      precio_costo: precioCosto,
+      precio_venta: precioVenta,
       stock_actual: 0,
       stock_minimo: Number(b.stock_minimo) || 0,
       fecha_vencimiento:
         typeof b.fecha_vencimiento === 'string' && b.fecha_vencimiento
           ? b.fecha_vencimiento
           : null,
+      rubro: typeof b.rubro === 'string' && b.rubro ? b.rubro : null,
+      subrubro: typeof b.subrubro === 'string' && b.subrubro ? b.subrubro : null,
+      iva_porcentaje: b.iva_porcentaje != null ? Number(b.iva_porcentaje) || null : null,
+      porcentaje_ganancia: porcentajeGanancia,
+      ubicacion: typeof b.ubicacion === 'string' && b.ubicacion ? b.ubicacion : null,
+      moneda: typeof b.moneda === 'string' && b.moneda ? b.moneda : '$',
     })
     .select()
     .single();

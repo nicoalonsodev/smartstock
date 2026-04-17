@@ -58,6 +58,12 @@ type ProductoDetail = {
   codigo_barras: string | null;
   plu: string | null;
   es_pesable: boolean;
+  rubro: string | null;
+  subrubro: string | null;
+  iva_porcentaje: number | null;
+  porcentaje_ganancia: number | null;
+  ubicacion: string | null;
+  moneda: string;
   categoria: { id: string; nombre: string } | null;
   proveedor: { id: string; nombre: string } | null;
   movimientos: MovRow[];
@@ -103,6 +109,12 @@ export function ProductoDetalleClient({
   const [codigoBarras, setCodigoBarras] = useState('');
   const [plu, setPlu] = useState('');
   const [esPesable, setEsPesable] = useState(false);
+  const [rubro, setRubro] = useState('');
+  const [subrubro, setSubrubro] = useState('');
+  const [ivaPorcentaje, setIvaPorcentaje] = useState('');
+  const [porcentajeGanancia, setPorcentajeGanancia] = useState('');
+  const [ubicacionField, setUbicacionField] = useState('');
+  const [moneda, setMoneda] = useState('$');
   const [barcodeLoading, setBarcodeLoading] = useState(false);
   const [barcodeMsg, setBarcodeMsg] = useState<{ type: 'ok' | 'warn' | 'err'; text: string } | null>(null);
   const { modulos, loading: modulosLoading } = useModulos();
@@ -131,6 +143,12 @@ export function ProductoDetalleClient({
     setCodigoBarras(p.codigo_barras ?? '');
     setPlu(p.plu ?? '');
     setEsPesable(p.es_pesable ?? false);
+    setRubro(p.rubro ?? '');
+    setSubrubro(p.subrubro ?? '');
+    setIvaPorcentaje(p.iva_porcentaje != null ? String(p.iva_porcentaje) : '');
+    setPorcentajeGanancia(p.porcentaje_ganancia != null ? String(p.porcentaje_ganancia) : '');
+    setUbicacionField(p.ubicacion ?? '');
+    setMoneda(p.moneda ?? '$');
     setBarcodeMsg(null);
     setLoading(false);
   }, [productoId]);
@@ -183,6 +201,12 @@ export function ProductoDetalleClient({
         codigo_barras: codigoBarras.trim() || null,
         plu: esPesable && plu.trim() ? plu.trim() : null,
         es_pesable: esPesable,
+        rubro: rubro.trim() || null,
+        subrubro: subrubro.trim() || null,
+        iva_porcentaje: ivaPorcentaje ? parseFloat(ivaPorcentaje) : null,
+        porcentaje_ganancia: porcentajeGanancia ? parseFloat(porcentajeGanancia) : null,
+        ubicacion: ubicacionField.trim() || null,
+        moneda: moneda.trim() || '$',
       }),
     });
     const json = await res.json();
@@ -339,12 +363,29 @@ export function ProductoDetalleClient({
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
+                <span className="text-muted-foreground">Rubro</span>
+                <Input value={rubro} onChange={(e) => setRubro(e.target.value)} placeholder="Ej: Ferretería" />
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span className="text-muted-foreground">Subrubro</span>
+                <Input value={subrubro} onChange={(e) => setSubrubro(e.target.value)} placeholder="Ej: Tornillería" />
+              </label>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-1 text-sm">
                 <span className="text-muted-foreground">Precio costo</span>
                 <Input
                   type="number"
                   step="0.01"
                   value={precioCosto}
-                  onChange={(e) => setPrecioCosto(e.target.value)}
+                  onChange={(e) => {
+                    setPrecioCosto(e.target.value);
+                    const c = parseFloat(e.target.value);
+                    const g = parseFloat(porcentajeGanancia);
+                    if (c > 0 && g > 0) {
+                      setPrecioVenta(String(Math.round(c * (1 + g / 100) * 100) / 100));
+                    }
+                  }}
                 />
               </label>
               <label className="grid gap-1 text-sm">
@@ -357,6 +398,43 @@ export function ProductoDetalleClient({
                 />
               </label>
             </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="grid gap-1 text-sm">
+                <span className="text-muted-foreground">Ganancia %</span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={porcentajeGanancia}
+                  onChange={(e) => {
+                    setPorcentajeGanancia(e.target.value);
+                    const c = parseFloat(precioCosto);
+                    const g = parseFloat(e.target.value);
+                    if (c > 0 && g > 0) {
+                      setPrecioVenta(String(Math.round(c * (1 + g / 100) * 100) / 100));
+                    }
+                  }}
+                  placeholder="Ej: 30"
+                />
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span className="text-muted-foreground">IVA %</span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={ivaPorcentaje}
+                  onChange={(e) => setIvaPorcentaje(e.target.value)}
+                  placeholder="Default del tenant"
+                />
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span className="text-muted-foreground">Moneda</span>
+                <Input value={moneda} onChange={(e) => setMoneda(e.target.value)} placeholder="$" />
+              </label>
+            </div>
+            <label className="grid gap-1 text-sm">
+              <span className="text-muted-foreground">Ubicación</span>
+              <Input value={ubicacionField} onChange={(e) => setUbicacionField(e.target.value)} placeholder="Ej: Estante A3" />
+            </label>
             <label className="grid gap-1 text-sm">
               <span className="text-muted-foreground">Stock mínimo</span>
               <Input
@@ -465,8 +543,39 @@ export function ProductoDetalleClient({
               <dt className="text-muted-foreground">Costo / Venta</dt>
               <dd>
                 {formatCurrency(data.precio_costo)} / {formatCurrency(data.precio_venta)}
+                {data.porcentaje_ganancia != null && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    ({data.porcentaje_ganancia}% ganancia)
+                  </span>
+                )}
               </dd>
             </div>
+            <div>
+              <dt className="text-muted-foreground">IVA</dt>
+              <dd>{data.iva_porcentaje != null ? `${data.iva_porcentaje}%` : 'Default del tenant'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Moneda</dt>
+              <dd>{data.moneda}</dd>
+            </div>
+            {(data.rubro || data.subrubro) && (
+              <>
+                <div>
+                  <dt className="text-muted-foreground">Rubro</dt>
+                  <dd>{data.rubro ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Subrubro</dt>
+                  <dd>{data.subrubro ?? '—'}</dd>
+                </div>
+              </>
+            )}
+            {data.ubicacion && (
+              <div>
+                <dt className="text-muted-foreground">Ubicación</dt>
+                <dd>{data.ubicacion}</dd>
+              </div>
+            )}
             <div>
               <dt className="text-muted-foreground">Vencimiento</dt>
               <dd>{data.fecha_vencimiento ?? '—'}</dd>

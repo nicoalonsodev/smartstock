@@ -36,6 +36,13 @@ type FilaApi = {
   categoria?: string | null;
   unidad?: string | null;
   fecha_vencimiento?: string | null;
+  codigo_barras?: string | null;
+  rubro?: string | null;
+  subrubro?: string | null;
+  iva_porcentaje?: number | null;
+  porcentaje_ganancia?: number | null;
+  ubicacion?: string | null;
+  moneda?: string | null;
 };
 
 function filaValidadaToPayload(f: FilaValidada): FilaApi {
@@ -50,6 +57,13 @@ function filaValidadaToPayload(f: FilaValidada): FilaApi {
     categoria: d.categoria != null ? String(d.categoria) : null,
     unidad: d.unidad != null ? String(d.unidad) : null,
     fecha_vencimiento: d.fecha_vencimiento != null ? String(d.fecha_vencimiento) : null,
+    codigo_barras: d.codigo_barras != null ? String(d.codigo_barras) : null,
+    rubro: d.rubro != null ? String(d.rubro) : null,
+    subrubro: d.subrubro != null ? String(d.subrubro) : null,
+    iva_porcentaje: d.iva_porcentaje as number | null | undefined,
+    porcentaje_ganancia: d.porcentaje_ganancia as number | null | undefined,
+    ubicacion: d.ubicacion != null ? String(d.ubicacion) : null,
+    moneda: d.moneda != null ? String(d.moneda) : null,
   };
 }
 

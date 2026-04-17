@@ -19,6 +19,12 @@ const CAMPO_LABELS: Record<CampoProducto, string> = {
   fecha_vencimiento: 'Vencimiento',
   unidad: 'Unidad',
   codigo_barras: 'Código de barras',
+  rubro: 'Rubro',
+  subrubro: 'Subrubro',
+  iva_porcentaje: 'IVA %',
+  porcentaje_ganancia: 'Ganancia %',
+  ubicacion: 'Ubicación',
+  moneda: 'Moneda',
 };
 
 const CAMPOS_AGREGABLES: { value: CampoProducto; label: string }[] = [
@@ -32,6 +38,12 @@ const CAMPOS_AGREGABLES: { value: CampoProducto; label: string }[] = [
   { value: 'proveedor', label: 'Proveedor' },
   { value: 'fecha_vencimiento', label: 'Fecha de vencimiento' },
   { value: 'unidad', label: 'Unidad de medida' },
+  { value: 'rubro', label: 'Rubro' },
+  { value: 'subrubro', label: 'Subrubro' },
+  { value: 'iva_porcentaje', label: 'IVA %' },
+  { value: 'porcentaje_ganancia', label: 'Ganancia %' },
+  { value: 'ubicacion', label: 'Ubicación' },
+  { value: 'moneda', label: 'Moneda' },
 ];
 
 export type ColumnaPreview = {

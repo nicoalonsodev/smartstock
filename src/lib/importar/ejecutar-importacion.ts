@@ -31,6 +31,12 @@ export interface FilaImportacion {
   unidad?: string | null;
   fecha_vencimiento?: string | null;
   codigo_barras?: string | null;
+  rubro?: string | null;
+  subrubro?: string | null;
+  iva_porcentaje?: number | null;
+  porcentaje_ganancia?: number | null;
+  ubicacion?: string | null;
+  moneda?: string | null;
 }
 
 export interface EjecutarImportacionParams {
@@ -121,8 +127,22 @@ export async function ejecutarImportacionFilas(
         if (fila.unidad) updates.unidad = mapUnidad(fila.unidad);
         if (fila.fecha_vencimiento) updates.fecha_vencimiento = fila.fecha_vencimiento;
         if (fila.codigo_barras) updates.codigo_barras = fila.codigo_barras;
+        if (fila.rubro != null) updates.rubro = fila.rubro || null;
+        if (fila.subrubro != null) updates.subrubro = fila.subrubro || null;
+        if (fila.iva_porcentaje != null) updates.iva_porcentaje = fila.iva_porcentaje;
+        if (fila.porcentaje_ganancia != null) updates.porcentaje_ganancia = fila.porcentaje_ganancia;
+        if (fila.ubicacion != null) updates.ubicacion = fila.ubicacion || null;
+        if (fila.moneda) updates.moneda = fila.moneda;
         if (categoriaId) updates.categoria_id = categoriaId;
         if (proveedor_id) updates.proveedor_id = proveedor_id;
+
+        if (fila.precio_venta == null && fila.porcentaje_ganancia != null && fila.porcentaje_ganancia > 0) {
+          const costo = fila.precio_costo ?? productoExistente.precio_costo;
+          if (costo > 0) {
+            updates.precio_venta =
+              Math.round(costo * (1 + fila.porcentaje_ganancia / 100) * 100) / 100;
+          }
+        }
 
         await supabase
           .from('producto')
@@ -133,7 +153,7 @@ export async function ejecutarImportacionFilas(
         const costoAnterior = productoExistente.precio_costo;
         const ventaAnterior = productoExistente.precio_venta;
         const costoNuevo = fila.precio_costo ?? costoAnterior;
-        const ventaNuevo = fila.precio_venta ?? ventaAnterior;
+        const ventaNuevo = updates.precio_venta ?? fila.precio_venta ?? ventaAnterior;
 
         if (costoAnterior !== costoNuevo || ventaAnterior !== ventaNuevo) {
           const margenAnt =
@@ -169,6 +189,18 @@ export async function ejecutarImportacionFilas(
       } else {
         const codigo = fila.codigo || `AUTO-${Date.now()}-${i}`;
 
+        const insertCosto = fila.precio_costo ?? 0;
+        let insertVenta = fila.precio_venta ?? 0;
+        if (
+          insertVenta === 0 &&
+          insertCosto > 0 &&
+          fila.porcentaje_ganancia != null &&
+          fila.porcentaje_ganancia > 0
+        ) {
+          insertVenta =
+            Math.round(insertCosto * (1 + fila.porcentaje_ganancia / 100) * 100) / 100;
+        }
+
         const { data: nuevoProducto, error: insertErr } = await supabase
           .from('producto')
           .insert({
@@ -178,12 +210,18 @@ export async function ejecutarImportacionFilas(
             categoria_id: categoriaId,
             proveedor_id: proveedor_id,
             unidad: mapUnidad(fila.unidad),
-            precio_costo: fila.precio_costo ?? 0,
-            precio_venta: fila.precio_venta ?? 0,
+            precio_costo: insertCosto,
+            precio_venta: insertVenta,
             stock_actual: 0,
             stock_minimo: fila.stock_minimo ?? 0,
             fecha_vencimiento: fila.fecha_vencimiento || null,
             codigo_barras: fila.codigo_barras || null,
+            rubro: fila.rubro || null,
+            subrubro: fila.subrubro || null,
+            iva_porcentaje: fila.iva_porcentaje ?? null,
+            porcentaje_ganancia: fila.porcentaje_ganancia ?? null,
+            ubicacion: fila.ubicacion || null,
+            moneda: fila.moneda || '$',
           })
           .select()
           .single();

@@ -106,8 +106,36 @@ export function validarFilas(
         case 'categoria':
         case 'proveedor':
         case 'unidad':
+        case 'codigo_barras':
+        case 'rubro':
+        case 'subrubro':
+        case 'ubicacion':
+        case 'moneda':
           datos[campo] = valorRaw != null ? String(valorRaw).trim() : null;
           break;
+
+        case 'iva_porcentaje':
+        case 'porcentaje_ganancia': {
+          const pct = parsearPrecioArgentino(valorRaw);
+          if (valorRaw != null && String(valorRaw).trim() !== '' && pct === null) {
+            errores.push({
+              campo,
+              mensaje: 'Debe ser un número válido',
+              valorOriginal: valorRaw,
+            });
+            datos[campo] = null;
+          } else if (pct !== null && pct < 0) {
+            errores.push({
+              campo,
+              mensaje: 'No puede ser negativo',
+              valorOriginal: valorRaw,
+            });
+            datos[campo] = null;
+          } else {
+            datos[campo] = pct;
+          }
+          break;
+        }
       }
     }
 

@@ -9,7 +9,13 @@ export type CampoProducto =
   | 'proveedor'
   | 'fecha_vencimiento'
   | 'unidad'
-  | 'codigo_barras';
+  | 'codigo_barras'
+  | 'rubro'
+  | 'subrubro'
+  | 'iva_porcentaje'
+  | 'porcentaje_ganancia'
+  | 'ubicacion'
+  | 'moneda';
 
 /** Diccionario de aliases por campo (60+ entradas en total). */
 export const ALIASES: Record<CampoProducto, string[]> = {
@@ -115,13 +121,10 @@ export const ALIASES: Record<CampoProducto, string[]> = {
   categoria: [
     'categoria',
     'cat',
-    'rubro',
     'familia',
     'tipo',
     'category',
     'grupo',
-    'linea',
-    'seccion',
     'clasificacion',
     'depto',
     'departamento',
@@ -169,4 +172,10 @@ export const ALIASES: Record<CampoProducto, string[]> = {
     'codbarras',
     'gtin',
   ],
+  rubro: ['rubro', 'linea', 'seccion'],
+  subrubro: ['subrubro', 'sublinea', 'subcategoria', 'sub_rubro'],
+  iva_porcentaje: ['iva', 'iva_porcentaje', 'impuesto', 'alicuota', 'tax'],
+  porcentaje_ganancia: ['ganancia', 'margen', 'markup', 'rentabilidad', 'margin'],
+  ubicacion: ['ubicacion', 'deposito', 'almacen', 'posicion', 'estante', 'location'],
+  moneda: ['moneda', 'divisa', 'currency', 'mon'],
 };

@@ -16,6 +16,13 @@ const CAMPOS_DISPONIBLES: { value: CampoProducto | 'ignorar'; label: string }[] 
   { value: 'proveedor', label: 'Proveedor' },
   { value: 'fecha_vencimiento', label: 'Fecha de vencimiento' },
   { value: 'unidad', label: 'Unidad de medida' },
+  { value: 'rubro', label: 'Rubro' },
+  { value: 'subrubro', label: 'Subrubro' },
+  { value: 'iva_porcentaje', label: 'IVA %' },
+  { value: 'porcentaje_ganancia', label: 'Ganancia %' },
+  { value: 'ubicacion', label: 'Ubicación' },
+  { value: 'moneda', label: 'Moneda' },
+  { value: 'codigo_barras', label: 'Código de barras' },
   { value: 'ignorar', label: '— Ignorar columna —' },
 ];
 

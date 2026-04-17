@@ -20,6 +20,8 @@ export type ProductoTabla = {
   disponible?: number;
   codigo_barras?: string | null;
   es_pesable?: boolean;
+  rubro?: string | null;
+  subrubro?: string | null;
 };
 
 interface Props {
@@ -68,6 +70,7 @@ export function ProductosTable({ productos, selectable, selected, onSelectionCha
             <th className="px-4 py-3 font-medium">Código</th>
             <th className="px-4 py-3 font-medium">Producto</th>
             <th className="px-4 py-3 font-medium">Categoría</th>
+            <th className="hidden px-4 py-3 font-medium lg:table-cell">Rubro</th>
             <th className="px-4 py-3 text-right font-medium">Stock</th>
             <th className="px-4 py-3 text-right font-medium">Disponible</th>
             <th className="px-4 py-3 text-right font-medium">Costo</th>
@@ -104,6 +107,10 @@ export function ProductosTable({ productos, selectable, selected, onSelectionCha
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {p.categoria?.nombre ?? '—'}
+                </td>
+                <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">
+                  {p.rubro ?? '—'}
+                  {p.subrubro ? <span className="text-xs"> / {p.subrubro}</span> : null}
                 </td>
                 <td
                   className={`px-4 py-3 text-right font-mono ${stockBajo ? 'font-semibold text-amber-600' : ''}`}
