@@ -1605,14 +1605,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-ARCA-001 — Configuración ARCA (certificados y datos)
+## V40-ARCA-001 — Configuración ARCA (certificados y datos) (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 5
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V20-UI-002, V15-FAC-011
 
 **Descripción:** Crear la página `/configuracion/arca` donde el admin sube certificado y clave privada, configura CUIT, punto de venta y ambiente. Los certificados se encriptan con AES-256-CBC antes de guardar.
@@ -1630,14 +1630,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-ARCA-002 — Implementar WSAA (autenticación con certificado)
+## V40-ARCA-002 — Implementar WSAA (autenticación con certificado) (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 8
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-001
 
 **Descripción:** Implementar el flujo completo de WSAA: construir TRA XML, firmar con CMS/PKCS#7, enviar a WSAA, parsear respuesta, guardar ticket.
@@ -1656,14 +1656,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-ARCA-003 — Renovación automática de ticket WSAA
+## V40-ARCA-003 — Renovación automática de ticket WSAA (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 3
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-002
 
 **Descripción:** Antes de cada operación con WSFE, verificar si el ticket sigue vigente (con 5 minutos de margen) y renovarlo si expiró.
@@ -1679,14 +1679,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-ARCA-004 — Implementar WSFE (solicitar CAE)
+## V40-ARCA-004 — Implementar WSFE (solicitar CAE) (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 8
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-003
 
 **Descripción:** Implementar la operación `FECAESolicitar` de WSFE: construir XML del comprobante, enviar, parsear respuesta con CAE o errores.
@@ -1704,14 +1704,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-ARCA-005 — Integrar ARCA en el flujo de emisión
+## V40-ARCA-005 — Integrar ARCA en el flujo de emisión (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 5
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-004, V15-FAC-006
 
 **Descripción:** Extender la API de emisión de comprobantes para que, si el módulo `facturador_arca` está activo, solicite CAE después de crear el comprobante. Manejar los 3 escenarios: aprobado, rechazado, timeout.
@@ -1728,14 +1728,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-ARCA-006 — Consultar último comprobante en ARCA
+## V40-ARCA-006 — Consultar último comprobante en ARCA (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: high
 - Estimación: 2
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-004
 
 **Descripción:** Implementar la operación `FECompUltimoAutorizado` para sincronizar la numeración local con ARCA y detectar inconsistencias.
@@ -1750,14 +1750,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-ARCA-007 — Cola de reintentos con Edge Function cron
+## V40-ARCA-007 — Cola de reintentos con Edge Function cron (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: critical
 - Estimación: 5
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-005
 
 **Descripción:** Crear la Edge Function que corre cada 15 minutos y procesa comprobantes en estado `pendiente_arca`, reintentando hasta 3 veces.
@@ -1775,14 +1775,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-ARCA-008 — Regenerar PDF con CAE y código de barras
+## V40-ARCA-008 — Regenerar PDF con CAE y código de barras (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: high
 - Estimación: 3
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-005
 
 **Descripción:** Cuando ARCA aprueba un comprobante, regenerar el PDF incluyendo el CAE, fecha de vencimiento del CAE, y el código de barras fiscal.
@@ -1797,14 +1797,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-ARCA-009 — Alerta de vencimiento de certificado ARCA
+## V40-ARCA-009 — Alerta de vencimiento de certificado ARCA (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: medium
 - Estimación: 2
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-001
 
 **Descripción:** Verificar la fecha de vencimiento del certificado ARCA y alertar al admin cuando faltan 30 días o menos.
@@ -1819,14 +1819,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-ARCA-010 — Botón "Probar conexión" con ARCA
+## V40-ARCA-010 — Botón "Probar conexión" con ARCA (hecho)
 
 - Tipo: feature
 - Módulo: arca
 - Prioridad: high
 - Estimación: 2
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-002
 
 **Descripción:** En la página de configuración ARCA, agregar un botón que testea la conexión: intenta obtener un ticket WSAA y consultar el último comprobante.
@@ -1843,14 +1843,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-TEST-001 — Tests de integración ARCA contra homologación
+## V40-TEST-001 — Tests de integración ARCA contra homologación (hecho)
 
 - Tipo: test
 - Módulo: arca
 - Prioridad: high
 - Estimación: 8
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-005
 
 **Descripción:** Tests end-to-end contra el ambiente de homologación de ARCA. Requiere certificado de homologación configurado.
@@ -1868,14 +1868,14 @@ ultima_actualizacion: 2026-04-16
 
 ---
 
-## V40-TEST-002 — Tests de la cola de reintentos
+## V40-TEST-002 — Tests de la cola de reintentos (hecho)
 
 - Tipo: test
 - Módulo: arca
 - Prioridad: high
 - Estimación: 3
 - Versión: v4.0
-- Estado: todo
+- Estado: done
 - Dependencias: V40-ARCA-007
 
 **Descripción:** Tests que verifican el comportamiento de la cola de reintentos: reintento exitoso, máximo de reintentos, transición a `error_arca`.

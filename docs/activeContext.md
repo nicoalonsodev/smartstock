@@ -24,6 +24,13 @@ Este bloque incorpora dos capacidades complementarias que conforman un facturado
 
 ## Resumen de implementación completada
 
+### Bloque D — ARCA v4.0 (V40-ARCA-001 a V40-TEST-002)
+- Configuración de certificados y datos fiscales (WSAA + WSFE)
+- Flujo de emisión con CAE post-emisión
+- Cola de reintentos con Edge Function cron
+- Regeneración de PDF con CAE, alerta de vencimiento de certificado
+- Tests de integración contra homologación y cola de reintentos
+
 ### Fase 1 — Migraciones y tipos (V60-POS-001 a V60-POS-005)
 - 4 migraciones SQL (024-027): barcode columns, NUMERIC quantities, facturador_pos flag, ticket comprobante type
 - TypeScript types regenerated
@@ -92,6 +99,7 @@ Este bloque incorpora dos capacidades complementarias que conforman un facturado
 
 **Fecha:** 2026-04-16
 **Último ticket completado:** V60-POS-029 — Tests unitarios y de integración del POS
+**Bloque D (v4.0 ARCA):** Completado — 12/12 tickets
 **Bloque E (v5.0 Analizador):** Completado — 25/25 tickets
 **Bloque F (v6.0 POS):** Completado — 29/29 tickets (119 pts)
-**Bloques pendientes de implementar:** v4.0 ARCA (10 tickets)
+**Todos los bloques implementados hasta v6.0.**
