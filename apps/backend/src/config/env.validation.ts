@@ -27,4 +27,8 @@ export const envValidationSchema = Joi.object({
   }),
   DB_SSL: Joi.string().valid('true', 'false', '1', '0').default('false'),
   DB_LOGGING: Joi.string().valid('true', 'false', '1', '0').default('false'),
+
+  LOG_LEVEL: Joi.string()
+    .valid('trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent')
+    .default('info'),
 }).unknown(true);

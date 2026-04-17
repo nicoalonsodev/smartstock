@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { LoggerErrorInterceptor, LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { envValidationSchema } from './config/env.validation';
 import { getTypeOrmOptions } from './database/typeorm.config';
+import { createPinoParams } from './logging/create-pino-params';
 
 @Module({
   imports: [
@@ -17,11 +20,19 @@ import { getTypeOrmOptions } from './database/typeorm.config';
         allowUnknown: true,
       },
     }),
+    LoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => createPinoParams(config),
+    }),
     TypeOrmModule.forRootAsync({
       useFactory: async () => getTypeOrmOptions(),
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_INTERCEPTOR, useClass: LoggerErrorInterceptor },
+  ],
 })
 export class AppModule {}

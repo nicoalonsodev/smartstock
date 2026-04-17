@@ -106,12 +106,18 @@ Regla: no se mergea ningún ticket de datos sin evidencia de estos 3 pasos.
 - Tipo: infra
 - Prioridad: high
 - Estimación: 2
-- Estado: todo
+- Estado: done
 - Dependencias: NB-ARC-001
 - Criterios:
   - Logger JSON consistente.
   - Correlation/request ID por request.
   - Logs de errores con contexto de tenant y usuario.
+- Implementación:
+  - **`nestjs-pino`**: logs JSON en `staging`/`production`/`prod`; `pino-pretty` en `development`/`dev`.
+  - **`genReqId`**: respeta `x-request-id` o `x-correlation-id` si vienen; si no, UUID. `pino-http` expone `X-Request-Id` en la respuesta.
+  - **`customProps` / `customErrorObject`**: campos `requestId`, `correlationId`, `tenantId`, `userId` (últimos dos desde cabeceras opcionales `x-tenant-id` / `x-user-id` hasta que exista JWT + guard).
+  - **`LoggerErrorInterceptor`** global para errores en handlers con el mismo contexto de request.
+  - **`LOG_LEVEL`** en env (`trace`…`silent`, default `info`); redacción de `authorization` / `cookie`.
 
 ## NB-ARC-004 — Error filter global
 - Tipo: infra

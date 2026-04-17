@@ -13,6 +13,7 @@ const SCHEMA_KEYS = [
   'DB_NAME',
   'DB_SSL',
   'DB_LOGGING',
+  'LOG_LEVEL',
 ] as const;
 
 /**
