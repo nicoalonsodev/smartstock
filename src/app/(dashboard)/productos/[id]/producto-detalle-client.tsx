@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useModulos } from '@/hooks/useModulos';
 import { formatCurrency, formatDateTime } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/types/database';
@@ -104,6 +105,7 @@ export function ProductoDetalleClient({
   const [esPesable, setEsPesable] = useState(false);
   const [barcodeLoading, setBarcodeLoading] = useState(false);
   const [barcodeMsg, setBarcodeMsg] = useState<{ type: 'ok' | 'warn' | 'err'; text: string } | null>(null);
+  const { modulos, loading: modulosLoading } = useModulos();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -235,6 +237,14 @@ export function ProductoDetalleClient({
           <Link href="/productos" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
             ← Lista
           </Link>
+          {!modulosLoading && modulos.facturador_pos ? (
+            <Link
+              href={`/productos/${productoId}/etiquetas`}
+              className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+            >
+              Etiquetas
+            </Link>
+          ) : null}
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{data.nombre}</h1>
             <p className="text-sm text-muted-foreground font-mono">{data.codigo}</p>
@@ -242,14 +252,6 @@ export function ProductoDetalleClient({
         </div>
         {canEdit && !editMode ? (
           <div className="flex gap-2">
-            {data.codigo_barras && (
-              <Link
-                href={`/productos/${productoId}/etiquetas`}
-                className={cn(buttonVariants({ variant: 'outline' }))}
-              >
-                Imprimir etiquetas
-              </Link>
-            )}
             <Button type="button" variant="outline" onClick={() => setEditMode(true)}>
               Editar
             </Button>

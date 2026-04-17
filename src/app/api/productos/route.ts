@@ -102,6 +102,11 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const busqueda = searchParams.get('q');
+  // Sanitize for ilike inside PostgREST .or(): strip chars that have
+  // special meaning in the filter syntax (,()) or in SQL LIKE (% _ \).
+  const busquedaSafe = busqueda
+    ? busqueda.trim().replace(/[,()%_\\]/g, ' ').replace(/\s+/g, ' ').trim()
+    : '';
   const categoriaId = searchParams.get('categoria_id');
   const proveedorId = searchParams.get('proveedor_id');
   const soloStockBajo = searchParams.get('stock_bajo') === 'true';
@@ -118,12 +123,16 @@ export async function GET(request: NextRequest) {
       .gt('stock_minimo', 0)
       .order('nombre');
 
-    if (busqueda) {
-      const isNumeric = /^\d+$/.test(busqueda.trim());
+    if (busquedaSafe) {
+      const isNumeric = /^\d+$/.test(busquedaSafe);
       if (isNumeric) {
-        q = q.or(`codigo_barras.eq.${busqueda.trim()},codigo.ilike.%${busqueda.trim()}%,nombre.ilike.%${busqueda.trim()}%`);
+        q = q.or(
+          `codigo_barras.eq.${busquedaSafe},codigo.ilike.%${busquedaSafe}%,nombre.ilike.%${busquedaSafe}%`,
+        );
       } else {
-        q = q.or(`nombre.wfts(spanish).${busqueda},codigo.ilike.%${busqueda.trim()}%`);
+        q = q.or(
+          `nombre.ilike.%${busquedaSafe}%,codigo.ilike.%${busquedaSafe}%`,
+        );
       }
     }
     if (categoriaId) q = q.eq('categoria_id', categoriaId);
@@ -156,12 +165,16 @@ export async function GET(request: NextRequest) {
     .order('nombre')
     .range(offset, offset + porPagina - 1);
 
-  if (busqueda) {
-    const isNumeric = /^\d+$/.test(busqueda.trim());
+  if (busquedaSafe) {
+    const isNumeric = /^\d+$/.test(busquedaSafe);
     if (isNumeric) {
-      query = query.or(`codigo_barras.eq.${busqueda.trim()},codigo.ilike.%${busqueda.trim()}%,nombre.ilike.%${busqueda.trim()}%`);
+      query = query.or(
+        `codigo_barras.eq.${busquedaSafe},codigo.ilike.%${busquedaSafe}%,nombre.ilike.%${busquedaSafe}%`,
+      );
     } else {
-      query = query.or(`nombre.wfts(spanish).${busqueda},codigo.ilike.%${busqueda.trim()}%`);
+      query = query.or(
+        `nombre.ilike.%${busquedaSafe}%,codigo.ilike.%${busquedaSafe}%`,
+      );
     }
   }
   if (categoriaId) query = query.eq('categoria_id', categoriaId);

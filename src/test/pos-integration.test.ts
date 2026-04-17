@@ -86,20 +86,22 @@ describe('POS integration tests', () => {
 
   describe('Barcode parser — scale barcodes', () => {
     it('parses scale barcode with valid PLU and weight', () => {
-      const result = parseBarcode('2001230045007');
+      // 2 0 00123 00450 X → PLU 00123, peso 0.450 kg
+      const result = parseBarcode('2000123004501');
       expect(result.tipo).toBe('balanza_peso');
       expect(result.codigoLookup).toBe('00123');
       expect(result.pesoKg).toBeCloseTo(0.45);
     });
 
     it('handles maximum weight (99.999 kg)', () => {
-      const result = parseBarcode('2000009999907');
+      // 2 0 00000 99999 X → peso 99.999 kg
+      const result = parseBarcode('2000000999990');
       expect(result.tipo).toBe('balanza_peso');
       expect(result.pesoKg).toBeCloseTo(99.999);
     });
 
     it('handles zero weight', () => {
-      const result = parseBarcode('2001230000007');
+      const result = parseBarcode('2000123000000');
       expect(result.tipo).toBe('balanza_peso');
       expect(result.pesoKg).toBe(0);
     });

@@ -9,6 +9,7 @@ import {
   ShortcutsHelpModal,
   usePosKeyboardShortcuts,
 } from '@/components/pos/keyboard-shortcuts';
+import { ProductSearchModal } from '@/components/pos/product-search-modal';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -162,6 +163,10 @@ export default function PosPage() {
   const [weightProduct, setWeightProduct] = useState<ProductoScanned | null>(null);
   const [weightInput, setWeightInput] = useState('');
 
+  // Product search modal
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchInitialQuery, setSearchInitialQuery] = useState('');
+
   // Cancel confirmation
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
@@ -243,11 +248,74 @@ export default function PosPage() {
 
   const clienteActual = clientes.find((c) => c.id === clienteId);
 
+  const addUnitProduct = useCallback((producto: ProductoScanned) => {
+    setItems((prev) => {
+      const existing = prev.findIndex(
+        (it) => it.producto.id === producto.id && !it.peso,
+      );
+      if (existing >= 0) {
+        const updated = [...prev];
+        const newCant = updated[existing].cantidad + 1;
+        updated[existing] = { ...updated[existing], cantidad: newCant };
+        setHighlightIdx(existing);
+        if (newCant > producto.stock_actual) {
+          setStockWarning(
+            `"${producto.nombre}" tiene stock ${producto.stock_actual}, se agregaron ${newCant}.`,
+          );
+        }
+        return updated;
+      }
+
+      if (1 > producto.stock_actual) {
+        setStockWarning(
+          `"${producto.nombre}" tiene stock ${producto.stock_actual}.`,
+        );
+      }
+
+      const newItems = [...prev, { producto, cantidad: 1 }];
+      setHighlightIdx(newItems.length - 1);
+      return newItems;
+    });
+  }, []);
+
+  const addProduct = useCallback(
+    (producto: ProductoScanned) => {
+      setScanError('');
+      setStockWarning('');
+      setLastScanned(producto);
+
+      if (producto.es_pesable) {
+        setWeightProduct(producto);
+        setWeightInput('');
+        setShowWeightModal(true);
+        return;
+      }
+
+      addUnitProduct(producto);
+    },
+    [addUnitProduct],
+  );
+
+  const openSearchWith = useCallback((initial: string) => {
+    setScanError('');
+    setStockWarning('');
+    setLastScanned(null);
+    setSearchInitialQuery(initial);
+    setShowSearch(true);
+  }, []);
+
   const handleScan = useCallback(
     async (codigo: string) => {
       setScanError('');
       setStockWarning('');
       setLastScanned(null);
+
+      // Heuristic: free-text input (spaces or accents) → skip the
+      // barcode lookup and go straight to the search modal.
+      if (/[\s\u00C0-\u017F]/.test(codigo)) {
+        openSearchWith(codigo);
+        return;
+      }
 
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
         setScanError('Sin conexión a internet. Verificá tu red y reintentá.');
@@ -258,6 +326,14 @@ export default function PosPage() {
         const res = await fetch(
           `/api/productos/buscar-por-barcode?codigo=${encodeURIComponent(codigo)}`,
         );
+
+        if (res.status === 404) {
+          // Not a known code/SKU/PLU → fall back to name search with the
+          // typed phrase pre-filled, so "martillo" or "clavo" still work.
+          openSearchWith(codigo);
+          return;
+        }
+
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           setScanError(err.error ? `${err.error}: ${codigo}` : `Producto no encontrado: ${codigo}`);
@@ -267,58 +343,36 @@ export default function PosPage() {
         const data: ScanResult = await res.json();
         setLastScanned(data.producto);
 
-        // Weighable product scanned without scale weight → open weight modal
-        if (data.producto.es_pesable && data.tipo !== 'balanza_peso') {
-          setWeightProduct(data.producto);
-          setWeightInput('');
-          setShowWeightModal(true);
-          return;
-        }
-
-        setItems((prev) => {
-          if (data.tipo === 'balanza_peso' && data.peso) {
-            const cantidad = data.producto.unidad === 'gramo'
-              ? Math.round(data.peso * 1000)
-              : data.peso;
+        // Scale barcode with embedded weight → add directly with that weight
+        if (data.tipo === 'balanza_peso' && data.peso) {
+          const cantidad = data.producto.unidad === 'gramo'
+            ? Math.round(data.peso * 1000)
+            : data.peso;
+          setItems((prev) => {
             const newItems = [
               ...prev,
               { producto: data.producto, cantidad, peso: cantidad },
             ];
             setHighlightIdx(newItems.length - 1);
             return newItems;
-          }
+          });
+          return;
+        }
 
-          const existing = prev.findIndex(
-            (it) => it.producto.id === data.producto.id && !it.peso,
-          );
-          if (existing >= 0) {
-            const updated = [...prev];
-            const newCant = updated[existing].cantidad + 1;
-            updated[existing] = { ...updated[existing], cantidad: newCant };
-            setHighlightIdx(existing);
-            if (newCant > data.producto.stock_actual) {
-              setStockWarning(
-                `"${data.producto.nombre}" tiene stock ${data.producto.stock_actual}, se agregaron ${newCant}.`,
-              );
-            }
-            return updated;
-          }
+        // Weighable product scanned without embedded weight → ask for weight
+        if (data.producto.es_pesable) {
+          setWeightProduct(data.producto);
+          setWeightInput('');
+          setShowWeightModal(true);
+          return;
+        }
 
-          if (1 > data.producto.stock_actual) {
-            setStockWarning(
-              `"${data.producto.nombre}" tiene stock ${data.producto.stock_actual}.`,
-            );
-          }
-
-          const newItems = [...prev, { producto: data.producto, cantidad: 1 }];
-          setHighlightIdx(newItems.length - 1);
-          return newItems;
-        });
+        addUnitProduct(data.producto);
       } catch {
         setScanError('Error de conexión');
       }
     },
-    [],
+    [addUnitProduct, openSearchWith],
   );
 
   function confirmWeight() {
@@ -399,11 +453,22 @@ export default function PosPage() {
       )
     : clientes;
 
-  const anyModalOpen = showClienteSearch || showWeightModal || showCancelConfirm || showCobro;
+  const anyModalOpen =
+    showClienteSearch ||
+    showWeightModal ||
+    showCancelConfirm ||
+    showCobro ||
+    showSearch;
 
   const { showHelp, setShowHelp } = usePosKeyboardShortcuts({
     onCobrar: () => {
       if (items.length > 0 && canEmit && !anyModalOpen) setShowCobro(true);
+    },
+    onBuscarProducto: () => {
+      if (canEmit && !anyModalOpen) {
+        setSearchInitialQuery('');
+        setShowSearch(true);
+      }
     },
     onCambiarCliente: () => {
       if (!anyModalOpen) setShowClienteSearch(true);
@@ -511,14 +576,29 @@ export default function PosPage() {
         {/* Left: Scan + items list (~65%) */}
         <div className="flex flex-[65] flex-col p-4 gap-3 overflow-hidden">
           {/* Scan bar */}
-          <div className="shrink-0">
-            <BarcodeInput
-              ref={barcodeRef}
-              onScan={handleScan}
-              placeholder="Escaneá un código de barras o escribí un SKU…"
-              pauseRefocus={anyModalOpen}
+          <div className="shrink-0 flex gap-2">
+            <div className="flex-1">
+              <BarcodeInput
+                ref={barcodeRef}
+                onScan={handleScan}
+                placeholder="Escaneá código, escribí SKU o nombre del producto…"
+                pauseRefocus={anyModalOpen}
+                disabled={!canEmit}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 px-4 shrink-0"
               disabled={!canEmit}
-            />
+              onClick={() => {
+                setSearchInitialQuery('');
+                setShowSearch(true);
+              }}
+              title="Buscar por nombre (F3)"
+            >
+              🔍 Buscar (F3)
+            </Button>
           </div>
 
           {/* Scan feedback */}
@@ -840,6 +920,27 @@ export default function PosPage() {
           </div>
         </div>
       )}
+
+      <ProductSearchModal
+        open={showSearch}
+        initialQuery={searchInitialQuery}
+        onClose={() => {
+          setShowSearch(false);
+          setSearchInitialQuery('');
+          barcodeRef.current?.focus();
+        }}
+        onSelect={(p) => {
+          addProduct({
+            id: p.id,
+            codigo: p.codigo,
+            nombre: p.nombre,
+            precio_venta: p.precio_venta,
+            stock_actual: p.stock_actual,
+            es_pesable: p.es_pesable,
+            unidad: p.unidad,
+          });
+        }}
+      />
 
       <ShortcutsHelpModal open={showHelp} onClose={() => setShowHelp(false)} />
     </>
