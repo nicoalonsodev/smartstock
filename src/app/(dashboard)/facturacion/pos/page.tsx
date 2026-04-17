@@ -52,6 +52,88 @@ export type CartItem = {
 
 type DescuentoTipo = 'porcentaje' | 'monto';
 
+function CantidadEditor({
+  value,
+  isPesable,
+  unidad,
+  onChange,
+  onAdjust,
+}: {
+  value: number;
+  isPesable: boolean;
+  unidad?: string;
+  onChange: (v: number) => void;
+  onAdjust: (delta: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const step = isPesable && unidad !== 'gramo' ? 0.001 : 1;
+  const displayValue = isPesable && unidad !== 'gramo'
+    ? value.toFixed(3)
+    : String(value);
+
+  function startEdit() {
+    setDraft(displayValue);
+    setEditing(true);
+    requestAnimationFrame(() => inputRef.current?.select());
+  }
+
+  function commit() {
+    const n = parseFloat(draft);
+    if (n && n > 0) onChange(n);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <Input
+        ref={inputRef}
+        type="number"
+        min={step}
+        step={step}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); commit(); }
+          if (e.key === 'Escape') setEditing(false);
+        }}
+        className="w-24 ml-auto text-right h-8"
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <button
+        type="button"
+        className="flex h-7 w-7 items-center justify-center rounded-md border text-sm hover:bg-muted transition-colors"
+        onClick={() => onAdjust(-step)}
+      >
+        −
+      </button>
+      <button
+        type="button"
+        className="min-w-[3rem] rounded-md border px-2 py-1 text-center text-sm font-medium hover:bg-muted transition-colors tabular-nums"
+        onClick={startEdit}
+        title="Clic para editar"
+      >
+        {displayValue}
+      </button>
+      <button
+        type="button"
+        className="flex h-7 w-7 items-center justify-center rounded-md border text-sm hover:bg-muted transition-colors"
+        onClick={() => onAdjust(step)}
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
 export default function PosPage() {
   const barcodeRef = useRef<BarcodeInputRef>(null);
   const [tenantId, setTenantId] = useState('');
@@ -195,9 +277,12 @@ export default function PosPage() {
 
         setItems((prev) => {
           if (data.tipo === 'balanza_peso' && data.peso) {
+            const cantidad = data.producto.unidad === 'gramo'
+              ? Math.round(data.peso * 1000)
+              : data.peso;
             const newItems = [
               ...prev,
-              { producto: data.producto, cantidad: data.peso, peso: data.peso },
+              { producto: data.producto, cantidad, peso: cantidad },
             ];
             setHighlightIdx(newItems.length - 1);
             return newItems;
@@ -252,12 +337,22 @@ export default function PosPage() {
     setWeightProduct(null);
   }
 
-  function updateCantidad(idx: number, val: string) {
-    const n = parseFloat(val);
-    if (!n || n <= 0) return;
+  function updateCantidad(idx: number, val: number) {
+    if (!val || val <= 0) return;
     setItems((prev) => {
       const updated = [...prev];
-      updated[idx] = { ...updated[idx], cantidad: n };
+      updated[idx] = { ...updated[idx], cantidad: val };
+      return updated;
+    });
+  }
+
+  function adjustCantidad(idx: number, delta: number) {
+    setItems((prev) => {
+      const item = prev[idx];
+      const next = Math.round((item.cantidad + delta) * 1000) / 1000;
+      if (next <= 0) return prev;
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], cantidad: next };
       return updated;
     });
   }
@@ -484,13 +579,12 @@ export default function PosPage() {
                           {it.producto.unidad ?? 'unidad'}
                         </td>
                         <td className="px-4 py-2 text-right">
-                          <Input
-                            type="number"
-                            min={0.001}
-                            step={it.peso ? 0.001 : 1}
+                          <CantidadEditor
                             value={it.cantidad}
-                            onChange={(e) => updateCantidad(i, e.target.value)}
-                            className="w-24 ml-auto text-right h-8"
+                            isPesable={!!it.peso}
+                            unidad={it.producto.unidad}
+                            onChange={(v) => updateCantidad(i, v)}
+                            onAdjust={(d) => adjustCantidad(i, d)}
                           />
                         </td>
                         <td className="px-4 py-2 text-right">
@@ -623,20 +717,22 @@ export default function PosPage() {
       {showWeightModal && weightProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-96 rounded-xl border bg-background p-6 shadow-xl space-y-4">
-            <h3 className="text-lg font-semibold">Ingresar peso manualmente</h3>
+            <h3 className="text-lg font-semibold">Ingresar cantidad manualmente</h3>
             <p className="text-sm text-muted-foreground">
               {weightProduct.nombre} — Producto pesable
             </p>
             <div className="flex items-end gap-2">
               <label className="flex-1 grid gap-1">
-                <span className="text-sm text-muted-foreground">Peso (kg)</span>
+                <span className="text-sm text-muted-foreground">
+                  {weightProduct.unidad === 'gramo' ? 'Peso (gramos)' : 'Peso (kg)'}
+                </span>
                 <Input
                   type="number"
-                  min={0.001}
-                  step={0.001}
+                  min={weightProduct.unidad === 'gramo' ? 1 : 0.001}
+                  step={weightProduct.unidad === 'gramo' ? 1 : 0.001}
                   value={weightInput}
                   onChange={(e) => setWeightInput(e.target.value)}
-                  placeholder="0.000"
+                  placeholder={weightProduct.unidad === 'gramo' ? '0' : '0.000'}
                   className="text-2xl h-14 text-center"
                   autoFocus
                   onKeyDown={(e) => {

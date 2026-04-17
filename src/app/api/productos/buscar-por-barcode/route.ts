@@ -84,6 +84,22 @@ export async function GET(request: Request) {
     });
   }
 
+  // Fallback: try by PLU (codigo de balanza)
+  const { data: byPlu } = await supabase
+    .from('producto')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('plu', parsed.codigoLookup)
+    .eq('activo', true)
+    .maybeSingle();
+
+  if (byPlu) {
+    return NextResponse.json({
+      producto: byPlu,
+      tipo: parsed.tipo,
+    });
+  }
+
   return NextResponse.json(
     { error: 'Producto no encontrado', codigo },
     { status: 404 },
