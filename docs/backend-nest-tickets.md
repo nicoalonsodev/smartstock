@@ -99,7 +99,7 @@ Regla: no se mergea ningún ticket de datos sin evidencia de estos 3 pasos.
   - Error explícito si faltan secretos.
 - Implementación:
   - Esquema **Joi** (`src/config/env.validation.ts`) + `ConfigModule.forRoot({ validationSchema })`.
-  - `NODE_ENV`: `development` | `staging` | `production` | `test` (equivalente a dev/staging/prod + test).
+  - `NODE_ENV`: `development`/`dev`, `staging`, `production`/`prod`, `test`.
   - CLI TypeORM (`src/database/data-source.ts`): `loadEnvFilesAndValidate()` carga `.env` + `.env.local` y aplica la misma validación.
 
 ## NB-ARC-003 — Logging estructurado + requestId
