@@ -91,12 +91,16 @@ Regla: no se mergea ningún ticket de datos sin evidencia de estos 3 pasos.
 - Tipo: setup
 - Prioridad: critical
 - Estimación: 2
-- Estado: todo
+- Estado: done
 - Dependencias: NB-ARC-001
 - Criterios:
   - Variables obligatorias validadas en arranque.
   - Soporte `dev/staging/prod`.
   - Error explícito si faltan secretos.
+- Implementación:
+  - Esquema **Joi** (`src/config/env.validation.ts`) + `ConfigModule.forRoot({ validationSchema })`.
+  - `NODE_ENV`: `development` | `staging` | `production` | `test` (equivalente a dev/staging/prod + test).
+  - CLI TypeORM (`src/database/data-source.ts`): `loadEnvFilesAndValidate()` carga `.env` + `.env.local` y aplica la misma validación.
 
 ## NB-ARC-003 — Logging estructurado + requestId
 - Tipo: infra
