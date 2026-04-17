@@ -69,7 +69,11 @@ export function MapeoColumnas({ mapeo, onMapeoChange, onConfirmar, filasMuestra 
           <div key={`${col.headerOriginal}-${i}`} className="flex items-center gap-4 rounded-lg border p-3">
             <div className="flex w-1/3 items-center gap-2">
               {CONFIANZA_ICON[col.confianza]}
-              <span className="font-mono text-sm">{col.headerOriginal}</span>
+              <span className="font-mono text-sm" title={col.headerOriginal}>
+                {col.sintetica
+                  ? `${CAMPOS_DISPONIBLES.find((c) => c.value === col.campoDetectado)?.label ?? 'Campo'} (añadida en preview)`
+                  : col.headerOriginal}
+              </span>
             </div>
             <span className="text-muted-foreground">→</span>
             <select

@@ -12,7 +12,20 @@ import { writeImportResult } from '@/lib/importar/draft';
 import { MAPEO_IA_PREVIEW } from '@/lib/ia/mapeo-preview';
 import { type CampoProducto } from '@/lib/normalizador/aliases';
 import { deduplicarFilas } from '@/lib/normalizador/deduplicar';
+import type { MapeoColumna } from '@/lib/normalizador/mapear';
 import { validarFilas, type FilaValidada } from '@/lib/normalizador/validar';
+
+function copiarMapeoIa(): MapeoColumna[] {
+  return MAPEO_IA_PREVIEW.map((m) => ({ ...m }));
+}
+
+function generarHeaderSintetico(campo: CampoProducto): string {
+  const r =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? (crypto.randomUUID() as string).replace(/-/g, '').slice(0, 10)
+      : String(Math.random()).slice(2, 12);
+  return `__ss_${campo}_${r}`;
+}
 
 type FilaApi = {
   codigo: string | null;
@@ -53,6 +66,7 @@ export function IaPreciosClient() {
   const [limite, setLimite] = useState<{ usadas: number; limite: number; permitido: boolean } | null>(
     null,
   );
+  const [mapeoIa, setMapeoIa] = useState<MapeoColumna[]>(() => copiarMapeoIa());
 
   const refreshLimite = useCallback(async () => {
     try {
@@ -78,18 +92,22 @@ export function IaPreciosClient() {
     void refreshLimite();
   }, [refreshLimite]);
 
-  const camposActivos = useMemo((): CampoProducto[] => {
-    const s = new Set<CampoProducto>();
-    for (const c of MAPEO_IA_PREVIEW) {
-      if (!c.ignorar && c.campoDetectado) s.add(c.campoDetectado);
-    }
-    return Array.from(s);
-  }, []);
+  const columnasPreview = useMemo(
+    () =>
+      mapeoIa
+        .filter((m) => !m.ignorar && m.campoDetectado)
+        .map((m) => ({
+          headerOriginal: m.headerOriginal,
+          campo: m.campoDetectado!,
+          sintetica: m.sintetica,
+        })),
+    [mapeoIa],
+  );
 
   const filasValidadas = useMemo(() => {
     if (!filasRaw) return [];
-    return validarFilas(filasRaw, MAPEO_IA_PREVIEW);
-  }, [filasRaw]);
+    return validarFilas(filasRaw, mapeoIa);
+  }, [filasRaw, mapeoIa]);
 
   useEffect(() => {
     if (step !== 'preview' || !filasRaw?.length) return;
@@ -143,6 +161,7 @@ export function IaPreciosClient() {
       name: string,
     ) => {
       setArchivoNombre(name);
+      setMapeoIa(copiarMapeoIa());
       setFilasRaw(
         productos.map((p) => ({
           codigo: p.codigo ?? '',
@@ -157,16 +176,81 @@ export function IaPreciosClient() {
     [],
   );
 
-  const onFilaEdit = useCallback(
-    (index: number, campo: CampoProducto, valor: string | number | null) => {
-      setFilasRaw((prev) => {
-        if (!prev) return prev;
-        const col = MAPEO_IA_PREVIEW.find((m) => m.campoDetectado === campo && !m.ignorar);
-        if (!col) return prev;
-        return prev.map((row, i) => (i === index ? { ...row, [col.headerOriginal]: valor } : row));
-      });
+  const onFilaEdit = useCallback((index: number, headerOriginal: string, valor: string | number | null) => {
+    setFilasRaw((prev) => {
+      if (!prev) return prev;
+      return prev.map((row, i) => (i === index ? { ...row, [headerOriginal]: valor } : row));
+    });
+  }, []);
+
+  const onAgregarColumna = useCallback((campo: CampoProducto) => {
+    const header = generarHeaderSintetico(campo);
+    setMapeoIa((prev) => [
+      ...prev,
+      {
+        headerOriginal: header,
+        campoDetectado: campo,
+        confianza: 'ninguna',
+        ignorar: false,
+        sintetica: true,
+      },
+    ]);
+    setFilasRaw((prev) => (prev ? prev.map((row) => ({ ...row, [header]: null })) : null));
+  }, []);
+
+  const onQuitarColumna = useCallback(
+    (headerOriginal: string) => {
+      const target = mapeoIa.find((m) => m.headerOriginal === headerOriginal);
+      if (!target?.sintetica) return;
+      setMapeoIa((prev) => prev.filter((m) => m.headerOriginal !== headerOriginal));
+      setFilasRaw((prev) =>
+        prev
+          ? prev.map((row) => {
+              const next = { ...row };
+              delete next[headerOriginal];
+              return next;
+            })
+          : null,
+      );
+    },
+    [mapeoIa],
+  );
+
+  const onBulkFill = useCallback(
+    (headerOriginal: string, valorTexto: string, filaIndices: number[]) => {
+      const set = new Set(filaIndices);
+      setFilasRaw((prev) =>
+        prev
+          ? prev.map((row, i) =>
+              set.has(i)
+                ? { ...row, [headerOriginal]: valorTexto === '' ? null : valorTexto }
+                : row
+            )
+          : null,
+      );
     },
     [],
+  );
+
+  const onCalcularVentaPorMargen = useCallback(
+    (headerPrecioVenta: string, porcentajeSobreCosto: number, filaIndices: number[]) => {
+      const idxSet = new Set(filaIndices);
+      setFilasRaw((prev) => {
+        if (!prev) return prev;
+        const v = validarFilas(prev, mapeoIa);
+        return prev.map((row, i) => {
+          if (!idxSet.has(i)) return row;
+          const costoRaw = v[i]?.datos.precio_costo;
+          const costo =
+            typeof costoRaw === 'number' && !Number.isNaN(costoRaw) ? costoRaw : null;
+          if (costo === null) return row;
+          const venta =
+            Math.round(costo * (1 + porcentajeSobreCosto / 100) * 100) / 100;
+          return { ...row, [headerPrecioVenta]: venta };
+        });
+      });
+    },
+    [mapeoIa],
   );
 
   const onFilaDescartar = useCallback((index: number) => {
@@ -285,6 +369,7 @@ export function IaPreciosClient() {
               onClick={() => {
                 setStep('carga');
                 setFilasRaw(null);
+                setMapeoIa(copiarMapeoIa());
                 setArchivoNombre('');
                 setCambios([]);
                 setSugerencias([]);
@@ -306,9 +391,14 @@ export function IaPreciosClient() {
 
           <PreviewTable
             filas={filasValidadas}
-            camposActivos={camposActivos}
+            filasRaw={filasRaw}
+            columnas={columnasPreview}
             onFilaEdit={onFilaEdit}
             onFilaDescartar={onFilaDescartar}
+            onAgregarColumna={onAgregarColumna}
+            onQuitarColumna={onQuitarColumna}
+            onBulkFill={onBulkFill}
+            onCalcularVentaPorMargen={onCalcularVentaPorMargen}
             onConfirmar={() => void ejecutarImportacion()}
             loading={loadingEjec || !canEdit}
             sugerenciasVentaPorFila={sugerencias}

@@ -20,20 +20,25 @@ graph LR
 
     subgraph Plan_Completo["Plan Completo = Base +"]
         D[facturador_arca]
+        D2[facturador_pos]
         E[pedidos]
         F[presupuestos]
         G[ia_precios]
+        G2[analizador_rentabilidad]
     end
 
     H[modulo_config] --> A
     H --> B
     H --> C
     H --> D
+    H --> D2
     H --> E
     H --> F
     H --> G
+    H --> G2
 
     D -.->|requiere| C
+    D2 -.->|requiere| C
 ```
 
 ---
@@ -48,9 +53,11 @@ CREATE TABLE modulo_config (
   importador_excel  BOOLEAN DEFAULT true,
   facturador_simple BOOLEAN DEFAULT false,
   facturador_arca   BOOLEAN DEFAULT false,
+  facturador_pos    BOOLEAN DEFAULT false,
   pedidos           BOOLEAN DEFAULT false,
   presupuestos      BOOLEAN DEFAULT false,
   ia_precios        BOOLEAN DEFAULT false,
+  analizador_rentabilidad BOOLEAN DEFAULT false,
   created_at        TIMESTAMPTZ DEFAULT NOW(),
   updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
@@ -58,6 +65,10 @@ CREATE TABLE modulo_config (
 ALTER TABLE modulo_config
   ADD CONSTRAINT chk_arca_requiere_facturador
   CHECK (facturador_arca = false OR facturador_simple = true);
+
+ALTER TABLE modulo_config
+  ADD CONSTRAINT chk_pos_requiere_facturador
+  CHECK (facturador_pos = false OR facturador_simple = true);
 ```
 
 ### Reglas de negocio
@@ -68,9 +79,11 @@ ALTER TABLE modulo_config
 | `importador_excel` | No. Siempre `true` | Core del sistema |
 | `facturador_simple` | Sí | Habilitado en ambos planes |
 | `facturador_arca` | Sí | Requiere `facturador_simple = true` |
+| `facturador_pos` | Sí | Requiere `facturador_simple = true` |
 | `pedidos` | Sí | Solo Plan Completo |
 | `presupuestos` | Sí | Solo Plan Completo |
 | `ia_precios` | Sí | Solo Plan Completo |
+| `analizador_rentabilidad` | Sí | Solo Plan Completo |
 
 ### Configuración default por plan
 
@@ -82,9 +95,11 @@ export const MODULOS_PLAN_BASE = {
   importador_excel: true,
   facturador_simple: false,
   facturador_arca: false,
+  facturador_pos: false,
   pedidos: false,
   presupuestos: false,
   ia_precios: false,
+  analizador_rentabilidad: false,
 } as const;
 
 export const MODULOS_PLAN_COMPLETO = {
@@ -92,9 +107,11 @@ export const MODULOS_PLAN_COMPLETO = {
   importador_excel: true,
   facturador_simple: true,
   facturador_arca: true,
+  facturador_pos: true,
   pedidos: true,
   presupuestos: true,
   ia_precios: true,
+  analizador_rentabilidad: true,
 } as const;
 ```
 
@@ -112,16 +129,20 @@ BEGIN
     UPDATE modulo_config SET
       facturador_simple = true,
       facturador_arca = true,
+      facturador_pos = true,
       pedidos = true,
       presupuestos = true,
-      ia_precios = true
+      ia_precios = true,
+      analizador_rentabilidad = true
     WHERE tenant_id = p_tenant_id;
   ELSIF p_plan = 'base' THEN
     UPDATE modulo_config SET
       facturador_arca = false,
+      facturador_pos = false,
       pedidos = false,
       presupuestos = false,
-      ia_precios = false
+      ia_precios = false,
+      analizador_rentabilidad = false
     WHERE tenant_id = p_tenant_id;
   END IF;
 END;
@@ -175,9 +196,11 @@ export interface ModulosConfig {
   importador_excel: boolean;
   facturador_simple: boolean;
   facturador_arca: boolean;
+  facturador_pos: boolean;
   pedidos: boolean;
   presupuestos: boolean;
   ia_precios: boolean;
+  analizador_rentabilidad: boolean;
 }
 
 const DEFAULT_MODULOS: ModulosConfig = {
@@ -185,9 +208,11 @@ const DEFAULT_MODULOS: ModulosConfig = {
   importador_excel: true,
   facturador_simple: false,
   facturador_arca: false,
+  facturador_pos: false,
   pedidos: false,
   presupuestos: false,
   ia_precios: false,
+  analizador_rentabilidad: false,
 };
 
 export function useModulos() {
@@ -201,7 +226,7 @@ export function useModulos() {
       const { data, error } = await supabase
         .from('modulo_config')
         .select(
-          'stock, importador_excel, facturador_simple, facturador_arca, pedidos, presupuestos, ia_precios'
+          'stock, importador_excel, facturador_simple, facturador_arca, facturador_pos, pedidos, presupuestos, ia_precios, analizador_rentabilidad'
         )
         .single();
 
@@ -232,7 +257,7 @@ import { usePathname } from 'next/navigation';
 import { useModulos } from '@/hooks/useModulos';
 import {
   Package, ArrowUpDown, Upload, FileText, Users,
-  Truck, ShoppingCart, FileSpreadsheet, Brain, Settings,
+  Truck, ShoppingCart, FileSpreadsheet, Brain, Settings, ScanBarcode,
 } from 'lucide-react';
 
 interface NavItem {
@@ -250,9 +275,11 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Proveedores', href: '/proveedores', icon: Truck, modulo: 'stock' },
   { label: 'Clientes', href: '/clientes', icon: Users, modulo: 'facturador_simple' },
   { label: 'Facturación', href: '/facturacion', icon: FileText, modulo: 'facturador_simple' },
+  { label: 'POS', href: '/facturacion/pos', icon: ScanBarcode, modulo: 'facturador_pos' },
   { label: 'Pedidos', href: '/pedidos', icon: ShoppingCart, modulo: 'pedidos' },
   { label: 'Presupuestos', href: '/presupuestos', icon: FileSpreadsheet, modulo: 'presupuestos' },
   { label: 'IA Precios', href: '/ia-precios', icon: Brain, modulo: 'ia_precios' },
+  { label: 'Analizador', href: '/analizador', icon: Brain, modulo: 'analizador_rentabilidad' },
   { label: 'Configuración', href: '/configuracion', icon: Settings },
 ];
 
@@ -307,9 +334,11 @@ type ModuloKey =
   | 'importador_excel'
   | 'facturador_simple'
   | 'facturador_arca'
+  | 'facturador_pos'
   | 'pedidos'
   | 'presupuestos'
-  | 'ia_precios';
+  | 'ia_precios'
+  | 'analizador_rentabilidad';
 
 export async function moduloGuard(modulo: ModuloKey) {
   const supabase = await createServerClient();
@@ -377,9 +406,11 @@ type ModuloKey =
   | 'importador_excel'
   | 'facturador_simple'
   | 'facturador_arca'
+  | 'facturador_pos'
   | 'pedidos'
   | 'presupuestos'
-  | 'ia_precios';
+  | 'ia_precios'
+  | 'analizador_rentabilidad';
 
 export async function requireModulo(modulo: ModuloKey) {
   const supabase = await createServerClient();
@@ -430,7 +461,7 @@ sequenceDiagram
     DB-->>API: OK
     API-->>UI: { success: true }
     UI->>UI: Refresca useModulos()
-    UI-->>Admin: Sidebar muestra nuevos items:<br/>Pedidos, Presupuestos, IA Precios
+    UI-->>Admin: Sidebar muestra nuevos items:<br/>Pedidos, Presupuestos, IA Precios y Analizador
 ```
 
 ### API Route para cambio de plan
@@ -487,10 +518,12 @@ export async function POST(request: Request) {
 | `stock` | `/productos`, `/productos/[id]`, `/productos/nuevo`, `/movimientos`, `/proveedores`, `/proveedores/[id]` | `/api/productos`, `/api/movimientos` |
 | `importador_excel` | `/importar`, `/importar/mapeo`, `/importar/preview` | `/api/importar/validar`, `/api/importar/ejecutar` |
 | `facturador_simple` | `/facturacion`, `/facturacion/nueva`, `/facturacion/[id]`, `/clientes`, `/clientes/[id]` | `/api/facturacion/emitir` |
+| `facturador_pos` | `/facturacion/pos`, `/productos/[id]/etiquetas` | `/api/productos/[id]/codigo-barras`, `/api/productos/[id]/generar-codigo`, `/api/productos/buscar-por-barcode` |
 | `facturador_arca` | `/configuracion/arca` | `/api/facturacion/arca/wsaa`, `/api/facturacion/arca/wsfe` |
 | `pedidos` | `/pedidos`, `/pedidos/nuevo`, `/pedidos/[id]` | `/api/pedidos` |
 | `presupuestos` | `/presupuestos` | `/api/pedidos` (tipo presupuesto) |
 | `ia_precios` | `/ia-precios`, `/ia-precios/historial` | `/api/ia/extraer` |
+| `analizador_rentabilidad` | `/analizador`, `/analizador/listas`, `/analizador/proveedores`, `/analizador/reposicion`, `/analizador/ranking`, `/analizador/cuenta-corriente` | `/api/analizador/*` |
 | — (siempre visible) | `/`, `/configuracion`, `/configuracion/plan`, `/configuracion/usuarios` | `/api/configuracion/plan` |
 
 ---
@@ -505,18 +538,22 @@ export type ModuloKey =
   | 'importador_excel'
   | 'facturador_simple'
   | 'facturador_arca'
+  | 'facturador_pos'
   | 'pedidos'
   | 'presupuestos'
-  | 'ia_precios';
+  | 'ia_precios'
+  | 'analizador_rentabilidad';
 
 export interface ModulosConfig {
   stock: boolean;
   importador_excel: boolean;
   facturador_simple: boolean;
   facturador_arca: boolean;
+  facturador_pos: boolean;
   pedidos: boolean;
   presupuestos: boolean;
   ia_precios: boolean;
+  analizador_rentabilidad: boolean;
 }
 
 export type PlanTipo = 'base' | 'completo';
@@ -526,9 +563,11 @@ export const MODULOS_LABELS: Record<ModuloKey, string> = {
   importador_excel: 'Importador Excel/CSV',
   facturador_simple: 'Facturador simple (PDF)',
   facturador_arca: 'Facturación electrónica (ARCA)',
+  facturador_pos: 'POS con escáner',
   pedidos: 'Pedidos',
   presupuestos: 'Presupuestos',
   ia_precios: 'IA de precios',
+  analizador_rentabilidad: 'Analizador de rentabilidad',
 };
 
 export const MODULOS_PLAN: Record<ModuloKey, PlanTipo | 'siempre'> = {
@@ -536,8 +575,10 @@ export const MODULOS_PLAN: Record<ModuloKey, PlanTipo | 'siempre'> = {
   importador_excel: 'siempre',
   facturador_simple: 'base',
   facturador_arca: 'completo',
+  facturador_pos: 'completo',
   pedidos: 'completo',
   presupuestos: 'completo',
   ia_precios: 'completo',
+  analizador_rentabilidad: 'completo',
 };
 ```

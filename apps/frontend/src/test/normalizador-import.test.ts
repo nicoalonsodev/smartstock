@@ -14,9 +14,18 @@ describe('Normalizador — mapeo de columnas', () => {
   });
 });
 
-describe('Normalizador — precios argentinos', () => {
+describe('Normalizador — precios (AR y US)', () => {
   it('parsea "$1.234,56" a 1234.56', () => {
     expect(parsearPrecioArgentino('$1.234,56')).toBe(1234.56);
+  });
+
+  it('parsea miles y centavos estilo US "$5,200.00" a 5200', () => {
+    expect(parsearPrecioArgentino('$5,200.00')).toBe(5200);
+    expect(parsearPrecioArgentino('"$5,200.00"')).toBe(5200);
+  });
+
+  it('parsea "5.200" (miles AR) a 5200', () => {
+    expect(parsearPrecioArgentino('5.200')).toBe(5200);
   });
 });
 

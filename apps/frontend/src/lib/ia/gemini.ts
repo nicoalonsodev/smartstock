@@ -1,5 +1,5 @@
 const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
 
 const GEMINI_TIMEOUT_MS = 120_000;
 
@@ -36,25 +36,31 @@ export async function llamarGemini(
   prompt: string,
   archivo: { base64: string; mimeType: string },
 ): Promise<string> {
+  return llamarGeminiBase([
+    { inline_data: { mime_type: archivo.mimeType, data: archivo.base64 } },
+    { text: prompt },
+  ]);
+}
+
+/**
+ * Variant that sends only text (no file). Used for matching, summaries, etc.
+ */
+export async function llamarGeminiTexto(prompt: string): Promise<string> {
+  return llamarGeminiBase([{ text: prompt }]);
+}
+
+type GeminiPart =
+  | { text: string }
+  | { inline_data: { mime_type: string; data: string } };
+
+async function llamarGeminiBase(parts: GeminiPart[]): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey?.trim()) {
     throw new GeminiError('GEMINI_API_KEY no configurada', 'config');
   }
 
   const body = {
-    contents: [
-      {
-        parts: [
-          {
-            inline_data: {
-              mime_type: archivo.mimeType,
-              data: archivo.base64,
-            },
-          },
-          { text: prompt },
-        ],
-      },
-    ],
+    contents: [{ parts }],
     generationConfig: {
       temperature: 0.1,
       maxOutputTokens: 8192,

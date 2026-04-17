@@ -1,10 +1,7 @@
 {
   "name": "smartstock-monorepo",
   "private": true,
-  "workspaces": [
-    "apps/frontend",
-    "apps/backend"
-  ],
+  "workspaces": ["apps/frontend", "apps/backend"],
   "scripts": {
     "dev": "npm run dev -w @smartstock/frontend",
     "dev:frontend": "npm run dev -w @smartstock/frontend",
@@ -17,6 +14,8 @@
     "test:backend": "npm run test -w @smartstock/backend",
     "migration:generate": "npm run migration:generate -w @smartstock/backend",
     "migration:run": "npm run migration:run -w @smartstock/backend",
-    "migration:revert": "npm run migration:revert -w @smartstock/backend"
+    "migration:revert": "npm run migration:revert -w @smartstock/backend",
+    "gen:types": "npm run gen:types -w @smartstock/frontend",
+    "gen:plantillas-prueba": "npm run gen:plantillas-prueba -w @smartstock/frontend"
   }
 }

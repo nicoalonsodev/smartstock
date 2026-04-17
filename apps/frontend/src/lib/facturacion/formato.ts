@@ -17,6 +17,7 @@ export function formatearTipoComprobante(tipo: string): string {
     nota_credito_c: 'Nota de Crédito C',
     remito: 'Remito',
     presupuesto: 'Presupuesto',
+    ticket: 'Ticket',
   };
   return labels[tipo] ?? tipo;
 }

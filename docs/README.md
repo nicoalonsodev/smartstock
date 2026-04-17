@@ -43,16 +43,17 @@ La filosofía central es que el sistema se adapta al negocio, no al revés. Un a
 - **Pedidos y presupuestos** — estados, conversión a factura, reserva de stock
 - **IA de precios** — extracción automática desde PDF/imagen con Gemini 1.5 Pro
 - **Integración ARCA** — facturación electrónica con CAE (WSAA + WSFE)
+- **Analizador de rentabilidad** — listas de proveedores, simulación de márgenes, forecast, ranking y cuenta corriente
 
 ### Perfiles de cliente
 
-| Perfil | Stock | Excel | Facturación | Pedidos | IA precios | ARCA |
-|---|---|---|---|---|---|---|
-| Almacén de barrio | Si | Si | Simple (PDF) | No | No | No |
-| Kiosco / maxikiosco | Si | Si | No | No | No | No |
-| Distribuidora | Si | Si | Electrónica | Si | Si | Si |
-| Fábrica | Si | Si | Simple o electrónica | Si | No | Opcional |
-| Área de ventas | No | No | Electrónica | Si (presup.) | No | Si |
+| Perfil | Stock | Excel | Facturación | Pedidos | IA precios | ARCA | Analizador |
+|---|---|---|---|---|---|---|---|
+| Almacén de barrio | Si | Si | Simple (PDF) | No | No | No | No |
+| Kiosco / maxikiosco | Si | Si | No | No | No | No | No |
+| Distribuidora | Si | Si | Electrónica | Si | Si | Si | Si |
+| Fábrica | Si | Si | Simple o electrónica | Si | No | Opcional | Si |
+| Área de ventas | No | No | Electrónica | Si (presup.) | No | Si | Si |
 
 ---
 
@@ -123,6 +124,7 @@ El proyecto estará disponible en `http://localhost:3000`.
 | [facturacion.md](./facturacion.md) | Facturador simple, PDF, numeración, descuento de stock |
 | [pedidos.md](./pedidos.md) | Pedidos, presupuestos, estados, conversión a factura |
 | [ia-precios.md](./ia-precios.md) | Extracción con Gemini, prompt, preview, historial |
+| [analizador.md](./analizador.md) | Listas de proveedores, matching, simulación de márgenes, forecast y rentabilidad |
 | [arca.md](./arca.md) | WSAA, WSFE, CAE, reintentos, certificados |
 | [arca-cola-worker.md](./arca-cola-worker.md) | Cola `arca_job`, worker, cron, stub homologación |
 | [backend-nest-barcodes-plan.md](./backend-nest-barcodes-plan.md) | Plan de evolución backend NestJS + modelo de código de barras + cierre ARCA fiscal |
@@ -132,4 +134,4 @@ El proyecto estará disponible en `http://localhost:3000`.
 | [backend-nest-implementation-roadmap.md](./backend-nest-implementation-roadmap.md) | Roadmap por sprints para implementar y migrar backend sin romper operación |
 | [backend-nest-tickets.md](./backend-nest-tickets.md) | Backlog completo NestJS con dependencias, workflow Git y pipeline de migraciones/build |
 | [deploy.md](./deploy.md) | Vercel, VPS, migraciones en producción, checklist go-live |
-| [TICKETS.md](./TICKETS.md) | Backlog completo con 65+ tickets organizados por versión |
+| [TICKETS.md](./TICKETS.md) | Backlog completo con 104 tickets organizados por versión |

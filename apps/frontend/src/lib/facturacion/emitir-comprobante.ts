@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { calcularImportes } from '@/lib/facturacion/calcular-importes';
+import { solicitarCAE } from '@/lib/facturacion/arca/wsfe';
 import { formatearTipoComprobante } from '@/lib/facturacion/formato';
 import { generarPDF } from '@/lib/facturacion/pdf-generator';
 import type { Database } from '@/types/database';
@@ -13,6 +14,9 @@ export interface EmitirComprobanteBody {
   items: { producto_id: string; cantidad: number; precio_unitario: number }[];
   notas?: string;
   iva_porcentaje?: number;
+  metodo_pago?: 'efectivo' | 'debito' | 'credito' | 'transferencia' | 'mixto';
+  metodo_pago_detalle?: Record<string, number>;
+  caja_id?: string;
 }
 
 export type EmitirComprobanteSuccess = {
@@ -67,7 +71,7 @@ export async function emitirComprobante(
   const productoIds = body.items.map((i) => i.producto_id);
   const { data: productos } = await supabase
     .from('producto')
-    .select('id, codigo, nombre, stock_actual')
+    .select('id, codigo, nombre, stock_actual, precio_costo')
     .in('id', productoIds);
 
   if (!productos || productos.length !== productoIds.length) {
@@ -120,6 +124,9 @@ export async function emitirComprobante(
       estado: 'emitido' as const,
       notas: body.notas || null,
       usuario_id: ctx.userId,
+      metodo_pago: body.metodo_pago ?? null,
+      metodo_pago_detalle: body.metodo_pago_detalle ?? null,
+      caja_id: body.caja_id ?? null,
     })
     .select()
     .single();
@@ -134,6 +141,7 @@ export async function emitirComprobante(
     cantidad: item.cantidad,
     precio_unitario: item.precio_unitario,
     subtotal: item.subtotal,
+    precio_costo: productosMap.get(item.producto_id)?.precio_costo ?? 0,
   }));
 
   const { error: itemsError } = await supabase.from('comprobante_item').insert(itemsInsert);
@@ -161,6 +169,32 @@ export async function emitirComprobante(
       if (movError) {
         return { ok: false, status: 500, error: `Error de stock: ${movError.message}` };
       }
+    }
+  }
+
+  if (!esPresupuesto) {
+    const esNotaCredito = body.tipo.startsWith('nota_credito');
+    const deltaDeuda = esNotaCredito ? -importes.total : importes.total;
+
+    await supabase
+      .from('cuenta_corriente')
+      .upsert(
+        { tenant_id: ctx.tenantId, cliente_id: body.cliente_id, saldo: 0 },
+        { onConflict: 'tenant_id,cliente_id', ignoreDuplicates: true },
+      );
+
+    const { data: cuenta } = await supabase
+      .from('cuenta_corriente')
+      .select('id, saldo')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('cliente_id', body.cliente_id)
+      .single();
+
+    if (cuenta) {
+      await supabase
+        .from('cuenta_corriente')
+        .update({ saldo: cuenta.saldo + deltaDeuda })
+        .eq('id', cuenta.id);
     }
   }
 
@@ -225,10 +259,140 @@ export async function emitirComprobante(
     }
   }
 
+  // --- POST-EMISIÓN: solicitar CAE si el módulo facturador_arca está activo ---
+  let cae: string | null = null;
+  let caeVencimiento: string | null = null;
+
+  const { data: moduloConfig } = await supabase
+    .from('modulo_config')
+    .select('facturador_arca')
+    .maybeSingle();
+
+  const arcaActivo = moduloConfig && (moduloConfig as Record<string, boolean>).facturador_arca;
+
+  if (arcaActivo) {
+    const { data: arcaConfig } = await supabase
+      .from('arca_config')
+      .select('tenant_id, cuit_emisor, punto_de_venta, ambiente')
+      .eq('tenant_id', ctx.tenantId)
+      .single();
+
+    if (arcaConfig && arcaConfig.cuit_emisor && arcaConfig.punto_de_venta) {
+      const resultado = await solicitarCAE(
+        supabase,
+        {
+          tenant_id: arcaConfig.tenant_id,
+          cuit_emisor: arcaConfig.cuit_emisor,
+          punto_de_venta: arcaConfig.punto_de_venta,
+          ambiente: arcaConfig.ambiente,
+        },
+        {
+          tenantId: ctx.tenantId,
+          tipo: body.tipo,
+          numero,
+          fecha: comprobante.fecha,
+          clienteCuitDni: cliente.cuit_dni ?? null,
+          importeTotal: importes.total,
+          importeNeto: importes.subtotal,
+          importeIVA: importes.iva_monto,
+          alicuotaIVA: importes.iva_porcentaje,
+        },
+        comprobante.id,
+      );
+
+      if (resultado.aprobado && resultado.cae) {
+        cae = resultado.cae;
+        caeVencimiento = resultado.caeVencimiento;
+        await supabase
+          .from('comprobante')
+          .update({
+            cae: resultado.cae,
+            cae_vencimiento: resultado.caeVencimiento,
+            estado: 'emitido' as never,
+          })
+          .eq('id', comprobante.id);
+
+        if (generarPdfYSubir) {
+          const itemsPDFCae = body.items.map((item) => {
+            const prod = productosMap.get(item.producto_id)!;
+            return {
+              cantidad: item.cantidad,
+              descripcion: prod.nombre,
+              precio_unitario: item.precio_unitario,
+              subtotal: Math.round(item.cantidad * item.precio_unitario * 100) / 100,
+            };
+          });
+
+          const pdfConCAE = generarPDF(
+            {
+              nombre: tenant.nombre,
+              razon_social: tenant.razon_social,
+              cuit: tenant.cuit,
+              domicilio: tenant.domicilio,
+              condicion_iva: tenant.condicion_iva ?? 'consumidor_final',
+              punto_de_venta: tenant.punto_de_venta,
+            },
+            {
+              nombre: cliente.nombre,
+              razon_social: cliente.razon_social,
+              cuit_dni: cliente.cuit_dni,
+              condicion_iva: cliente.condicion_iva ?? 'consumidor_final',
+              direccion: cliente.direccion,
+            },
+            {
+              tipo: body.tipo,
+              numero,
+              fecha: comprobante.fecha,
+              subtotal: importes.subtotal,
+              iva_monto: importes.iva_monto,
+              iva_porcentaje: importes.iva_porcentaje,
+              total: importes.total,
+              notas: body.notas || null,
+              cae: resultado.cae,
+              cae_vencimiento: resultado.caeVencimiento,
+            },
+            itemsPDFCae,
+          );
+
+          const pdfBufferCae = Buffer.from(pdfConCAE.output('arraybuffer'));
+          const pdfPathCae = `${ctx.tenantId}/comprobantes/${body.tipo}_${numero}.pdf`;
+
+          const { error: uploadErr } = await supabase.storage
+            .from('comprobantes')
+            .upload(pdfPathCae, pdfBufferCae, {
+              contentType: 'application/pdf',
+              upsert: true,
+            });
+
+          if (!uploadErr) {
+            const { data: pubUrl } = supabase.storage.from('comprobantes').getPublicUrl(pdfPathCae);
+            pdfUrl = pubUrl.publicUrl;
+            await supabase.from('comprobante').update({ pdf_url: pdfUrl }).eq('id', comprobante.id);
+          }
+        }
+      } else if (resultado.errores.some((e) => e.codigo === 'NETWORK')) {
+        await supabase
+          .from('comprobante')
+          .update({ estado: 'pendiente_arca' as never })
+          .eq('id', comprobante.id);
+      } else {
+        await supabase
+          .from('comprobante')
+          .update({ estado: 'error_arca' as never })
+          .eq('id', comprobante.id);
+      }
+    }
+  }
+
   return {
     ok: true,
     data: {
-      comprobante: { ...comprobante, numero, pdf_url: pdfUrl },
+      comprobante: {
+        ...comprobante,
+        numero,
+        pdf_url: pdfUrl,
+        ...(cae ? { cae, cae_vencimiento: caeVencimiento } : {}),
+      },
       importes,
     },
   };

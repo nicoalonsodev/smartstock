@@ -9,6 +9,7 @@ import { PreviewTable } from '@/components/importar/preview-table';
 import {
   clearImportDraft,
   readImportDraft,
+  writeImportDraft,
   writeImportResult,
   type ImportDraftV1,
 } from '@/lib/importar/draft';
@@ -16,6 +17,14 @@ import { type CampoProducto } from '@/lib/normalizador/aliases';
 import { deduplicarFilas } from '@/lib/normalizador/deduplicar';
 import type { MapeoColumna } from '@/lib/normalizador/mapear';
 import { validarFilas, type FilaValidada } from '@/lib/normalizador/validar';
+
+function generarHeaderSintetico(campo: CampoProducto): string {
+  const r =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? (crypto.randomUUID() as string).replace(/-/g, '').slice(0, 10)
+      : String(Math.random()).slice(2, 12);
+  return `__ss_${campo}_${r}`;
+}
 
 type FilaApi = {
   codigo: string | null;
@@ -68,24 +77,111 @@ export default function ImportarPreviewPage() {
     return validarFilas(filasRaw, mapeo);
   }, [filasRaw, mapeo]);
 
-  const camposActivos = useMemo(() => {
-    if (!mapeo) return [];
-    const s = new Set<CampoProducto>();
-    for (const c of mapeo) {
-      if (!c.ignorar && c.campoDetectado) s.add(c.campoDetectado);
-    }
-    return Array.from(s);
-  }, [mapeo]);
+  const columnasPreview = useMemo(
+    () =>
+      (mapeo ?? [])
+        .filter((m) => !m.ignorar && m.campoDetectado)
+        .map((m) => ({
+          headerOriginal: m.headerOriginal,
+          campo: m.campoDetectado!,
+          sintetica: m.sintetica,
+        })),
+    [mapeo]
+  );
 
-  const onFilaEdit = useCallback(
-    (index: number, campo: CampoProducto, valor: string | number | null) => {
+  useEffect(() => {
+    if (!draft || filasRaw === null || !mapeo) return;
+    const d = readImportDraft();
+    if (!d) return;
+    const fileHeaders = d.archivo.headers.filter((h) => !String(h).startsWith('__ss_'));
+    const syntheticHeaders = mapeo.filter((m) => m.sintetica).map((m) => m.headerOriginal);
+    const headers = [...fileHeaders];
+    for (const h of syntheticHeaders) {
+      if (!headers.includes(h)) headers.push(h);
+    }
+    writeImportDraft({
+      ...d,
+      mapeo,
+      archivo: {
+        ...d.archivo,
+        filas: filasRaw,
+        headers,
+      },
+    });
+  }, [draft, filasRaw, mapeo]);
+
+  const onFilaEdit = useCallback((index: number, headerOriginal: string, valor: string | number | null) => {
+    setFilasRaw((prev) => {
+      if (!prev) return prev;
+      return prev.map((row, i) => (i === index ? { ...row, [headerOriginal]: valor } : row));
+    });
+  }, []);
+
+  const onAgregarColumna = useCallback((campo: CampoProducto) => {
+    const header = generarHeaderSintetico(campo);
+    setMapeo((prev) => [
+      ...(prev ?? []),
+      {
+        headerOriginal: header,
+        campoDetectado: campo,
+        confianza: 'ninguna',
+        ignorar: false,
+        sintetica: true,
+      },
+    ]);
+    setFilasRaw((prev) => (prev ? prev.map((row) => ({ ...row, [header]: null })) : null));
+  }, []);
+
+  const onQuitarColumna = useCallback(
+    (headerOriginal: string) => {
+      const target = (mapeo ?? []).find((m) => m.headerOriginal === headerOriginal);
+      if (!target?.sintetica) return;
+      setMapeo((prev) => (prev ?? []).filter((m) => m.headerOriginal !== headerOriginal));
+      setFilasRaw((prev) =>
+        prev
+          ? prev.map((row) => {
+              const next = { ...row };
+              delete next[headerOriginal];
+              return next;
+            })
+          : null
+      );
+    },
+    [mapeo]
+  );
+
+  const onBulkFill = useCallback(
+    (headerOriginal: string, valorTexto: string, filaIndices: number[]) => {
+      const set = new Set(filaIndices);
+      setFilasRaw((prev) =>
+        prev
+          ? prev.map((row, i) =>
+              set.has(i)
+                ? { ...row, [headerOriginal]: valorTexto === '' ? null : valorTexto }
+                : row
+            )
+          : null
+      );
+    },
+    []
+  );
+
+  const onCalcularVentaPorMargen = useCallback(
+    (headerPrecioVenta: string, porcentajeSobreCosto: number, filaIndices: number[]) => {
+      const idxSet = new Set(filaIndices);
       setFilasRaw((prev) => {
         if (!prev || !mapeo) return prev;
-        const col = mapeo.find((m) => m.campoDetectado === campo && !m.ignorar);
-        if (!col) return prev;
-        return prev.map((row, i) =>
-          i === index ? { ...row, [col.headerOriginal]: valor } : row
-        );
+        const v = validarFilas(prev, mapeo);
+        return prev.map((row, i) => {
+          if (!idxSet.has(i)) return row;
+          const costoRaw = v[i]?.datos.precio_costo;
+          const costo =
+            typeof costoRaw === 'number' && !Number.isNaN(costoRaw) ? costoRaw : null;
+          if (costo === null) return row;
+          const venta =
+            Math.round(costo * (1 + porcentajeSobreCosto / 100) * 100) / 100;
+          return { ...row, [headerPrecioVenta]: venta };
+        });
       });
     },
     [mapeo]
@@ -176,9 +272,14 @@ export default function ImportarPreviewPage() {
 
       <PreviewTable
         filas={filasValidadas}
-        camposActivos={camposActivos}
+        filasRaw={filasRaw}
+        columnas={columnasPreview}
         onFilaEdit={onFilaEdit}
         onFilaDescartar={onFilaDescartar}
+        onAgregarColumna={onAgregarColumna}
+        onQuitarColumna={onQuitarColumna}
+        onBulkFill={onBulkFill}
+        onCalcularVentaPorMargen={onCalcularVentaPorMargen}
         onConfirmar={() => void ejecutarImportacion()}
         loading={loading || !canEdit}
       />

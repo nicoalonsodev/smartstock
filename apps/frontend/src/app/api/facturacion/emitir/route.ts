@@ -8,7 +8,15 @@ import {
 import { moduloGuard } from '@/lib/modulos/guard';
 
 export async function POST(request: Request) {
-  const guard = await moduloGuard('facturador_simple');
+  let body: EmitirComprobanteBody;
+  try {
+    body = (await request.json()) as EmitirComprobanteBody;
+  } catch {
+    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+  }
+
+  const requiredModule = body.tipo === 'ticket' ? 'facturador_pos' : 'facturador_simple';
+  const guard = await moduloGuard(requiredModule);
   if (!guard.allowed) return guard.response;
 
   const session = await getTenantSession();
@@ -16,13 +24,6 @@ export async function POST(request: Request) {
 
   const forbidden = rejectIfVisor(session.rol);
   if (forbidden) return forbidden;
-
-  let body: EmitirComprobanteBody;
-  try {
-    body = (await request.json()) as EmitirComprobanteBody;
-  } catch {
-    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
-  }
 
   const result = await emitirComprobante(session.supabase, {
     tenantId: session.tenantId,

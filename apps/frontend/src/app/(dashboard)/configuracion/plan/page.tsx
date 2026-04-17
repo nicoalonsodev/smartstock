@@ -17,6 +17,8 @@ const MODULO_LABELS: Record<keyof ModulosConfig, string> = {
   pedidos: 'Pedidos',
   presupuestos: 'Presupuestos',
   ia_precios: 'IA de precios',
+  analizador_rentabilidad: 'Analizador de rentabilidad',
+  facturador_pos: 'Terminal POS con escáner',
 };
 
 type PlanState = 'base' | 'completo';
@@ -49,6 +51,8 @@ export default function PlanPage() {
           pedidos: json.modulos.pedidos ?? false,
           presupuestos: json.modulos.presupuestos ?? false,
           ia_precios: json.modulos.ia_precios ?? false,
+          analizador_rentabilidad: json.modulos.analizador_rentabilidad ?? false,
+          facturador_pos: json.modulos.facturador_pos ?? false,
         });
       }
     }
@@ -122,7 +126,7 @@ export default function PlanPage() {
         />
         <PlanCard
           title="Plan Completo"
-          description="Agrega facturación electrónica ARCA y presupuestos, además de todo lo del plan base (incluidos pedidos e IA)."
+          description="Agrega facturación electrónica ARCA, presupuestos y analizador de rentabilidad, además de todo lo del plan base (pedidos e IA)."
           highlight={plan === 'completo'}
           acciones={
             isAdmin && plan === 'base' ? (

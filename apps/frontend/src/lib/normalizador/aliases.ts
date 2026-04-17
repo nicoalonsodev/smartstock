@@ -8,7 +8,8 @@ export type CampoProducto =
   | 'categoria'
   | 'proveedor'
   | 'fecha_vencimiento'
-  | 'unidad';
+  | 'unidad'
+  | 'codigo_barras';
 
 /** Diccionario de aliases por campo (60+ entradas en total). */
 export const ALIASES: Record<CampoProducto, string[]> = {
@@ -149,4 +150,23 @@ export const ALIASES: Record<CampoProducto, string[]> = {
     'vencimientofecha',
   ],
   unidad: ['unidad', 'um', 'medida', 'unit', 'uom', 'umed', 'med', 'unmed', 'unid'],
+  codigo_barras: [
+    'codigo_barras',
+    'codigobarras',
+    'codigo de barras',
+    'barcode',
+    'ean',
+    'ean13',
+    'ean-13',
+    'ean_13',
+    'ean8',
+    'ean-8',
+    'upc',
+    'codigo_barra',
+    'codigobarra',
+    'codigo barra',
+    'cod_barras',
+    'codbarras',
+    'gtin',
+  ],
 };

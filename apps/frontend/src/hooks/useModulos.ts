@@ -17,7 +17,7 @@ export function useModulos() {
     const { data, error } = await supabase
       .from('modulo_config')
       .select(
-        'stock, importador_excel, facturador_simple, facturador_arca, pedidos, presupuestos, ia_precios',
+        'stock, importador_excel, facturador_simple, facturador_arca, facturador_pos, pedidos, presupuestos, ia_precios, analizador_rentabilidad',
       )
       .maybeSingle();
 
@@ -27,9 +27,11 @@ export function useModulos() {
         importador_excel: data.importador_excel ?? true,
         facturador_simple: data.facturador_simple ?? false,
         facturador_arca: data.facturador_arca ?? false,
+        facturador_pos: data.facturador_pos ?? false,
         pedidos: data.pedidos ?? false,
         presupuestos: data.presupuestos ?? false,
         ia_precios: data.ia_precios ?? false,
+        analizador_rentabilidad: data.analizador_rentabilidad ?? false,
       });
     }
 

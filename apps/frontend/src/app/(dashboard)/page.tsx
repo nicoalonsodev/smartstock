@@ -1,12 +1,26 @@
+import { AlertasAnalizador } from '@/components/analizador/alertas-analizador';
 import { DashboardMetricas } from '@/components/dashboard/dashboard-metricas';
 import { StockBajoCard } from '@/components/dashboard/stock-bajo-card';
 import { VencimientosCard } from '@/components/dashboard/vencimientos-card';
 import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
 import { getSessionProfile } from '@/lib/dashboard/session-profile';
+import { createServerClient } from '@/lib/supabase/server';
 
 export default async function DashboardPage() {
   const profile = await getSessionProfile();
   const tenantName = profile?.tenantName ?? 'tu negocio';
+
+  let showAnalizador = false;
+  try {
+    const supabase = await createServerClient();
+    const { data: config } = await supabase
+      .from('modulo_config')
+      .select('analizador_rentabilidad')
+      .maybeSingle();
+    showAnalizador = !!config?.analizador_rentabilidad;
+  } catch {
+    // non-critical
+  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -32,6 +46,13 @@ export default async function DashboardPage() {
           <VencimientosCard />
         </div>
       </section>
+
+      {showAnalizador && (
+        <section aria-label="Alertas del analizador">
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground">Analizador</h2>
+          <AlertasAnalizador />
+        </section>
+      )}
     </div>
   );
 }

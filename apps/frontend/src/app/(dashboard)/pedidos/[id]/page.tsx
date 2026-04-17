@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useDashboardRole } from '@/components/dashboard/dashboard-role-context';
+import { useModulos } from '@/hooks/useModulos';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Select,
@@ -54,6 +55,7 @@ export default function PedidoDetallePage() {
   const router = useRouter();
   const id = typeof params.id === 'string' ? params.id : '';
   const { canEdit } = useDashboardRole();
+  const { modulos } = useModulos();
   const [pedido, setPedido] = useState<PedidoDetalle | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -219,6 +221,34 @@ export default function PedidoDetallePage() {
                 <Button type="button" size="sm" disabled={busy} onClick={() => void facturar()}>
                   <FileText className="mr-1 h-4 w-4" /> Generar factura
                 </Button>
+                {modulos.facturador_pos && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      sessionStorage.setItem(
+                        'smartstock_pos_from_pedido',
+                        JSON.stringify({
+                          pedidoId: pedido.id,
+                          items: pedido.items.map((it) => ({
+                            producto: {
+                              id: it.producto.id,
+                              codigo: it.producto.codigo,
+                              nombre: it.producto.nombre,
+                              precio_venta: it.precio_unitario,
+                              stock_actual: 999,
+                            },
+                            cantidad: it.cantidad,
+                          })),
+                        }),
+                      );
+                      router.push('/facturacion/pos');
+                    }}
+                  >
+                    Enviar al POS
+                  </Button>
+                )}
               </div>
             ) : null}
           </div>

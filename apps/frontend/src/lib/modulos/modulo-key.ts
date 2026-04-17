@@ -3,18 +3,22 @@ export type ModuloKey =
   | 'importador_excel'
   | 'facturador_simple'
   | 'facturador_arca'
+  | 'facturador_pos'
   | 'pedidos'
   | 'presupuestos'
-  | 'ia_precios';
+  | 'ia_precios'
+  | 'analizador_rentabilidad';
 
 export interface ModulosConfig {
   stock: boolean;
   importador_excel: boolean;
   facturador_simple: boolean;
   facturador_arca: boolean;
+  facturador_pos: boolean;
   pedidos: boolean;
   presupuestos: boolean;
   ia_precios: boolean;
+  analizador_rentabilidad: boolean;
 }
 
 export const DEFAULT_MODULOS: ModulosConfig = {
@@ -22,7 +26,9 @@ export const DEFAULT_MODULOS: ModulosConfig = {
   importador_excel: true,
   facturador_simple: false,
   facturador_arca: false,
+  facturador_pos: false,
   pedidos: false,
   presupuestos: false,
   ia_precios: false,
+  analizador_rentabilidad: false,
 };

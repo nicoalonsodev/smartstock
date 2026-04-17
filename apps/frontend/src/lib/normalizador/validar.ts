@@ -20,6 +20,11 @@ export function validarFilas(
 
       const valorRaw = fila[col.headerOriginal];
       const campo = col.campoDetectado;
+      const vacio = valorRaw == null || String(valorRaw).trim() === '';
+
+      if (campo !== 'nombre' && vacio) {
+        continue;
+      }
 
       switch (campo) {
         case 'codigo':
@@ -27,16 +32,10 @@ export function validarFilas(
           break;
 
         case 'nombre':
-          if (!valorRaw || String(valorRaw).trim() === '') {
-            errores.push({
-              campo,
-              mensaje: 'El nombre del producto no puede estar vacío',
-              valorOriginal: valorRaw,
-            });
-            datos[campo] = null;
-          } else {
-            datos[campo] = String(valorRaw).trim();
+          if (vacio) {
+            continue;
           }
+          datos[campo] = String(valorRaw).trim();
           break;
 
         case 'precio_costo':
@@ -112,6 +111,15 @@ export function validarFilas(
       }
     }
 
+    if (!datos.nombre || String(datos.nombre).trim() === '') {
+      errores.push({
+        campo: 'nombre',
+        mensaje: 'El nombre del producto no puede estar vacío',
+        valorOriginal: null,
+      });
+      datos.nombre = null;
+    }
+
     return {
       filaOriginal: index + 1,
       datos,
@@ -121,16 +129,69 @@ export function validarFilas(
   });
 }
 
-/** Precio con formato argentino: miles con punto, decimales con coma (ej. $1.234,56). */
+/**
+ * Montos con separadores locales habituales en listas:
+ * - AR: $1.234,56 o 5.200 (miles con punto)
+ * - US/EN: $5,200.00 (miles con coma, decimales con punto)
+ */
 export function parsearPrecioArgentino(valor: unknown): number | null {
   if (valor == null || String(valor).trim() === '') return null;
-  const str = String(valor)
-    .replace(/\$/g, '')
-    .replace(/\s/g, '')
-    .replace(/\./g, '')
-    .replace(',', '.');
-  const num = parseFloat(str);
-  return Number.isNaN(num) ? null : Math.round(num * 100) / 100;
+
+  let s = String(valor).trim().replace(/[^\d.,\-]/g, '');
+  if (s === '' || s === '-') return null;
+
+  const neg = s.startsWith('-');
+  if (neg) s = s.slice(1);
+  s = s.replace(/-/g, '');
+  if (s === '') return null;
+
+  const lastComma = s.lastIndexOf(',');
+  const lastDot = s.lastIndexOf('.');
+
+  let normalized: string;
+
+  if (lastComma >= 0 && lastDot >= 0) {
+    if (lastDot > lastComma) {
+      normalized = s.replace(/,/g, '');
+    } else {
+      normalized = s.replace(/\./g, '').replace(',', '.');
+    }
+  } else if (lastComma >= 0) {
+    const after = s.slice(lastComma + 1);
+    if (/^\d{1,2}$/.test(after)) {
+      normalized = s.slice(0, lastComma).replace(/\./g, '') + '.' + after;
+    } else if (/^\d{3}$/.test(after)) {
+      normalized = s.replace(/,/g, '');
+    } else {
+      const parts = s.split(',');
+      if (parts.length > 1 && parts.every((p) => /^\d+$/.test(p))) {
+        normalized = parts.join('');
+      } else {
+        normalized = s.slice(0, lastComma).replace(/\./g, '') + '.' + after;
+      }
+    }
+  } else if (lastDot >= 0) {
+    const parts = s.split('.');
+    if (!parts.every((p) => /^\d+$/.test(p)) || parts.length < 2) {
+      normalized = s;
+    } else {
+      const last = parts[parts.length - 1]!;
+      if (last.length <= 2) {
+        normalized = parts.slice(0, -1).join('') + '.' + last;
+      } else if (last.length > 3) {
+        normalized = parts.slice(0, -1).join('') + '.' + last;
+      } else {
+        normalized = parts.join('');
+      }
+    }
+  } else {
+    normalized = s;
+  }
+
+  const num = parseFloat(normalized);
+  if (Number.isNaN(num)) return null;
+  const rounded = Math.round(num * 100) / 100;
+  return neg ? -rounded : rounded;
 }
 
 function parsearEntero(valor: unknown): number | null {
