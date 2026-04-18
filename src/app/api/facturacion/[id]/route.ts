@@ -18,7 +18,7 @@ export async function GET(
   const { data, error } = await session.supabase
     .from('comprobante')
     .select(
-      '*, cliente:cliente_id(nombre, razon_social, cuit_dni, condicion_iva), usuario:usuario_id(nombre, apellido), items:comprobante_item(id, cantidad, precio_unitario, subtotal, producto:producto_id(nombre, codigo))',
+      '*, cliente:cliente_id(nombre, razon_social, cuit_dni, condicion_iva), usuario:usuario_id(nombre, apellido), items:comprobante_item(id, cantidad, precio_unitario, subtotal, producto:producto_id(nombre, codigo, iva_porcentaje))',
     )
     .eq('id', id)
     .maybeSingle();

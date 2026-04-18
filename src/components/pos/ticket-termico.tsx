@@ -150,7 +150,7 @@ function buildTicketHTML(data: TicketData, ancho: string, fontSize: string): str
       <td style="text-align:right">${formatCurrency(data.subtotal)}</td>
     </tr>
     ${data.descuento && data.descuento > 0 ? `<tr><td>Descuento</td><td style="text-align:right">-${formatCurrency(data.descuento)}</td></tr>` : ''}
-    ${data.ivaMonto && data.ivaMonto > 0 ? `<tr><td>IVA 21%</td><td style="text-align:right">${formatCurrency(data.ivaMonto)}</td></tr>` : ''}
+    ${data.ivaMonto && data.ivaMonto > 0 ? `<tr><td>IVA (incluido)</td><td style="text-align:right">${formatCurrency(data.ivaMonto)}</td></tr>` : ''}
     <tr class="total-row">
       <td>TOTAL</td>
       <td style="text-align:right">${formatCurrency(data.total)}</td>

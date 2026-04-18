@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from('producto')
     .select(
-      'id, codigo, nombre, precio_venta, stock_actual, unidad, es_pesable, codigo_barras',
+      'id, codigo, nombre, precio_venta, stock_actual, unidad, es_pesable, codigo_barras, iva_porcentaje',
     )
     .eq('tenant_id', tenantId)
     .eq('activo', true)

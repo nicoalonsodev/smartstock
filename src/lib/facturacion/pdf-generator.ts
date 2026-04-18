@@ -25,6 +25,8 @@ interface ItemPDF {
   descripcion: string;
   precio_unitario: number;
   subtotal: number;
+  iva_porcentaje?: number | null;
+  iva_monto?: number;
 }
 
 interface DatosComprobante {
@@ -147,18 +149,39 @@ export function generarPDF(
   y += 6;
 
   // === TABLA DE ITEMS ===
-  const colX = {
-    cant: margin,
-    desc: margin + 20,
-    precio: pageWidth - margin - 60,
-    subtotal: pageWidth - margin - 25,
-  };
+  // Factura con IVA discriminado: cada línea muestra su alícuota e importe
+  // de IVA embebido; en ticket/remito/presupuesto se omiten esas columnas.
+  const muestraIvaItem =
+    comprobante.iva_monto > 0 &&
+    items.some((it) => it.iva_porcentaje != null || it.iva_monto != null);
+
+  const colX = muestraIvaItem
+    ? {
+        cant: margin,
+        desc: margin + 18,
+        precio: pageWidth - margin - 88,
+        ivaPct: pageWidth - margin - 58,
+        ivaMonto: pageWidth - margin - 38,
+        subtotal: pageWidth - margin - 10,
+      }
+    : {
+        cant: margin,
+        desc: margin + 20,
+        precio: pageWidth - margin - 60,
+        ivaPct: pageWidth - margin - 60,
+        ivaMonto: pageWidth - margin - 60,
+        subtotal: pageWidth - margin - 10,
+      };
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.text('Cant.', colX.cant, y);
   doc.text('Descripción', colX.desc, y);
   doc.text('P. Unit.', colX.precio, y, { align: 'right' });
+  if (muestraIvaItem) {
+    doc.text('IVA %', colX.ivaPct, y, { align: 'right' });
+    doc.text('IVA', colX.ivaMonto, y, { align: 'right' });
+  }
   doc.text('Subtotal', colX.subtotal, y, { align: 'right' });
   y += 2;
   doc.line(margin, y, pageWidth - margin, y);
@@ -172,10 +195,22 @@ export function generarPDF(
     }
 
     doc.text(String(item.cantidad), colX.cant, y);
-    doc.text(item.descripcion.substring(0, 50), colX.desc, y);
+    doc.text(
+      item.descripcion.substring(0, muestraIvaItem ? 38 : 50),
+      colX.desc,
+      y,
+    );
     doc.text(formatCurrency(item.precio_unitario), colX.precio, y, {
       align: 'right',
     });
+    if (muestraIvaItem) {
+      const rate = item.iva_porcentaje;
+      const iva = item.iva_monto ?? 0;
+      doc.text(rate != null ? `${rate}%` : '-', colX.ivaPct, y, {
+        align: 'right',
+      });
+      doc.text(formatCurrency(iva), colX.ivaMonto, y, { align: 'right' });
+    }
     doc.text(formatCurrency(item.subtotal), colX.subtotal, y, {
       align: 'right',
     });

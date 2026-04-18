@@ -441,19 +441,26 @@ export default function PosPage() {
 
   const esFactura = tipoComprobante === 'factura';
 
+  // Precios IVA-incluidos: al facturar sólo discriminamos el IVA embebido,
+  // no se suma al total.
   const ivaDesglose = esFactura
     ? items.reduce<Record<number, number>>((acc, it) => {
         const rate = it.producto.iva_porcentaje ?? ivaDefault;
-        const lineSubtotal = Math.round(it.cantidad * it.producto.precio_venta * 100) / 100;
-        const proportion = subtotalRounded > 0 ? lineSubtotal / subtotalRounded : 0;
-        const baseAfterDiscount = Math.round(afterDiscount * proportion * 100) / 100;
-        acc[rate] = Math.round(((acc[rate] ?? 0) + baseAfterDiscount * (rate / 100)) * 100) / 100;
+        const lineGross = Math.round(it.cantidad * it.producto.precio_venta * 100) / 100;
+        const proportion = subtotalRounded > 0 ? lineGross / subtotalRounded : 0;
+        const grossAfterDiscount = afterDiscount * proportion;
+        // IVA embebido: gross * rate / (100 + rate)
+        const ivaLine = (grossAfterDiscount * rate) / (100 + rate);
+        acc[rate] = Math.round(((acc[rate] ?? 0) + ivaLine) * 100) / 100;
         return acc;
       }, {})
     : {};
 
   const ivaMonto = Object.values(ivaDesglose).reduce((s, v) => s + v, 0);
-  const total = Math.round((afterDiscount + ivaMonto) * 100) / 100;
+  const total = afterDiscount;
+  const netoGravado = esFactura
+    ? Math.round((afterDiscount - ivaMonto) * 100) / 100
+    : afterDiscount;
 
   const filteredClientes = clienteSearch.trim()
     ? clientes.filter((c) =>
@@ -668,6 +675,12 @@ export default function PosPage() {
                     <th className="px-4 py-2 font-medium w-16">Unidad</th>
                     <th className="px-4 py-2 text-right font-medium w-28">Cantidad</th>
                     <th className="px-4 py-2 text-right font-medium w-28">P. Unit.</th>
+                    {esFactura && (
+                      <>
+                        <th className="px-4 py-2 text-right font-medium w-20">IVA %</th>
+                        <th className="px-4 py-2 text-right font-medium w-24">IVA</th>
+                      </>
+                    )}
                     <th className="px-4 py-2 text-right font-medium w-28">Subtotal</th>
                     <th className="px-4 py-2 w-10"></th>
                   </tr>
@@ -675,6 +688,10 @@ export default function PosPage() {
                 <tbody>
                   {items.map((it, i) => {
                     const lineSubtotal = Math.round(it.cantidad * it.producto.precio_venta * 100) / 100;
+                    const lineRate = it.producto.iva_porcentaje ?? ivaDefault;
+                    const lineIva = esFactura
+                      ? Math.round(((lineSubtotal * lineRate) / (100 + lineRate)) * 100) / 100
+                      : 0;
                     return (
                       <tr
                         key={`${it.producto.id}-${i}`}
@@ -700,6 +717,16 @@ export default function PosPage() {
                         <td className="px-4 py-2 text-right">
                           {formatCurrency(it.producto.precio_venta)}
                         </td>
+                        {esFactura && (
+                          <>
+                            <td className="px-4 py-2 text-right text-muted-foreground tabular-nums">
+                              {lineRate}%
+                            </td>
+                            <td className="px-4 py-2 text-right text-muted-foreground tabular-nums">
+                              {formatCurrency(lineIva)}
+                            </td>
+                          </>
+                        )}
                         <td className="px-4 py-2 text-right font-medium">
                           {formatCurrency(lineSubtotal)}
                         </td>
@@ -766,12 +793,22 @@ export default function PosPage() {
               )}
             </div>
 
-            {esFactura && Object.entries(ivaDesglose).map(([rate, monto]) => (
-              <div key={rate} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">IVA {rate}%</span>
-                <span>{formatCurrency(monto)}</span>
-              </div>
-            ))}
+            {esFactura && (
+              <>
+                <div className="flex justify-between text-sm border-t pt-3">
+                  <span className="text-muted-foreground">Neto gravado</span>
+                  <span>{formatCurrency(netoGravado)}</span>
+                </div>
+                {Object.entries(ivaDesglose).map(([rate, monto]) => (
+                  <div key={rate} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      IVA {rate}% <span className="text-xs">(incluido)</span>
+                    </span>
+                    <span>{formatCurrency(monto)}</span>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
 
           <div className="space-y-3 pt-4 border-t">
@@ -968,6 +1005,7 @@ export default function PosPage() {
             stock_actual: p.stock_actual,
             es_pesable: p.es_pesable,
             unidad: p.unidad,
+            iva_porcentaje: p.iva_porcentaje,
           });
         }}
       />

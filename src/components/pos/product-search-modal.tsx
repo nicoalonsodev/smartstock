@@ -15,6 +15,7 @@ export type ProductSearchResult = {
   stock_actual: number;
   es_pesable?: boolean;
   unidad?: string;
+  iva_porcentaje?: number | null;
 };
 
 interface ProductSearchModalProps {

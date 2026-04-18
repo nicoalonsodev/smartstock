@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { calcularPrecioVenta } from '@/lib/productos/calcular-precio-venta';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/types/database';
 
@@ -52,6 +53,34 @@ export default function NuevoProductoPage() {
   const [fechaVencimiento, setFechaVencimiento] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ivaDefault, setIvaDefault] = useState(21);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/perfil');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (typeof json?.ivaDefault === 'number') setIvaDefault(json.ivaDefault);
+      } catch {
+        // mantener default 21
+      }
+    })();
+  }, []);
+
+  // Recalcular precio de venta automáticamente.
+  // Fórmula: precio_venta = costo * (1 + ganancia/100) * (1 + iva/100)
+  useEffect(() => {
+    const costo = parseFloat(precioCosto);
+    if (!Number.isFinite(costo) || costo <= 0) {
+      setPrecioVenta('0');
+      return;
+    }
+    const ganancia = porcentajeGanancia === '' ? 0 : parseFloat(porcentajeGanancia);
+    const iva = ivaPorcentaje === '' ? null : parseFloat(ivaPorcentaje);
+    const venta = calcularPrecioVenta(costo, ganancia, iva, ivaDefault);
+    setPrecioVenta(String(venta));
+  }, [precioCosto, porcentajeGanancia, ivaPorcentaje, ivaDefault]);
 
   const loadOpts = useCallback(async () => {
     const [cRes, pRes] = await Promise.all([fetch('/api/categorias'), fetch('/api/proveedores')]);
@@ -220,27 +249,29 @@ export default function NuevoProductoPage() {
               step="0.01"
               min="0"
               value={precioCosto}
-              onChange={(e) => {
-                setPrecioCosto(e.target.value);
-                const c = parseFloat(e.target.value);
-                const g = parseFloat(porcentajeGanancia);
-                if (c > 0 && g > 0) {
-                  setPrecioVenta(String(Math.round(c * (1 + g / 100) * 100) / 100));
-                }
-              }}
+              onChange={(e) => setPrecioCosto(e.target.value)}
             />
           </label>
           <label className="grid gap-1 text-sm">
-            <span className="text-muted-foreground">Precio venta</span>
+            <span className="text-muted-foreground">
+              Precio venta{' '}
+              <span className="text-xs text-muted-foreground">(calculado, IVA incluido)</span>
+            </span>
             <Input
               type="number"
               step="0.01"
               min="0"
               value={precioVenta}
-              onChange={(e) => setPrecioVenta(e.target.value)}
+              readOnly
+              disabled
+              className="bg-muted/50 cursor-not-allowed"
             />
           </label>
         </div>
+        <p className="text-xs text-muted-foreground -mt-2">
+          Precio venta = costo × (1 + ganancia%) × (1 + IVA%). Cargá la ganancia y el IVA para
+          calcularlo.
+        </p>
 
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="grid gap-1 text-sm">
@@ -249,14 +280,7 @@ export default function NuevoProductoPage() {
               type="number"
               step="0.01"
               value={porcentajeGanancia}
-              onChange={(e) => {
-                setPorcentajeGanancia(e.target.value);
-                const c = parseFloat(precioCosto);
-                const g = parseFloat(e.target.value);
-                if (c > 0 && g > 0) {
-                  setPrecioVenta(String(Math.round(c * (1 + g / 100) * 100) / 100));
-                }
-              }}
+              onChange={(e) => setPorcentajeGanancia(e.target.value)}
               placeholder="Ej: 30"
             />
           </label>
@@ -267,7 +291,7 @@ export default function NuevoProductoPage() {
               step="0.01"
               value={ivaPorcentaje}
               onChange={(e) => setIvaPorcentaje(e.target.value)}
-              placeholder="Default del tenant"
+              placeholder={`Default del tenant (${ivaDefault}%)`}
             />
           </label>
           <label className="grid gap-1 text-sm">

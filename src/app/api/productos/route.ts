@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { getTenantSession, rejectIfVisor } from '@/lib/api/tenant-session';
 import { moduloGuard } from '@/lib/modulos/guard';
+import { calcularPrecioVenta } from '@/lib/productos/calcular-precio-venta';
 import { obtenerStockComprometidoPorProducto } from '@/lib/stock/comprometido';
 import type { Database } from '@/types/database';
 
@@ -259,10 +260,17 @@ export async function POST(request: Request) {
 
   const precioCosto = Number(b.precio_costo) || 0;
   const porcentajeGanancia = b.porcentaje_ganancia != null ? Number(b.porcentaje_ganancia) : null;
-  let precioVenta = Number(b.precio_venta) || 0;
-  if (precioVenta === 0 && precioCosto > 0 && porcentajeGanancia != null && porcentajeGanancia > 0) {
-    precioVenta = Math.round(precioCosto * (1 + porcentajeGanancia / 100) * 100) / 100;
-  }
+  const ivaPorcentaje = b.iva_porcentaje != null ? Number(b.iva_porcentaje) || null : null;
+
+  // El precio de venta se calcula a partir del costo, la ganancia y el IVA.
+  // Fórmula: precio_venta = costo * (1 + ganancia/100) * (1 + iva/100).
+  const { data: tenantRow } = await session.supabase
+    .from('tenant')
+    .select('iva_porcentaje_default')
+    .eq('id', session.tenantId)
+    .maybeSingle();
+  const ivaDefault = tenantRow?.iva_porcentaje_default ?? 21;
+  const precioVenta = calcularPrecioVenta(precioCosto, porcentajeGanancia, ivaPorcentaje, ivaDefault);
 
   const { data: producto, error } = await session.supabase
     .from('producto')
@@ -284,7 +292,7 @@ export async function POST(request: Request) {
           : null,
       rubro: typeof b.rubro === 'string' && b.rubro ? b.rubro : null,
       subrubro: typeof b.subrubro === 'string' && b.subrubro ? b.subrubro : null,
-      iva_porcentaje: b.iva_porcentaje != null ? Number(b.iva_porcentaje) || null : null,
+      iva_porcentaje: ivaPorcentaje,
       porcentaje_ganancia: porcentajeGanancia,
       ubicacion: typeof b.ubicacion === 'string' && b.ubicacion ? b.ubicacion : null,
       moneda: typeof b.moneda === 'string' && b.moneda ? b.moneda : '$',

@@ -38,6 +38,7 @@ type Producto = {
   precio_venta: number;
   precio_costo: number;
   stock_actual: number;
+  iva_porcentaje?: number | null;
 };
 
 type ItemForm = {
@@ -84,6 +85,7 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [tenantIva, setTenantIva] = useState<string | null>(null);
+  const [ivaDefault, setIvaDefault] = useState(21);
   const [loading, setLoading] = useState(true);
   const [showMargen, setShowMargen] = useState(false);
 
@@ -102,11 +104,12 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [cRes, pRes, tRes, mRes] = await Promise.all([
+    const [cRes, pRes, tRes, mRes, perfilRes] = await Promise.all([
       fetch('/api/clientes'),
       fetch('/api/productos'),
       fetch('/api/configuracion/tenant'),
       fetch('/api/configuracion/plan'),
+      fetch('/api/perfil'),
     ]);
 
     if (cRes.ok) {
@@ -125,6 +128,10 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
       const mJson = await mRes.json();
       const modulos = mJson.modulos ?? mJson;
       setShowMargen(!!modulos.analizador_rentabilidad);
+    }
+    if (perfilRes.ok) {
+      const pJson = await perfilRes.json();
+      if (pJson.ivaDefault != null) setIvaDefault(pJson.ivaDefault);
     }
     setLoading(false);
   }, []);
@@ -168,13 +175,34 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
     setItems(items.filter((_, i) => i !== index));
   }
 
+  // Precios IVA-incluidos: el total es la suma bruta y, para Factura A,
+  // sólo se DISCRIMINA el IVA embebido (no se suma al total).
+  // Cada ítem usa su propia alícuota (iva_porcentaje del producto); si no
+  // tiene, cae al default del tenant.
   const subtotal = items.reduce(
     (sum, i) => sum + i.cantidad * i.precio_unitario,
     0,
   );
   const esFacturaA = tipo === 'factura_a' || tipo === 'nota_credito_a';
-  const ivaMonto = esFacturaA ? Math.round(subtotal * 0.21 * 100) / 100 : 0;
-  const total = Math.round((subtotal + ivaMonto) * 100) / 100;
+
+  const ivaPorItem = items.map((it) => {
+    const rate = it.producto.iva_porcentaje ?? ivaDefault;
+    const lineGross = it.cantidad * it.precio_unitario;
+    const lineIva = esFacturaA
+      ? Math.round(((lineGross * rate) / (100 + rate)) * 100) / 100
+      : 0;
+    return { rate, lineGross: Math.round(lineGross * 100) / 100, lineIva };
+  });
+
+  const ivaDesglose = ivaPorItem.reduce<Record<number, number>>((acc, it) => {
+    if (it.lineIva <= 0) return acc;
+    acc[it.rate] = Math.round(((acc[it.rate] ?? 0) + it.lineIva) * 100) / 100;
+    return acc;
+  }, {});
+
+  const ivaMonto = Object.values(ivaDesglose).reduce((s, v) => s + v, 0);
+  const netoGravado = Math.round((subtotal - ivaMonto) * 100) / 100;
+  const total = Math.round(subtotal * 100) / 100;
 
   async function handleEmitir() {
     if (!clienteId || !tipo || items.length === 0) return;
@@ -300,6 +328,12 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
                 <TableHead>Producto</TableHead>
                 <TableHead className="w-24">Cantidad</TableHead>
                 <TableHead className="w-32">Precio</TableHead>
+                {esFacturaA && (
+                  <>
+                    <TableHead className="w-20 text-right">IVA %</TableHead>
+                    <TableHead className="w-24 text-right">IVA</TableHead>
+                  </>
+                )}
                 <TableHead className="w-28 text-right">Subtotal</TableHead>
                 {showMargen && <TableHead className="w-20 text-right">Costo</TableHead>}
                 {showMargen && <TableHead className="w-20 text-right">Margen</TableHead>}
@@ -312,6 +346,10 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
                 const lineaVenta = item.precio_unitario * item.cantidad;
                 const lineaMargenPct = lineaCosto > 0
                   ? ((lineaVenta - lineaCosto) / lineaCosto) * 100
+                  : 0;
+                const lineaIvaRate = item.producto.iva_porcentaje ?? ivaDefault;
+                const lineaIva = esFacturaA
+                  ? Math.round(((lineaVenta * lineaIvaRate) / (100 + lineaIvaRate)) * 100) / 100
                   : 0;
                 return (
                   <TableRow key={item.producto.id}>
@@ -349,6 +387,16 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
                         className="w-28"
                       />
                     </TableCell>
+                    {esFacturaA && (
+                      <>
+                        <TableCell className="text-right font-mono text-muted-foreground">
+                          {lineaIvaRate}%
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-muted-foreground">
+                          {formatCurrency(lineaIva)}
+                        </TableCell>
+                      </>
+                    )}
                     <TableCell className="text-right font-mono">
                       {formatCurrency(lineaVenta)}
                     </TableCell>
@@ -385,16 +433,27 @@ export function EmitirComprobanteClient({ initialTipo }: { initialTipo?: string 
         const margenTotalPct = costoTotal > 0 ? (margenTotal / costoTotal) * 100 : 0;
         return (
           <div className="space-y-1 text-right text-sm">
-            <p>
-              Subtotal:{' '}
-              <span className="font-mono">{formatCurrency(subtotal)}</span>
-            </p>
             {esFacturaA ? (
+              <>
+                <p>
+                  Neto gravado:{' '}
+                  <span className="font-mono">{formatCurrency(netoGravado)}</span>
+                </p>
+                {Object.entries(ivaDesglose)
+                  .sort((a, b) => Number(b[0]) - Number(a[0]))
+                  .map(([rate, monto]) => (
+                    <p key={rate}>
+                      IVA {rate}% <span className="text-xs">(incluido)</span>:{' '}
+                      <span className="font-mono">{formatCurrency(monto)}</span>
+                    </p>
+                  ))}
+              </>
+            ) : (
               <p>
-                IVA (21%):{' '}
-                <span className="font-mono">{formatCurrency(ivaMonto)}</span>
+                Subtotal:{' '}
+                <span className="font-mono">{formatCurrency(subtotal)}</span>
               </p>
-            ) : null}
+            )}
             <p className="text-lg font-bold">
               Total: <span className="font-mono">{formatCurrency(total)}</span>
             </p>

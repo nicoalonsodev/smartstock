@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { getTenantSession, rejectIfVisor } from '@/lib/api/tenant-session';
 import { moduloGuard } from '@/lib/modulos/guard';
+import { calcularPrecioVenta } from '@/lib/productos/calcular-precio-venta';
 import { obtenerStockComprometidoPorProducto } from '@/lib/stock/comprometido';
 import type { Database } from '@/types/database';
 
@@ -147,23 +148,45 @@ export async function PATCH(
     }
   }
 
+  // El precio de venta SIEMPRE se calcula a partir del costo, la ganancia y el IVA.
+  // Si el cliente envió costo, ganancia o IVA, recalculamos. El campo precio_venta
+  // enviado por el cliente se ignora (el precio se computa server-side).
   if (
-    (b.porcentaje_ganancia !== undefined || b.precio_costo !== undefined) &&
-    b.precio_venta === undefined
+    b.precio_costo !== undefined ||
+    b.porcentaje_ganancia !== undefined ||
+    b.iva_porcentaje !== undefined
   ) {
     const { data: current } = await session.supabase
       .from('producto')
-      .select('precio_costo, porcentaje_ganancia')
+      .select('precio_costo, porcentaje_ganancia, iva_porcentaje')
       .eq('id', id)
       .maybeSingle();
+
+    const { data: tenant } = await session.supabase
+      .from('tenant')
+      .select('iva_porcentaje_default')
+      .eq('id', session.tenantId)
+      .maybeSingle();
+    const ivaDefault = tenant?.iva_porcentaje_default ?? 21;
+
     if (current) {
-      const costo = b.precio_costo !== undefined ? Number(b.precio_costo) : current.precio_costo;
+      const costo =
+        b.precio_costo !== undefined ? Number(b.precio_costo) : current.precio_costo;
       const ganancia =
         b.porcentaje_ganancia !== undefined
-          ? Number(b.porcentaje_ganancia)
+          ? b.porcentaje_ganancia == null
+            ? null
+            : Number(b.porcentaje_ganancia)
           : current.porcentaje_ganancia;
-      if (costo > 0 && ganancia != null && ganancia > 0) {
-        updates.precio_venta = Math.round(costo * (1 + ganancia / 100) * 100) / 100;
+      const iva =
+        b.iva_porcentaje !== undefined
+          ? b.iva_porcentaje == null
+            ? null
+            : Number(b.iva_porcentaje)
+          : current.iva_porcentaje;
+
+      if (costo > 0) {
+        updates.precio_venta = calcularPrecioVenta(costo, ganancia, iva, ivaDefault);
       }
     }
   }

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { calcularPrecioVenta } from '@/lib/productos/calcular-precio-venta';
 import type { Database } from '@/types/database';
 
 type UnidadMedida = Database['public']['Enums']['unidad_medida'];
@@ -79,6 +80,13 @@ export async function ejecutarImportacionFilas(
 
   const categoriasMap = new Map((categorias ?? []).map((c) => [c.nombre.toLowerCase(), c.id]));
 
+  const { data: tenantRow } = await supabase
+    .from('tenant')
+    .select('iva_porcentaje_default')
+    .eq('id', tenantId)
+    .maybeSingle();
+  const ivaDefault = tenantRow?.iva_porcentaje_default ?? 21;
+
   for (let i = 0; i < filas.length; i++) {
     const fila = filas[i];
 
@@ -139,8 +147,12 @@ export async function ejecutarImportacionFilas(
         if (fila.precio_venta == null && fila.porcentaje_ganancia != null && fila.porcentaje_ganancia > 0) {
           const costo = fila.precio_costo ?? productoExistente.precio_costo;
           if (costo > 0) {
-            updates.precio_venta =
-              Math.round(costo * (1 + fila.porcentaje_ganancia / 100) * 100) / 100;
+            updates.precio_venta = calcularPrecioVenta(
+              costo,
+              fila.porcentaje_ganancia,
+              fila.iva_porcentaje,
+              ivaDefault,
+            );
           }
         }
 
@@ -197,8 +209,12 @@ export async function ejecutarImportacionFilas(
           fila.porcentaje_ganancia != null &&
           fila.porcentaje_ganancia > 0
         ) {
-          insertVenta =
-            Math.round(insertCosto * (1 + fila.porcentaje_ganancia / 100) * 100) / 100;
+          insertVenta = calcularPrecioVenta(
+            insertCosto,
+            fila.porcentaje_ganancia,
+            fila.iva_porcentaje,
+            ivaDefault,
+          );
         }
 
         const { data: nuevoProducto, error: insertErr } = await supabase

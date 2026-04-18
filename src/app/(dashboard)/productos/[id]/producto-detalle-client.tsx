@@ -23,6 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useModulos } from '@/hooks/useModulos';
+import { calcularPrecioVenta } from '@/lib/productos/calcular-precio-venta';
 import { formatCurrency, formatDateTime } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/types/database';
@@ -83,9 +84,11 @@ const UNIDADES: Unidad[] = [
 export function ProductoDetalleClient({
   productoId,
   canEdit,
+  ivaDefault,
 }: {
   productoId: string;
   canEdit: boolean;
+  ivaDefault: number;
 }) {
   const router = useRouter();
   const [data, setData] = useState<ProductoDetail | null>(null);
@@ -180,6 +183,21 @@ export function ProductoDetalleClient({
   useEffect(() => {
     void loadOpts();
   }, [loadOpts]);
+
+  // Recalcular precio de venta cuando cambia costo, ganancia o IVA en modo edición.
+  // Fórmula: precio_venta = costo * (1 + ganancia/100) * (1 + iva/100)
+  useEffect(() => {
+    if (!editMode) return;
+    const costo = parseFloat(precioCosto);
+    if (!Number.isFinite(costo) || costo <= 0) {
+      setPrecioVenta('0');
+      return;
+    }
+    const ganancia = porcentajeGanancia === '' ? 0 : parseFloat(porcentajeGanancia);
+    const iva = ivaPorcentaje === '' ? null : parseFloat(ivaPorcentaje);
+    const venta = calcularPrecioVenta(costo, ganancia, iva, ivaDefault);
+    setPrecioVenta(String(venta));
+  }, [editMode, precioCosto, porcentajeGanancia, ivaPorcentaje, ivaDefault]);
 
   async function save() {
     setSaving(true);
@@ -378,26 +396,28 @@ export function ProductoDetalleClient({
                   type="number"
                   step="0.01"
                   value={precioCosto}
-                  onChange={(e) => {
-                    setPrecioCosto(e.target.value);
-                    const c = parseFloat(e.target.value);
-                    const g = parseFloat(porcentajeGanancia);
-                    if (c > 0 && g > 0) {
-                      setPrecioVenta(String(Math.round(c * (1 + g / 100) * 100) / 100));
-                    }
-                  }}
+                  onChange={(e) => setPrecioCosto(e.target.value)}
                 />
               </label>
               <label className="grid gap-1 text-sm">
-                <span className="text-muted-foreground">Precio venta</span>
+                <span className="text-muted-foreground">
+                  Precio venta{' '}
+                  <span className="text-xs text-muted-foreground">(calculado, IVA incluido)</span>
+                </span>
                 <Input
                   type="number"
                   step="0.01"
                   value={precioVenta}
-                  onChange={(e) => setPrecioVenta(e.target.value)}
+                  readOnly
+                  disabled
+                  className="bg-muted/50 cursor-not-allowed"
                 />
               </label>
             </div>
+            <p className="text-xs text-muted-foreground -mt-2">
+              Precio venta = costo × (1 + ganancia%) × (1 + IVA%). Modificá ganancia o IVA para
+              actualizarlo.
+            </p>
             <div className="grid gap-4 sm:grid-cols-3">
               <label className="grid gap-1 text-sm">
                 <span className="text-muted-foreground">Ganancia %</span>
@@ -405,14 +425,7 @@ export function ProductoDetalleClient({
                   type="number"
                   step="0.01"
                   value={porcentajeGanancia}
-                  onChange={(e) => {
-                    setPorcentajeGanancia(e.target.value);
-                    const c = parseFloat(precioCosto);
-                    const g = parseFloat(e.target.value);
-                    if (c > 0 && g > 0) {
-                      setPrecioVenta(String(Math.round(c * (1 + g / 100) * 100) / 100));
-                    }
-                  }}
+                  onChange={(e) => setPorcentajeGanancia(e.target.value)}
                   placeholder="Ej: 30"
                 />
               </label>
@@ -423,7 +436,7 @@ export function ProductoDetalleClient({
                   step="0.01"
                   value={ivaPorcentaje}
                   onChange={(e) => setIvaPorcentaje(e.target.value)}
-                  placeholder="Default del tenant"
+                  placeholder={`Default del tenant (${ivaDefault}%)`}
                 />
               </label>
               <label className="grid gap-1 text-sm">

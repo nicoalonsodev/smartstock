@@ -232,11 +232,16 @@ export async function emitirComprobante(
   if (generarPdfYSubir) {
     const itemsPDF = body.items.map((item) => {
       const prod = productosMap.get(item.producto_id)!;
+      const rate = prod.iva_porcentaje ?? ivaFallback;
+      const lineGross = Math.round(item.cantidad * item.precio_unitario * 100) / 100;
+      const lineIva = Math.round(((lineGross * rate) / (100 + rate)) * 100) / 100;
       return {
         cantidad: item.cantidad,
         descripcion: prod.nombre,
         precio_unitario: item.precio_unitario,
-        subtotal: Math.round(item.cantidad * item.precio_unitario * 100) / 100,
+        subtotal: lineGross,
+        iva_porcentaje: rate,
+        iva_monto: lineIva,
       };
     });
 
@@ -344,11 +349,16 @@ export async function emitirComprobante(
         if (generarPdfYSubir) {
           const itemsPDFCae = body.items.map((item) => {
             const prod = productosMap.get(item.producto_id)!;
+            const rate = prod.iva_porcentaje ?? ivaFallback;
+            const lineGross = Math.round(item.cantidad * item.precio_unitario * 100) / 100;
+            const lineIva = Math.round(((lineGross * rate) / (100 + rate)) * 100) / 100;
             return {
               cantidad: item.cantidad,
               descripcion: prod.nombre,
               precio_unitario: item.precio_unitario,
-              subtotal: Math.round(item.cantidad * item.precio_unitario * 100) / 100,
+              subtotal: lineGross,
+              iva_porcentaje: rate,
+              iva_monto: lineIva,
             };
           });
 

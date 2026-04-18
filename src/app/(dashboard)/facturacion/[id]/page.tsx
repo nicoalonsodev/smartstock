@@ -61,7 +61,11 @@ type ComprobanteDetalle = {
     cantidad: number;
     precio_unitario: number;
     subtotal: number;
-    producto: { nombre: string; codigo: string | null } | null;
+    producto: {
+      nombre: string;
+      codigo: string | null;
+      iva_porcentaje?: number | null;
+    } | null;
   }[];
 };
 
@@ -201,40 +205,70 @@ export default function ComprobanteDetallePage() {
               <TableHead>Producto</TableHead>
               <TableHead className="text-right">Cantidad</TableHead>
               <TableHead className="text-right">P. Unitario</TableHead>
+              {c.iva_monto > 0 && (
+                <>
+                  <TableHead className="text-right">IVA %</TableHead>
+                  <TableHead className="text-right">IVA</TableHead>
+                </>
+              )}
               <TableHead className="text-right">Subtotal</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {c.items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium">
-                  {item.producto?.nombre ?? '—'}
-                </TableCell>
-                <TableCell className="text-right">{item.cantidad}</TableCell>
-                <TableCell className="text-right font-mono">
-                  {formatCurrency(item.precio_unitario)}
-                </TableCell>
-                <TableCell className="text-right font-mono">
-                  {formatCurrency(item.subtotal)}
-                </TableCell>
-              </TableRow>
-            ))}
+            {c.items.map((item) => {
+              const rate = item.producto?.iva_porcentaje ?? c.iva_porcentaje;
+              const lineIva =
+                c.iva_monto > 0 && rate
+                  ? Math.round(((item.subtotal * rate) / (100 + rate)) * 100) / 100
+                  : 0;
+              return (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">
+                    {item.producto?.nombre ?? '—'}
+                  </TableCell>
+                  <TableCell className="text-right">{item.cantidad}</TableCell>
+                  <TableCell className="text-right font-mono">
+                    {formatCurrency(item.precio_unitario)}
+                  </TableCell>
+                  {c.iva_monto > 0 && (
+                    <>
+                      <TableCell className="text-right font-mono text-muted-foreground">
+                        {rate != null ? `${rate}%` : '—'}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-muted-foreground">
+                        {formatCurrency(lineIva)}
+                      </TableCell>
+                    </>
+                  )}
+                  <TableCell className="text-right font-mono">
+                    {formatCurrency(item.subtotal)}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
 
       {/* Totales */}
       <div className="text-right space-y-1 text-sm">
-        <p>
-          Subtotal:{' '}
-          <span className="font-mono">{formatCurrency(c.subtotal)}</span>
-        </p>
         {c.iva_monto > 0 ? (
+          <>
+            <p>
+              Neto gravado:{' '}
+              <span className="font-mono">{formatCurrency(c.subtotal)}</span>
+            </p>
+            <p>
+              IVA ({c.iva_porcentaje}%) <span className="text-xs">(incluido)</span>:{' '}
+              <span className="font-mono">{formatCurrency(c.iva_monto)}</span>
+            </p>
+          </>
+        ) : (
           <p>
-            IVA ({c.iva_porcentaje}%):{' '}
-            <span className="font-mono">{formatCurrency(c.iva_monto)}</span>
+            Subtotal:{' '}
+            <span className="font-mono">{formatCurrency(c.subtotal)}</span>
           </p>
-        ) : null}
+        )}
         <p className="text-lg font-bold">
           Total: <span className="font-mono">{formatCurrency(c.total)}</span>
         </p>

@@ -79,9 +79,10 @@ function buildTRA(generacion: Date, expiracion: Date): string {
 }
 
 function formatDateARCA(date: Date): string {
-  const offset = '-03:00';
-  const iso = date.toISOString().replace('Z', '');
-  return iso.substring(0, 19) + offset;
+  const arcaOffsetMinutes = -3 * 60;
+  const shiftedDate = new Date(date.getTime() + arcaOffsetMinutes * 60 * 1000);
+  const iso = shiftedDate.toISOString().replace('Z', '');
+  return `${iso.substring(0, 19)}-03:00`;
 }
 
 function firmarCMS(
@@ -93,25 +94,24 @@ function firmarCMS(
   p7.content = forge.util.createBuffer(contenido, 'utf8');
 
   const cert = forge.pki.certificateFromPem(certificadoPem);
-  const key = forge.pki.privateKeyFromPem(clavePrivadaPem);
-
   p7.addCertificate(cert);
+
   p7.addSigner({
-    key,
+    key: forge.pki.privateKeyFromPem(clavePrivadaPem),
     certificate: cert,
     digestAlgorithm: forge.pki.oids.sha256,
     authenticatedAttributes: [
       { type: forge.pki.oids.contentType, value: forge.pki.oids.data },
       { type: forge.pki.oids.messageDigest },
-      { type: forge.pki.oids.signingTime, value: new Date().toISOString() },
+      { type: forge.pki.oids.signingTime },
     ],
   });
 
   p7.sign({ detached: false });
 
   const asn1 = p7.toAsn1();
-  const derBytes = forge.asn1.toDer(asn1).getBytes();
-  return forge.util.encode64(derBytes);
+  const der = forge.asn1.toDer(asn1);
+  return Buffer.from(der.getBytes(), 'binary').toString('base64');
 }
 
 export async function asegurarTicketVigente(

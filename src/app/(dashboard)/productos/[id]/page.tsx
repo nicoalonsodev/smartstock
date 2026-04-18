@@ -16,10 +16,11 @@ export default async function ProductoDetallePage({
 
   const profile = await getSessionProfile();
   const canEdit = profile ? profile.rol !== 'visor' : false;
+  const ivaDefault = profile?.ivaDefault ?? 21;
 
   return (
     <div className="mx-auto max-w-4xl">
-      <ProductoDetalleClient productoId={id} canEdit={canEdit} />
+      <ProductoDetalleClient productoId={id} canEdit={canEdit} ivaDefault={ivaDefault} />
     </div>
   );
 }

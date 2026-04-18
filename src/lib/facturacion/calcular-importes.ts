@@ -16,10 +16,19 @@ interface Importes {
 /**
  * Calcula importes de un comprobante.
  *
- * - Factura / NC: subtotal neto + IVA discriminado por producto = total
- * - Ticket, Remito, Presupuesto: total = subtotal (IVA incluido en precio)
+ * Precios IVA-incluidos (convención del sistema): `precio_unitario` ya contiene
+ * el IVA. Para comprobantes con IVA discriminado sólo se separa el componente
+ * de IVA embebido; el total NO se incrementa.
  *
- * Each item can carry its own iva_porcentaje; falls back to ivaPorcentajeDefault.
+ * - Factura / NC:
+ *     total        = sum(cantidad * precio_unitario)   // bruto IVA incluido
+ *     iva_monto    = sum por línea de  gross * rate / (100 + rate)
+ *     subtotal     = total - iva_monto                 // neto gravado
+ *
+ * - Ticket, Remito, Presupuesto: total = subtotal (sin discriminar IVA)
+ *
+ * Cada ítem puede traer su propio `iva_porcentaje`; si no, usa
+ * `ivaPorcentajeDefault`.
  */
 export function calcularImportes(
   items: ItemComprobante[],
@@ -44,7 +53,9 @@ export function calcularImportes(
     let ivaMonto = 0;
     for (const item of itemsCalculados) {
       const rate = item.iva_porcentaje ?? ivaPorcentajeDefault;
-      ivaMonto += Math.round(item.subtotal * (rate / 100) * 100) / 100;
+      // IVA embebido en precio bruto: gross * rate / (100 + rate)
+      ivaMonto +=
+        Math.round(((item.subtotal * rate) / (100 + rate)) * 100) / 100;
     }
     ivaMonto = Math.round(ivaMonto * 100) / 100;
 
@@ -52,11 +63,14 @@ export function calcularImportes(
       ? (itemsCalculados[0].iva_porcentaje ?? ivaPorcentajeDefault)
       : ivaPorcentajeDefault;
 
+    const total = subtotalRedondeado;
+    const subtotalNeto = Math.round((total - ivaMonto) * 100) / 100;
+
     return {
-      subtotal: subtotalRedondeado,
+      subtotal: subtotalNeto,
       iva_porcentaje: rateUsed,
       iva_monto: ivaMonto,
-      total: Math.round((subtotalRedondeado + ivaMonto) * 100) / 100,
+      total,
       items: itemsCalculados,
     };
   }
